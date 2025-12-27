@@ -1,690 +1,672 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Catenary Grapher</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    :root{
-      --brand:#004080; --ink:#222; --muted:#606770; --bg:#f6f8fb;
-      --panel:#fff; --line:#d4dae3; --hdr:#eef2f6; --row:#fbfdff; --band:#fff59d;
-      --pagew:1080px; --colw-depth:120px; --colw-num:120px;
-    }
-    *{box-sizing:border-box}
-    html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif}
-    .page{width:var(--pagew); margin:0 0 18px 16px;}
-    header{background:var(--brand);color:#fff;padding:10px 14px;margin-left:-16px;width:calc(var(--pagew) + 32px);}
-    header h2{margin:0;font-size:20px}
+    <meta charset="UTF-8">
+    <title>Catenary Suite - Titanium Release</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --brand: #004080; --bg: #f4f7f9; --panel: #ffffff;
+            --border: #e0e6ed; --accent: #28a745; --danger: #dc3545; --sidebar-w: 360px;
+            --text-main: #2c3e50; --text-muted: #6c757d;
+            --hl-color: #fff9c4;
+        }
 
-    .controls{
-      background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px;margin-top:12px;
-      display:grid; grid-template-columns: 420px 1fr; gap:14px;
-    }
-    .leftStack{display:flex;flex-direction:column;gap:12px}
-    .section{background:#fff; border:1px dashed var(--line); border-radius:6px; padding:10px}
-    .section > h4{margin:0 0 6px 0;font-size:13px;color:var(--muted);font-weight:bold}
-    .flip{display:flex;gap:8px;align-items:center}
-    .flip input,.flip select{order:1; width:160px; font-size:13px; padding:4px 6px}
-    .flip span{order:2; font-size:13px; color:var(--muted)}
-    .stack{display:flex;flex-direction:column;gap:8px}
-    .inline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-    .btn{background:var(--brand);color:#fff;border:none;border-radius:4px;padding:6px 12px;font-size:13px;cursor:pointer}
-    .btn:hover{filter:brightness(1.1)}
-    .btn-lite{background:#9097a1;color:#fff}
-    .btn-lite:hover{filter:brightness(1.05)}
-    .tiny{padding:2px 6px;font-size:12px}
-    .tensionSelect{width:160px;font-size:13px;padding:4px 6px}
+        body { margin: 0; font-family: 'Inter', sans-serif; background-color: var(--bg); display: flex; height: 100vh; overflow: hidden; color: var(--text-main); }
 
-    /* Right panel (info + chart + controls) */
-    #infoPanel{display:flex;flex-direction:column;min-height:320px}
-    #infoPanel h4{margin:0 0 6px 0;font-size:14px}
-    #infoPanel p{margin:6px 0 0 0;color:var(--muted);font-size:12px;line-height:1.35}
-    #formulaImg{max-width:100%;height:auto;border:1px solid var(--line);border-radius:6px;margin-bottom:8px;display:block}
-    #inlineChartWrap{border:1px solid var(--line);border-radius:6px;padding:6px;margin-top:10px}
-    #noChartMsg{font-size:12px;color:var(--muted);text-align:center;padding:8px 0}
-    #inlineChart{display:none;width:100%;height:300px}
-    .chartCtrls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
-    .chartCtrls label{font-size:12px;color:var(--muted)}
-    .chartCtrls input[type=number]{width:90px;padding:4px 6px;font-size:12px}
-    .chartCtrls .wide{width:110px}
+        /* --- LAYOUT --- */
+        .sidebar { width: var(--sidebar-w); background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; padding: 20px; box-shadow: 4px 0 12px rgba(0,0,0,0.03); z-index: 20; }
+        .table-view { flex: 1.6; display: flex; flex-direction: column; padding: 20px; border-right: 1px solid var(--border); background: #fff; }
+        .chart-view { flex: 1; display: flex; flex-direction: column; padding: 20px; background: #f8f9fa; }
 
-    /* Workspace */
-    .workspace{display:grid;grid-template-columns:1fr 260px;gap:10px;margin-top:12px}
-    .panel{background:var(--panel);border:1px solid var(--line);border-radius:6px}
-    #tableWrapper{overflow:auto;max-height:66vh}
+        /* --- HEADERS --- */
+        .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 8px; }
+        .panel-title { font-size: 14px; font-weight: 700; text-transform: uppercase; color: var(--brand); letter-spacing: 0.5px; }
+        
+        .section-title { margin: 24px 0 6px 0; font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+        
+        /* Instructions */
+        .instruction { font-size: 12px; color: #64748b; margin-bottom: 15px; line-height: 1.4; font-weight: 400; }
+        .panel-instruction { font-size: 12px; color: #64748b; margin-bottom: 15px; margin-top:-5px; }
 
-    /* Table */
-    table{border-collapse:collapse;width:100%;background:#fff;font-size:12px;line-height:1.35}
-    col.depth{width:var(--colw-depth)}
-    col.num{width:var(--colw-num)}
-    th,td{border:1px solid #cfd6df; padding:4px 8px; text-align:center; font-variant-numeric:tabular-nums; vertical-align:middle; white-space:nowrap;}
-    thead th{background:var(--hdr);position:sticky;top:0;z-index:2}
-    thead .meta th{font-weight:700;font-size:12.5px;text-align:center;background:#e7eef7}
-    tbody tr:nth-child(even) td{background:var(--row)}
-    tbody tr.band td{background:var(--band)!important}
-    tbody tr.cursor td{outline:2px solid #f1c40f; outline-offset:-2px}
-    
-    /* Row Highlighter — polished look */
-#hiPanel{
-  padding:12px;border-radius:8px;border:1px solid var(--line);
-  background:#fff; box-shadow:0 1px 0 rgba(0,0,0,.03);
-}
-#hiPanel h4{font-weight:600}
-#hiPanel .hiRow label{color:var(--ink);font-weight:600}
-#hiPanel input[type=range]{accent-color:var(--brand);height:4px}
-#hiStartLbl,#hiEndLbl{
-  background:#e7eef7;border-radius:999px;padding:2px 8px;
-  min-width:28px;text-align:center;font-variant-numeric:tabular-nums
-}
-#hiReadout{background:#f8fbff;border:1px dashed var(--line);padding:6px;border-radius:6px}
-.hiBtns .btn-lite{background:#6b7280;color:#fff}
+        /* --- INPUTS --- */
+        .input-row { display: grid; grid-template-columns: 1fr 90px; gap: 12px; margin-bottom: 10px; align-items: center; font-size: 13px; font-weight: 500; }
+        input[type="number"], select { 
+            padding: 8px; border: 1px solid #cbd5e0; border-radius: 6px; 
+            font-size: 13px; font-family: inherit; text-align: center; color: var(--text-main); 
+            transition: all 0.2s;
+        }
+        input:focus, select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(0,64,128,0.1); outline: none; }
 
-    /* Print-only header row that repeats on each page */
-    .print-only { display: none; }
-    @media print {
-      thead .print-only { display: table-row !important; }
-      header{display:none}
-      .controls{display:none}
-      #rightStack{display:none}
-      .page{width:auto;margin:0}
-      .workspace{display:block !important; grid-template-columns:1fr !important; gap:0 !important}
-      #tableWrapper{max-height:none;overflow:visible;width:100%}
-      #tableArea table{width:100% !important}
-      col.depth, col.num { width:auto !important }
-      th,td{padding:3px 6px}
-    }
-  </style>
+        /* --- CONTROLS --- */
+        .param-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .big-check { 
+            display: flex; align-items: center; gap: 10px; padding: 10px; 
+            border: 1px solid var(--border); border-radius: 8px; 
+            cursor: pointer; transition: 0.2s; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
+        .big-check:hover { border-color: var(--brand); transform: translateY(-1px); }
+        .big-check span { font-size: 12px; font-weight: 600; color: var(--text-main); }
+
+        .tension-tag { display: inline-flex; align-items: center; background: #eef2ff; color: var(--brand); padding: 4px 10px; border-radius: 20px; margin: 3px; font-size: 11px; font-weight: 700; border: 1px solid #c7d2fe; }
+        .tension-tag span { margin-left: 6px; cursor: pointer; color: #ef4444; font-weight: 900; }
+
+        /* --- BUTTONS --- */
+        .btn { padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 8px; font-size: 13px; transition: all 0.2s; }
+        .btn-primary { background: var(--brand); color: white; box-shadow: 0 4px 6px rgba(0,64,128,0.2); }
+        .btn-primary:hover { background: #003366; transform: translateY(-1px); box-shadow: 0 6px 8px rgba(0,64,128,0.25); }
+        .btn-lite { background: #fff; border: 1px solid var(--border); color: var(--text-main); padding: 8px; }
+        .btn-lite:hover { background: #f8f9fa; border-color: #cbd5e0; }
+        .btn-md { padding: 6px 16px; font-size: 12px; width: auto; background: #fff; border: 1px solid var(--brand); color: var(--brand); border-radius: 6px; }
+        .btn-md:hover { background: #f0f7ff; }
+        .btn-info { font-size: 11px; background: none; border: none; color: var(--text-muted); text-decoration: underline; cursor: pointer; padding: 0; margin-bottom: 10px; text-align: left; }
+
+        .solver-actions { display: grid; grid-template-columns: 3fr 1fr; gap: 8px; margin-top: 8px; }
+        .btn-solver { background: var(--accent); color: white; margin-top: 0; box-shadow: 0 4px 6px rgba(40,167,69,0.2); }
+        .btn-solver:hover { background: #218838; transform: translateY(-1px); }
+        .btn-clear { background: #fff1f0; color: var(--danger); border: 1px solid #ffa39e; margin-top: 0; font-size: 11px; }
+        .btn-clear:hover { background: #ffccc7; }
+
+        /* --- BEAUTIFUL TABLE --- */
+        .table-wrapper { 
+            flex: 1; overflow: auto; 
+            border: 1px solid var(--border); border-radius: 8px; 
+            background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+        }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; text-align: center; }
+        
+        th { 
+            position: sticky; top: 0; z-index: 10;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(8px);
+            padding: 12px 8px;
+            font-weight: 700; color: var(--text-muted);
+            border-bottom: 2px solid var(--border);
+            text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;
+        }
+        th:first-child, td:first-child { position: sticky; left: 0; z-index: 11; background: #fff; border-right: 2px solid var(--border); }
+        th:first-child { z-index: 12; }
+
+        td { 
+            padding: 8px 12px; 
+            border-bottom: 1px solid #f1f5f9; 
+            font-variant-numeric: tabular-nums; 
+            transition: background 0.1s;
+        }
+        
+        tr:hover td { background-color: #f8fafc; }
+        tr.highlighted-row td { background-color: var(--hl-color) !important; border-top: 1px solid #fce788; border-bottom: 1px solid #fce788; font-weight: 700; color: #333; }
+
+        @keyframes waterfall { 
+            from { opacity: 0; transform: translateY(-15px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        .cascade-row { animation: waterfall 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; opacity: 0; }
+
+        /* --- CHART SECTION --- */
+        .chart-controls { 
+            padding: 15px; background: #fff; 
+            border: 1px solid var(--border); border-radius: 8px; 
+            margin-top: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        .range-group { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
+        .range-label { font-size: 11px; font-weight: 700; color: var(--text-muted); width: 60px; text-transform: uppercase; }
+        .range-inputs { display: flex; flex: 1; gap: 8px; align-items: center; }
+        .range-box { width: 55px; padding: 6px; text-align: center; font-size: 12px; border: 1px solid #cbd5e0; border-radius: 4px; font-weight: 600; color: var(--text-main); }
+        .hybrid-slider { flex: 1; accent-color: var(--brand); cursor: pointer; height: 4px; }
+        
+        .btn-apply { 
+            background: var(--brand); color: white; border: none; padding: 10px; 
+            font-weight: 700; border-radius: 6px; cursor: pointer; width: 100%; 
+            box-shadow: 0 2px 4px rgba(0,64,128,0.2); transition: all 0.2s;
+        }
+        .btn-apply:hover { background: #003366; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,64,128,0.25); }
+
+        /* --- SOLVER PANEL --- */
+        .solver-panel { 
+            background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; 
+            padding: 16px; margin-bottom: 20px; display: none; 
+            border-left: 4px solid var(--accent); box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        .solver-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .res-item { display: flex; flex-direction: column; }
+        .res-label { font-size: 10px; color: #166534; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; } 
+        .res-val { font-size: 18px; font-weight: 800; color: #14532d; font-family: 'Segoe UI', sans-serif; }
+
+        /* --- MODAL --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); z-index: 100; display: none; align-items: center; justify-content: center; }
+        .modal-card { background: white; padding: 30px; border-radius: 12px; width: 650px; max-width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); max-height:90vh; overflow-y:auto; }
+        .math-row { font-family: 'Courier New', monospace; background: #f1f5f9; padding: 12px; margin: 8px 0; border-radius: 6px; font-size: 13px; border-left: 4px solid var(--brand); color: #334155; }
+        .help-section { margin-bottom: 24px; border-bottom: 1px solid #e2e8f0; padding-bottom: 16px; }
+        .help-title { margin:0 0 8px 0; color:var(--text-main); font-size:16px; font-weight:700; }
+
+        /* --- HIGHLIGHTER TOOLBAR --- */
+        .hl-toolbar { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--border); border-bottom: none; padding: 10px 15px; border-radius: 8px 8px 0 0; }
+        .hl-active { background: #fffbeb; border-color: #fcd34d; }
+        .hl-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+        .hl-slider { flex: 1; accent-color: #f59e0b; cursor: pointer; }
+        .hl-btn { padding: 4px 10px; font-size: 11px; cursor: pointer; background: white; border: 1px solid #d1d5db; border-radius: 4px; font-weight: 600; color: var(--text-main); }
+        .hl-btn:hover { background: #f3f4f6; }
+    </style>
 </head>
 <body>
-  <div class="page">
-    <header><h2>Catenary Grapher</h2></header>
 
-    <div class="controls">
-      <div class="leftStack">
-        <div class="section">
-          <h4>Inputs</h4>
-          <div class="stack">
-            <label class="flip"><input type="number" id="weightWater" value="50" step="0.01" min="0.01"><span>Weight in water (kg/m)</span></label>
-            <label class="flip"><input type="number" id="weightAir" value="60" step="0.01" min="0"><span>Weight in air (kg/m)</span></label>
-            <label class="flip"><input type="number" id="sheaveHeight" value="2" step="0.01" min="0"><span>Sheave height (m)</span></label>
-            <label class="flip"><input type="number" id="maxDepth" value="100" step="0.1" min="0.1"><span>Max depth (m)</span></label>
-            <label class="flip"><input type="number" id="step" value="10" step="0.1" min="0.1"><span>Depth step (m)</span></label>
-          </div>
+<div id="mathModal" class="modal-overlay" onclick="toggleMath(false)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+        <h3 style="margin-top:0; color:var(--brand); border-bottom:2px solid #e2e8f0; padding-bottom:12px;">Catenary Engine Reference</h3>
+        
+        <div class="help-section">
+            <h4 class="help-title">1. Standard Physics & Geometry</h4>
+            <p class="instruction">The system models a composite cable (Air + Water segments). Continuity of slope is maintained at the waterline.</p>
+            <div class="math-row">Slope @ Waterline (m0) = sinh( x_water / a_water )</div>
+            <div class="math-row">Air_Length = (Sheave_H - Radius) + (&pi; * Radius / 2)</div>
         </div>
 
-        <div class="section">
-          <h4>Bottom tensions</h4>
-          <div class="stack">
-            <div class="inline">
-              <label class="flip">
-                <select id="tensionBase" class="tensionSelect">
-                  <option value="250" selected>250 kg</option>
-                  <option value="300">300 kg</option><option value="350">350 kg</option>
-                  <option value="400">400 kg</option><option value="450">450 kg</option>
-                  <option value="500">500 kg</option><option value="550">550 kg</option>
-                  <option value="600">600 kg</option><option value="650">650 kg</option>
-                  <option value="700">700 kg</option><option value="750">750 kg</option>
-                  <option value="800">800 kg</option><option value="850">850 kg</option>
-                  <option value="900">900 kg</option><option value="950">950 kg</option>
-                  <option value="1000">1000 kg</option><option value="1050">1050 kg</option>
-                  <option value="1100">1100 kg</option><option value="1150">1150 kg</option>
-                  <option value="1200">1200 kg</option><option value="1250">1250 kg</option>
-                  <option value="1300">1300 kg</option><option value="1350">1350 kg</option>
-                  <option value="1400">1400 kg</option><option value="1450">1450 kg</option>
-                  <option value="1500">1500 kg</option><option value="1550">1550 kg</option>
-                  <option value="1600">1600 kg</option><option value="1650">1650 kg</option>
-                  <option value="1700">1700 kg</option><option value="1750">1750 kg</option>
-                  <option value="1800">1800 kg</option><option value="1850">1850 kg</option>
-                  <option value="1900">1900 kg</option><option value="1950">1950 kg</option>
-                  <option value="2000">2000 kg</option><option value="2050">2050 kg</option>
-                  <option value="2100">2100 kg</option><option value="2150">2150 kg</option>
-                  <option value="2200">2200 kg</option><option value="2250">2250 kg</option>
-                  <option value="2300">2300 kg</option><option value="2350">2350 kg</option>
-                  <option value="2400">2400 kg</option><option value="2450">2450 kg</option>
-                  <option value="2500">2500 kg</option>
-                </select>
-                <span><strong>Primary bottom tension</strong></span>
-              </label>
-            </div>
-            <div id="extraTensions" class="stack"></div>
-            <div><button type="button" class="btn tiny" id="addBtn">+ Add Tension</button></div>
-          </div>
+        <div class="help-section">
+            <h4 class="help-title">2. Tension & Angles</h4>
+            <p class="instruction">Top Tension is the vector sum of Horizontal Tension ($H$) and the total vertical weight of the suspended cable (Water segment + Air segment).</p>
+            <div class="math-row">V_tot = (Len_Water * Wt_Water) + (Len_Air * Wt_Air)</div>
+            <div class="math-row">T_top = &radic;( H² + V_tot² )</div>
+            <p class="instruction">Departure Angle is measured from Vertical (0° = Straight Down).</p>
         </div>
 
-        <div class="section">
-          <h4>Mode</h4>
-          <div class="stack">
-            <label class="flip"><input type="radio" name="mode" value="detail" style="width:auto"><span>Detail (all parameters) — <em>primary tension only</em></span></label>
-            <label class="flip"><input type="radio" name="mode" value="compare" checked style="width:auto"><span>Compare Bottom Tensions</span></label>
-          </div>
+        <div class="help-section">
+            <h4 class="help-title" style="color:var(--accent);">3. The "As-Laid" Solver</h4>
+            <p class="instruction"><strong>What it does:</strong> Reverse-engineers the Bottom Tension required to achieve a specific curve observed by an ROV.</p>
+            <p class="instruction"><strong>How it works:</strong> It uses a <em>Newton-Raphson</em> numerical iteration. It takes your observed Layback (x) and Depth (y) and iteratively solves for the catenary parameter 'a' until the error is near zero.</p>
+            <p class="instruction"><strong>Use Case:</strong> Use this to validate your deck tension. If the Solver says you need 500kg to match the ROV position, but your winch reads 400kg, you may have a calibration issue or current drag.</p>
         </div>
+        
+        <div style="text-align:right;"><button class="btn btn-primary" style="width:auto; padding:8px 24px;" onclick="toggleMath(false)">Close Reference</button></div>
+    </div>
+</div>
 
-        <div class="section">
-          <h4>Parameter (compare mode)</h4>
-          <div class="stack">
-            <label class="flip"><input type="radio" name="display" value="layback" checked style="width:auto"><span>Layback</span></label>
-            <label class="flip"><input type="radio" name="display" value="length" style="width:auto"><span>Cable length</span></label>
-            <label class="flip"><input type="radio" name="display" value="angle" style="width:auto"><span>Angle (° from vertical)</span></label>
-            <label class="flip"><input type="radio" name="display" value="topTension" style="width:auto"><span>Top tension</span></label>
-          </div>
-          <div class="inline" style="margin-top:6px">
-            <button class="btn" id="genBtn">Generate Table</button>
-            <button class="btn" id="chartBtn">Pop-out Chart</button>
-            <button class="btn" onclick="window.print()">Print Table</button>
-          </div>
-        </div>
-      </div>
+<div class="sidebar">
+    <h3 style="margin-bottom:5px; color:var(--brand);">Catenary Suite</h3>
+    <button class="btn-info" onclick="toggleMath(true)">ⓘ Physics & Solver Guide</button>
+    
+    <div class="section-title">1. Environmental Inputs</div>
+    <p class="instruction">Configure the physical properties of the cable and the deployment geometry.</p>
+    <div class="input-row"><span>Wt Water (kg/m)</span><input type="number" id="wW" value="50"></div>
+    <div class="input-row"><span>Wt Air (kg/m)</span><input type="number" id="wA" value="60"></div>
+    <div class="input-row"><span>Sheave Height (m)</span><input type="number" id="sH" value="1"></div>
+    <div class="input-row"><span>Sheave Radius (m)</span><input type="number" id="sR" value="5"></div>
+    <div class="input-row"><span>Max Depth (m)</span><input type="number" id="mD" value="100"></div>
+    <div class="input-row"><span>Depth Step (m)</span><input type="number" id="dS" value="5"></div>
 
-      <div id="infoPanel" class="section">
-        <div class="inline" style="justify-content:space-between;align-items:center;margin-bottom:6px">
-          <h4 style="margin:0">Formula walkthrough (kg-based)</h4>
-        </div>
-      <img id="formulaImg" src="assets/catenary-formulas.png" alt="Catenary formula sheet"/>
-        <div id="inlineChartWrap">
-          <div id="noChartMsg">No chart yet — click <strong>Generate Table</strong> first.</div>
-          <canvas id="inlineChart"></canvas>
+    <div class="section-title">2. Tension Comparison</div>
+    <p class="instruction">Select one or more Bottom Tensions to generate comparative profiles.</p>
+    <div class="input-row">
+        <span>Select Tension</span>
+        <select id="tSelect">
+            </select>
+    </div>
+    <button class="btn btn-lite" onclick="addTension()">+ Add to Comparison</button>
+    <div id="tList" style="margin-top:8px; min-height:20px;"></div>
 
-          <!-- Chart controls -->
-          <div class="chartCtrls">
-            <label>Depth from</label><input type="number" id="xMin" class="wide" step="0.1">
-            <label>to</label><input type="number" id="xMax" class="wide" step="0.1">
-            <label>Y min</label><input type="number" id="yMin" step="0.1">
-            <label>Y max</label><input type="number" id="yMax" step="0.1">
-            <label>Y step</label><input type="number" id="yStep" step="0.1">
-            <label class="inline" style="gap:4px"><input type="checkbox" id="minorGrid" style="width:auto"> minor grid (½-step)</label>
-            <button class="btn tiny" id="applyChart">Apply</button>
-          </div>
-        </div>
-      </div>
+    <div class="section-title">3. Table & Chart Mode</div>
+    <p class="instruction">Choose which parameter to display in the main data table and on the chart Y-Axis.</p>
+    <div class="param-grid">
+        <label class="big-check"><input type="checkbox" class="p-check" value="layback" checked> <span>Layback</span></label>
+        <label class="big-check"><input type="checkbox" class="p-check" value="length" checked> <span>Length</span></label>
+        <label class="big-check"><input type="checkbox" class="p-check" value="angle"> <span>Angle</span></label>
+        <label class="big-check"><input type="checkbox" class="p-check" value="tension"> <span>Tension</span></label>
     </div>
 
-    <div class="workspace">
-      <div id="tableWrapper" class="panel">
-        <div id="tableArea"></div>
-      </div>
+    <button class="btn btn-primary" onclick="runMain()">GENERATE PROFILE & TABLE</button>
 
-      <div id="rightStack">
-        <aside id="hiPanel" class="panel">
-          <h4>Row Highlighter</h4>
-          <div class="hiRow" style="margin-bottom:6px">
-            <label class="flip" style="gap:6px">
-              <input type="checkbox" id="hiEnable" style="width:auto">
-              <span>Enable highlighter</span>
-            </label>
-          </div>
-          <p id="hiHint" class="muted">Turn on to use sliders or click-drag on the table.</p>
-          <div class="hiGroup">
-            <div class="hiRow">
-              <label style="width:64px">Start</label>
-              <input type="range" id="hiStart" min="1" max="1" value="1" disabled>
-              <span id="hiStartLbl" class="muted" style="width:28px;text-align:right">1</span>
-            </div>
-          </div>
-          <div class="hiGroup">
-            <div class="hiRow">
-              <label style="width:64px">End</label>
-              <input type="range" id="hiEnd" min="1" max="1" value="1" disabled>
-              <span id="hiEndLbl" class="muted" style="width:28px;text-align:right">1</span>
-            </div>
-          </div>
-          <div id="hiReadout" class="muted">Depths: –</div>
-          <div class="hiBtns">
-            <button class="btn-lite tiny" id="hiUp" disabled>▲ Up</button>
-            <button class="btn-lite tiny" id="hiDown" disabled>▼ Down</button>
-            <button class="btn-lite tiny" id="hiClear" disabled>Clear</button>
-          </div>
-        </aside>
-      </div>
+    <div class="section-title" style="margin-top:30px; color:var(--accent); border-color:var(--accent);">4. Raw Data Solver</div>
+    <p class="instruction">Input real-time ROV coordinates (Layback/Depth) to calculate the required tension.</p>
+    <div class="input-row"><span>Observed Layback</span><input type="number" id="obsL" value="120"></div>
+    <div class="input-row"><span>Observed Depth</span><input type="number" id="obsD" value="50"></div>
+    <div class="solver-actions">
+        <button class="btn btn-solver" onclick="solveLive()">CALCULATE 'AS-LAID' STATE</button>
+        <button class="btn btn-clear" onclick="clearSolver()">CLEAR</button>
     </div>
-  </div>
+</div>
 
-  <script>
-    /* ---------- Polyfills ---------- */
+<div class="table-view">
+    <div class="panel-header">
+        <span class="panel-title">Calculated Results</span>
+        <button class="btn btn-md" onclick="printTableWindow()">🖨 Print Table</button>
+    </div>
+    <p class="panel-instruction">Comprehensive tabular breakdown of the selected parameters at every depth step. Use the slider to highlight rows.</p>
+    <div id="hlToolbar" class="hl-toolbar">
+        <span class="hl-label">Row Highlighter:</span>
+        <input type="range" id="hlSlider" class="hl-slider" min="0" max="0" value="0" disabled>
+        <span id="hlReadout" style="font-size:12px; font-weight:bold; min-width:30px; text-align:right;">--</span>
+        <button class="hl-btn" onclick="moveHighlight(-1)">▲</button>
+        <button class="hl-btn" onclick="moveHighlight(1)">▼</button>
+        <button class="hl-btn" onclick="clearHighlight()">Clear</button>
+    </div>
+    <div class="table-wrapper">
+        <table id="mainTable">
+            <thead id="tableHdr"></thead>
+            <tbody id="tableBdy"></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="chart-view">
+    <div id="solverPanel" class="solver-panel">
+        <div style="font-size:11px; font-weight:bold; color:#166534; border-bottom:1px solid #86efac; margin-bottom:12px;">SOLVER RESULTS (AS-LAID)</div>
+        <div class="solver-grid">
+            <div class="res-item"><span class="res-label">Total Length</span><span class="res-val highlight" id="resLen">--</span></div>
+            <div class="res-item"><span class="res-label">Bottom Tension</span><span class="res-val" id="resBot">--</span></div>
+            <div class="res-item"><span class="res-label">Dep. Angle (Vert)</span><span class="res-val" id="resAng">--</span></div>
+        </div>
+    </div>
+
+    <div class="panel-header">
+        <span class="panel-title">Dynamic Profile</span>
+        <button class="btn btn-md" onclick="popChartWindow()">⤢ Pop-out Chart</button>
+    </div>
+    <p class="panel-instruction">Visual representation of the cable parameter vs. water depth. Use the controls below to zoom or filter the axes.</p>
+
+    <div style="flex:1; background:white; border:1px solid var(--border); padding:5px; position:relative; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.03);">
+        <canvas id="mainChart"></canvas>
+    </div>
+
+    <div class="chart-controls">
+        <div class="range-group">
+            <span class="range-label" id="xLabel">Depth</span>
+            <div class="range-inputs">
+                <input type="number" id="minXBox" class="range-box" placeholder="Min" value="0" onchange="sync('minX', 'Box')">
+                <input type="range" id="minXSlider" class="hybrid-slider" min="0" max="100" value="0" oninput="sync('minX', 'Slider')">
+                <input type="range" id="maxXSlider" class="hybrid-slider" min="0" max="100" value="100" oninput="sync('maxX', 'Slider')">
+                <input type="number" id="maxXBox" class="range-box" placeholder="Max" value="100" onchange="sync('maxX', 'Box')">
+            </div>
+        </div>
+        <div class="range-group">
+            <span class="range-label" id="yLabel">Value</span>
+            <div class="range-inputs">
+                <input type="number" id="minYBox" class="range-box" placeholder="Min" value="0" onchange="sync('minY', 'Box')">
+                <input type="range" id="minYSlider" class="hybrid-slider" min="0" max="100" value="0" oninput="sync('minY', 'Slider')">
+                <input type="range" id="maxYSlider" class="hybrid-slider" min="0" max="100" value="100" oninput="sync('maxY', 'Slider')">
+                <input type="number" id="maxYBox" class="range-box" placeholder="Max" value="100" onchange="sync('maxY', 'Box')">
+            </div>
+        </div>
+        <button class="btn-apply" onclick="applyFilters()">APPLY VIEW FILTERS</button>
+    </div>
+</div>
+
+<script>
+    /* 1. MATH LIBRARY */
     const ACOSH = Math.acosh || function(x){ return Math.log(x + Math.sqrt((x-1)*(x+1))); };
     const SINH  = Math.sinh  || function(x){ const e=Math.exp(x), ei=1/e; return (e-ei)/2; };
 
-    /* ---------- Minor grid plugin ---------- */
-    const minorGridPlugin = {
-      id: 'minorGrid',
-      afterDraw(chart, args, opts){
-        if(!opts || !opts.enabled) return;
-        const { xStep, yStep } = opts;
-        const x = chart.scales.x, y = chart.scales.y;
-        const ctx = chart.ctx; ctx.save();
-        ctx.strokeStyle = 'rgba(0,0,0,0.07)'; ctx.lineWidth = 0.5;
-
-        if(Number.isFinite(xStep) && x && x.min != null && x.max != null){
-          const dx = xStep/2;
-          for(let v = x.min + dx; v < x.max - 1e-9; v += xStep){
-            const px = x.getPixelForValue(v); ctx.beginPath();
-            ctx.moveTo(px, y.top); ctx.lineTo(px, y.bottom); ctx.stroke();
-          }
+    function solveAByLayback(x, depth, tol=1e-5, maxIt=50) {
+        if(x <= 0 || depth <= 0) return 100;
+        let a = (x*x) / (2*depth); if(a < 1) a = 10;
+        for(let i=0; i<maxIt; i++) {
+            const term = x/a;
+            const f = a * (Math.cosh(term) - 1) - depth;
+            const df = (Math.cosh(term) - 1) - term*Math.sinh(term);
+            if(Math.abs(f) < tol) return a;
+            a = a - f/df;
+            if(a <= 0.1) a = 0.1; 
         }
-        if(Number.isFinite(yStep) && y && y.min != null && y.max != null){
-          const dy = yStep/2;
-          for(let v = y.min + dy; v < y.max - 1e-9; v += yStep){
-            const py = y.getPixelForValue(v); ctx.beginPath();
-            ctx.moveTo(x.left, py); ctx.lineTo(x.right, py); ctx.stroke();
-          }
-        }
-        ctx.restore();
-      }
-    };
-    Chart.register(minorGridPlugin);
-
-    /* ---------- Helpers ---------- */
-    function buildDepths(maxDepth, step) {
-      const M = +maxDepth, S = +step;
-      if (!isFinite(M) || !isFinite(S) || M <= 0 || S <= 0) throw new Error('Max depth and step must be positive.');
-      const out = [];
-      if (S >= M) { out.push(+M.toFixed(6)); return out; }
-      let d = S, count = 0; const CAP = 5000;
-      while (d <= M + 1e-9 && count < CAP) { out.push(+d.toFixed(6)); d += S; count++; }
-      if (out.length === 0) out.push(+M.toFixed(6));
-      return out;
-    }
-    const qs = s => document.querySelector(s);
-
-    /* ---------- UI wiring ---------- */
-    document.getElementById('addBtn').addEventListener('click', () => {
-      const container = document.getElementById('extraTensions');
-      const row = document.createElement('div'); row.className = 'inline';
-      const sel = document.createElement('select');
-      sel.className = 'tensionSelect';
-      sel.innerHTML = document.getElementById('tensionBase').innerHTML;
-      sel.value = '500';
-      const rm = document.createElement('button');
-      rm.type = 'button'; rm.className = 'btn-lite tiny'; rm.textContent = 'Remove';
-      rm.onclick = () => row.remove();
-      row.appendChild(sel); row.appendChild(rm);
-      container.appendChild(row);
-    });
-
-    document.getElementById('genBtn').addEventListener('click', calculate);
-    document.getElementById('chartBtn').addEventListener('click', openChartWindow);
-    document.getElementById('applyChart').addEventListener('click', ()=> renderInlineChart(true));
-
-    function collectTensions(){
-      const base = parseFloat(document.getElementById('tensionBase').value);
-      const extras = [...document.querySelectorAll('#extraTensions .tensionSelect')].map(s => parseFloat(s.value));
-      return [base, ...extras].filter((v,i,a)=>a.indexOf(v)===i);
+        return a;
     }
 
-    function buildTableHTML(mode, tensions, results, depths, display, printMeta){
-      let colgroup = `<colgroup><col class="depth">`;
-      const numCols = (mode==='compare') ? tensions.length : 4;
-      for(let i=0;i<numCols;i++) colgroup += `<col class="num">`;
-      colgroup += `</colgroup>`;
+    function calcAirLength(sH, sR) {
+        if(sR < 0) sR = 0; if(sH < 0) sH = 0;
+        if (sH <= sR) return sH + (Math.PI * sR / 4); 
+        return (sH - sR) + (Math.PI * sR / 2);
+    }
 
-      const tensionsLabel = (mode==='compare' ? tensions.map(t=>`${t}kg`).join(', ') : `${tensions[0]}kg (primary)`);
-      const paramLabel = (mode==='compare' ? (display==='angle' ? 'angle (° from vertical)' : display) : 'Detail (primary)');
-      const colspan = (mode==='compare') ? tensions.length + 1 : 5;
+    /* 2. APP STATE */
+    let activeTensions = [400];
+    let solverActive = false;
+    let chart;
+    let totalRows = 0;
+    const colors = ['#004080', '#c0392b', '#8e44ad', '#f39c12', '#2c3e50'];
+    const MAX_RENDER_LIMIT = 5000;
+    let deploymentTimer = null;
 
-      const metaRow = `<tr class="meta"><th colspan="${colspan}">
-        Bottom tensions: ${tensionsLabel}  |  Parameter: ${paramLabel}
-      </th></tr>`;
+    /* 3. INITIALIZATION */
+    function initDropdown() {
+        const select = document.getElementById('tSelect');
+        select.innerHTML = ""; 
+        for(let i=250; i<=2000; i+=50){
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.innerText = i + " kg";
+            if(i===400) opt.selected = true;
+            select.appendChild(opt);
+        }
+    }
 
-      const printRow = (printMeta)
-        ? `<tr class="print-only"><th colspan="${colspan}">
-             Inputs — weight in water: ${printMeta.water} kg/m · weight in air: ${printMeta.air} kg/m · sheave height: ${printMeta.sheave} m
-           </th></tr>`
-        : '';
+    /* 4. UI LOGIC */
+    function toggleMath(show) { document.getElementById('mathModal').style.display = show ? 'flex' : 'none'; }
+    function addTension() { let val = parseInt(document.getElementById('tSelect').value); if (!activeTensions.includes(val)) { activeTensions.push(val); updateTensionTags(); } }
+    function updateTensionTags() { document.getElementById('tList').innerHTML = activeTensions.map(t => `<span class="tension-tag">${t}kg <span onclick="removeT(${t})">&times;</span></span>`).join(''); }
+    function removeT(t) { activeTensions = activeTensions.filter(x => x !== t); updateTensionTags(); }
 
-      let headRow='';
-      if(mode==='compare'){
-        headRow = `<tr><th>Depth (m)</th>${tensions.map(t=>`<th>${t}kg</th>`).join('')}</tr>`;
-      }else{
-        headRow = `<tr><th>Depth</th><th>Layback</th><th>Length</th><th>Angle (° from vertical)</th><th>Top Tension</th></tr>`;
-      }
+    /* 5. MAIN ENGINE */
+    function runMain() {
+        const wW = parseFloat(document.getElementById('wW').value);
+        const wA = parseFloat(document.getElementById('wA').value);
+        const sH = parseFloat(document.getElementById('sH').value);
+        const sR = parseFloat(document.getElementById('sR').value);
+        const mD = parseFloat(document.getElementById('mD').value);
+        const dS = parseFloat(document.getElementById('dS').value);
+        const selectedParams = Array.from(document.querySelectorAll('.p-check:checked')).map(c => c.value);
+        
+        let chartMode = 'layback'; 
+        if(selectedParams.length > 0) chartMode = selectedParams[0];
 
-      let tbody='<tbody>';
-      if(mode==='compare'){
-        depths.forEach((depth,i)=>{
-          tbody += `<tr data-row="${i+1}">
-            <td>${depth.toFixed(2)}</td>${tensions.map(t=>`<td>${results[t][i][display].toFixed(2)}</td>`).join('')}
-          </tr>`;
+        // Header (Opaque Background Trick)
+        let headHtml = `<tr><th style="background:#fff;">Depth (m)</th>`;
+        activeTensions.forEach((t, i) => { 
+            const color = colors[i % colors.length];
+            // Light tint for background
+            const bgTint = color + '15'; // 8% Alpha
+            selectedParams.forEach(p => {
+                let suffix = "";
+                if(p==='layback') suffix="Layback (m)";
+                if(p==='length') suffix="Length (m)";
+                if(p==='angle') suffix="Angle (°)";
+                if(p==='tension') suffix="Top Tens (kg)";
+                headHtml += `<th style="border-top: 4px solid ${color}; background: linear-gradient(0deg, ${bgTint}, ${bgTint}), #fff; color:${color};">${t}kg ${suffix}</th>`;
+            }); 
         });
-      }else{
-        const t = tensions[0];
-        depths.forEach((depth,i)=>{
-          const r = results[t][i];
-          tbody += `<tr data-row="${i+1}">
-            <td>${r.depth.toFixed(2)}</td><td>${r.layback.toFixed(2)}</td><td>${r.length.toFixed(2)}</td>
-            <td>${r.angle.toFixed(2)}</td><td>${r.topTension.toFixed(2)}</td>
-          </tr>`;
-        });
-      }
-      tbody+='</tbody>';
+        document.getElementById('tableHdr').innerHTML = headHtml;
 
-      return `<table id="resultTable">${colgroup}<thead>${metaRow}${printRow}${headRow}</thead>${tbody}</table>`;
-    }
+        const airLen = calcAirLength(sH, sR);
+        const airWt = airLen * wA; 
 
-    function calculate(){
-      const weightWater = +qs('#weightWater').value;
-      const weightAir   = +qs('#weightAir').value;
-      const sheave      = +qs('#sheaveHeight').value;
-      const maxDepth    = +qs('#maxDepth').value;
-      const step        = +qs('#step').value;
-      const mode        = qs('input[name="mode"]:checked').value;
-      const display     = qs('input[name="display"]:checked').value;
+        let bdyHtml = "";
+        const fullDatasets = [];
+        let rowCount = 0;
 
-      const tensions = collectTensions();
-      if (!tensions.length) { alert('Please set at least one bottom tension.'); return; }
+        for (let d = 0; d <= mD; d += dS) {
+            rowCount++;
+            let row = `<td>${d}</td>`;
+            activeTensions.forEach((t, i) => {
+                const a = t / wW;
+                let x = 0, s = 0, angle = 0, tension = 0, valid = true;
+                const color = colors[i % colors.length];
 
-      let depths;
-      try { depths = buildDepths(maxDepth, step); }
-      catch(err){ alert(err.message); return; }
+                if (a <= 0.01 || (d/a) > 200) { valid = false; } 
+                else {
+                    x = a * ACOSH(d / a + 1);
+                    const sWater = a * SINH(x / a);
+                    if (x > MAX_RENDER_LIMIT) x = MAX_RENDER_LIMIT;
+                    
+                    s = sWater + airLen; 
+                    const V_water = sWater * wW;
+                    const V_total = V_water + airWt; 
+                    
+                    tension = Math.sqrt(t*t + V_total*V_total); 
+                    const angleRad = Math.atan(V_total / t);
+                    angle = 90 - ((angleRad * 180) / Math.PI); 
+                }
 
-      const results = {};
-      const PI = Math.PI;
-      tensions.forEach(bt=>{
-        const a = bt / weightWater;
-        results[bt] = depths.map(depth=>{
-          const x = a * ACOSH(depth / a + 1);
-          const X1 = SINH(x / a);
-          const angleHoriz = Math.atan(X1) * 180 / PI;
-          const angleFromVertical = 90 - angleHoriz;
-          const s = a * X1;
-          const topTension = bt + weightWater * s + weightAir * sheave;
-          return { depth, layback: x, length: s, angle: angleFromVertical, topTension };
-        });
-      });
+                if(valid) {
+                    selectedParams.forEach(p => {
+                        let val = "";
+                        if(p === 'layback') val = x.toFixed(2);
+                        if(p === 'length') val = s.toFixed(2);
+                        if(p === 'angle') val = angle.toFixed(1) + "°";
+                        if(p === 'tension') val = tension.toFixed(0);
+                        // COLORED TEXT
+                        row += `<td style="color:${color}; font-weight:600;">${val}</td>`;
+                    });
+                    
+                    let plotVal = x;
+                    if(chartMode === 'length') plotVal = s;
+                    if(chartMode === 'angle') plotVal = angle;
+                    if(chartMode === 'tension') plotVal = tension;
 
-      document.getElementById('tableArea').innerHTML =
-        buildTableHTML(mode, tensions, results, depths, display,
-          { water: weightWater, air: weightAir, sheave: sheave });
-
-      hookRowSelection(); initRangeHighlighter(depths);
-      if (document.getElementById('hiEnable').checked) setRange(1,1,true);
-
-      // Default chart options
-      const dMin = depths[0], dMax = depths[depths.length-1];
-      qs('#xMin').value = dMin; qs('#xMax').value = dMax;
-      qs('#yMin').value = ''; qs('#yMax').value = ''; qs('#yStep').value = ''; qs('#minorGrid').checked = false;
-
-      window.chartData = { tensions, depths, results, mode, display, xStepInput: step, weights: { water: weightWater, air: weightAir, sheave } };
-      renderInlineChart(true);
-    }
-
-    /* ---------- Inline chart (linear x + controls) ---------- */
-    let inlineChart = null;
-    function toPoints(depths, arr){
-      const pts = [];
-      for(let i=0;i<depths.length;i++){
-        const y = Number(arr[i]); const x = Number(depths[i]);
-        pts.push(Number.isFinite(x) && Number.isFinite(y) ? {x, y} : {x, y:null});
-      }
-      return pts;
-    }
-    function minMaxFromDatasets(datasets){
-      const nums = [];
-      datasets.forEach(ds => ds.data.forEach(p => { if (p && Number.isFinite(p.y)) nums.push(p.y); }));
-      if (!nums.length) return null;
-      let min = Math.min(...nums), max = Math.max(...nums);
-      if (min === max) { const pad = Math.abs(min) * 0.05 || 1; min -= pad; max += pad; }
-      const span = max - min, pad = span * 0.05;
-      return {min: min - pad, max: max + pad};
-    }
-    function renderInlineChart(){
-      const canvas = qs('#inlineChart'), msg = qs('#noChartMsg'), wrap = qs('#inlineChartWrap');
-      function showNoData(){ if (inlineChart) { inlineChart.destroy(); inlineChart = null; } canvas.style.display='none'; msg.style.display='block'; }
-      if (!window.chartData) return showNoData();
-      const { tensions, depths, results, mode, display, xStepInput } = window.chartData;
-      if (!Array.isArray(depths) || !depths.length) return showNoData();
-
-      const xMin = parseFloat(qs('#xMin').value), xMax = parseFloat(qs('#xMax').value);
-      const yMin = parseFloat(qs('#yMin').value), yMax = parseFloat(qs('#yMax').value);
-      const yStep = parseFloat(qs('#yStep').value), minor = qs('#minorGrid').checked;
-
-      let datasets = [];
-      if (mode === 'compare') {
-        datasets = tensions.map(bt => ({
-          label: bt + ' kg',
-          data: toPoints(depths, depths.map((_,ix)=> results[bt]?.[ix]?.[display])),
-          borderWidth: 2, fill: false, spanGaps: true
-        }));
-      } else {
-        const bt = tensions[0];
-        const mk = key => toPoints(depths, depths.map((_,ix)=> results[bt]?.[ix]?.[key]));
-        datasets = [
-          { label:'Layback',     data: mk('layback'),    borderWidth:2, fill:false, spanGaps:true },
-          { label:'Length',      data: mk('length'),     borderWidth:2, fill:false, spanGaps:true },
-          { label:'Angle',       data: mk('angle'),      borderWidth:2, fill:false, spanGaps:true },
-          { label:'Top Tension', data: mk('topTension'), borderWidth:2, fill:false, spanGaps:true }
-        ];
-      }
-      const rng = minMaxFromDatasets(datasets); if (!rng) return showNoData();
-
-      const w = Math.max(320, wrap.clientWidth - 12); canvas.width = w; canvas.height = 300;
-      if (inlineChart) { inlineChart.destroy(); inlineChart = null; }
-      const ctx = canvas.getContext('2d');
-
-      inlineChart = new Chart(ctx, {
-        type:'line',
-        data:{ datasets },
-        options:{
-          responsive:false, maintainAspectRatio:false, parsing:false, animation:false,
-          plugins:{ legend:{ position:'top' }, minorGrid:{ enabled: minor, xStep: xStepInput, yStep: Number.isFinite(yStep)? yStep : undefined } },
-          scales:{
-            x:{ type:'linear', title:{ display:true, text:'Depth (m)' },
-                min: Number.isFinite(xMin) ? xMin : undefined,
-                max: Number.isFinite(xMax) ? xMax : undefined,
-                ticks:{ stepSize: xStepInput } },
-            y:{ title:{ display:true, text:(mode==='compare' ? (display==='angle' ? 'angle (° from vertical)' : display) : 'Value') },
-                min: Number.isFinite(yMin) ? yMin : rng.min,
-                max: Number.isFinite(yMax) ? yMax : rng.max,
-                ticks:{ stepSize: Number.isFinite(yStep) ? yStep : undefined } }
-          }
+                    if(!fullDatasets[i]) fullDatasets[i] = { 
+                        label: t+'kg', data: [], 
+                        borderColor: colors[i % colors.length], borderWidth: 2, pointRadius: 0, pointHitRadius: 15 
+                    };
+                    // Standard Engineering Plot: X = Depth, Y = Value
+                    fullDatasets[i].data.push({x: d, y: plotVal});
+                } else {
+                    selectedParams.forEach(p => row += `<td style="color:#ccc;">---</td>`);
+                    if(!fullDatasets[i]) fullDatasets[i] = { label: t+'kg', data: [], borderColor: colors[i % colors.length] };
+                }
+            });
+            bdyHtml += `<tr id="row-${rowCount}" class="cascade-row" style="animation-delay: ${rowCount * 0.01}s">${row}</tr>`;
         }
-      });
-      canvas.style.display='block'; msg.style.display='none';
-    }
+        
+        document.getElementById('tableBdy').innerHTML = bdyHtml;
+        totalRows = rowCount;
+        const slider = document.getElementById('hlSlider');
+        slider.max = totalRows; slider.disabled = false;
+        clearHighlight();
 
-    /* ---------- Pop-out chart with printed inputs header ---------- */
-    function openChartWindow(){
-  if(!window.chartData){ alert('Generate the table first!'); return; }
-  const { tensions, depths, results, mode, display, xStepInput, weights } = window.chartData;
+        if(solverActive && chartMode === 'layback') {
+            const obsL = parseFloat(document.getElementById('obsL').value);
+            const obsD = parseFloat(document.getElementById('obsD').value);
+            
+            const solvedA = solveAByLayback(obsL, obsD);
+            const solvedH = solvedA * wW;
+            const sWaterSolved = solvedA * SINH(obsL / solvedA);
+            const totalLenSolved = sWaterSolved + airLen;
+            const V_solved = (sWaterSolved * wW) + airWt;
+            const angleRad = Math.atan(V_solved / solvedH);
+            const angleVert = 90 - ((angleRad * 180) / Math.PI);
 
-  const xMin = parseFloat(document.querySelector('#xMin').value),
-        xMax = parseFloat(document.querySelector('#xMax').value),
-        yMin = parseFloat(document.querySelector('#yMin').value),
-        yMax = parseFloat(document.querySelector('#yMax').value),
-        yStep = parseFloat(document.querySelector('#yStep').value),
-        minor = document.querySelector('#minorGrid').checked;
+            document.getElementById('resLen').innerText = totalLenSolved.toFixed(2) + " m";
+            document.getElementById('resBot').innerText = solvedH.toFixed(0) + " kg";
+            document.getElementById('resAng').innerText = angleVert.toFixed(1) + " °";
 
-  const tensionsLabel = (mode==='compare'
-    ? tensions.map(t=>`${t}kg`).join(', ')
-    : `${tensions[0]}kg (primary)`);
-  const paramLabel = (mode==='compare'
-    ? (display==='angle' ? 'angle (° from vertical)' : display)
-    : 'Detail (primary)');
-
-  function toPoints(depths, arr){
-    const pts=[]; for(let i=0;i<depths.length;i++){
-      const x=+depths[i], y=+arr[i];
-      pts.push((isFinite(x)&&isFinite(y))?{x,y}:{x,y:null});
-    } return pts;
-  }
-
-  let datasets=[];
-  if (mode === 'compare') {
-    datasets = tensions.map(bt => ({
-      label: bt+' kg',
-      data: toPoints(depths, depths.map((_,ix)=>results[bt]?.[ix]?.[display])),
-      borderWidth: 2, fill:false, spanGaps:true
-    }));
-  } else {
-    const bt = tensions[0];
-    const mk = key => toPoints(depths, depths.map((_,ix)=>results[bt]?.[ix]?.[key]));
-    datasets = [
-      { label:'Layback', data:mk('layback'), borderWidth:2, fill:false, spanGaps:true },
-      { label:'Length', data:mk('length'), borderWidth:2, fill:false, spanGaps:true },
-      { label:'Angle', data:mk('angle'), borderWidth:2, fill:false, spanGaps:true },
-      { label:'Top Tension', data:mk('topTension'), borderWidth:2, fill:false, spanGaps:true }
-    ];
-  }
-  const nums=[]; datasets.forEach(ds=>ds.data.forEach(p=>{ if(p && isFinite(p.y)) nums.push(p.y); }));
-  if(!nums.length){ alert('No numeric data to chart.'); return; }
-  let ymin = isFinite(yMin)? yMin : Math.min(...nums),
-      ymax = isFinite(yMax)? yMax : Math.max(...nums);
-  if(ymin===ymax){ const pad=Math.abs(ymin)*0.05||1; ymin-=pad; ymax+=pad; }
-  const span=ymax-ymin, pad=span*0.05; ymin-=pad; ymax+=pad;
-
-  const W = 880, H = 560;
-  const w = window.open('', 'ChartWindow', `width=${W+40},height=${H+160}`);
-  w.document.write("<html><head><title>Catenary Chart</title>");
-  w.document.write(`
-    <style>
-      body{font-family:Arial;margin:12px}
-      button{padding:6px 10px;margin-bottom:8px}
-      .metaBox{
-        border:1px solid #cfd6df;background:#e7eef7;
-        border-radius:6px;padding:8px 10px;margin:6px 0 10px
-      }
-      .metaLine{margin:2px 0;font-size:12px}
-      .metaLine strong{font-weight:700}
-    </style>
-  `);
-  w.document.write("<script src='https://cdn.jsdelivr.net/npm/chart.js'><\/script>");
-  // minor-grid plugin (same look as inline)
-  w.document.write("<script>const minorGridPlugin={id:'minorGrid',afterDraw(c,a,o){if(!o||!o.enabled)return;const x=c.scales.x,y=c.scales.y,ctx=c.ctx;ctx.save();ctx.strokeStyle='rgba(0,0,0,0.07)';ctx.lineWidth=.5;if(Number.isFinite(o.xStep)&&x&&x.min!=null&&x.max!=null){const dx=o.xStep/2;for(let v=x.min+dx;v<x.max-1e-9;v+=o.xStep){const px=x.getPixelForValue(v);ctx.beginPath();ctx.moveTo(px,y.top);ctx.lineTo(px,y.bottom);ctx.stroke();}}if(Number.isFinite(o.yStep)&&y&&y.min!=null&&y.max!=null){const dy=o.yStep/2;for(let v=y.min+dy;v<y.max-1e-9;v+=o.yStep){const py=y.getPixelForValue(v);ctx.beginPath();ctx.moveTo(x.left,py);ctx.lineTo(x.right,py);ctx.stroke();}}ctx.restore();}};Chart.register(minorGridPlugin);<\/script>");
-  w.document.write("</head><body>");
-  w.document.write("<button onclick='window.print()'>Print Chart</button><br>");
-  w.document.write(`
-    <div class="metaBox">
-      <div class="metaLine"><strong>Inputs:</strong>
-        weight in water: ${weights.water} kg/m &nbsp;·&nbsp;
-        weight in air: ${weights.air} kg/m &nbsp;·&nbsp;
-        sheave height: ${weights.sheave} m
-      </div>
-      <div class="metaLine">
-        <strong>Bottom tensions:</strong> ${tensionsLabel}
-        &nbsp; | &nbsp; <strong>Parameter:</strong> ${paramLabel}
-      </div>
-    </div>
-  `);
-  w.document.write(`<canvas id='chartPop' width='${W}' height='${H}'></canvas>`);
-  w.document.write("<script>");
-  w.document.write(`
-    const ctx = document.getElementById('chartPop').getContext('2d');
-    const datasets = ${JSON.stringify(datasets)};
-    new Chart(ctx, {
-      type:'line',
-      data:{ datasets },
-      options:{
-        responsive:false, maintainAspectRatio:false, parsing:false, animation:false,
-        plugins:{ legend:{ position:'top' },
-                  minorGrid:{ enabled:${minor}, xStep:${xStepInput}, yStep:${isFinite(yStep)?yStep:'null'} } },
-        scales:{
-          x:{ type:'linear', title:{ display:true, text:'Depth (m)'},
-              min:${isFinite(xMin)?xMin:'null'}, max:${isFinite(xMax)?xMax:'null'},
-              ticks:{ stepSize:${xStepInput} } },
-          y:{ title:{ display:true, text:'${(mode==='compare' ? (display==='angle' ? 'angle (° from vertical)' : display) : 'Value') }'},
-              min:${ymin}, max:${ymax},
-              ticks:{ stepSize:${isFinite(yStep)?yStep:'null'} } }
+            const solverPoints = [];
+            for(let k=0; k<=50; k++) {
+                const d_i = (obsD * k) / 50;
+                const x_i = solvedA * ACOSH(d_i / solvedA + 1);
+                // Plot X=Depth, Y=Layback
+                solverPoints.push({ x: d_i, y: x_i });
+            }
+            fullDatasets.push({ label: 'As-Laid Target', data: solverPoints, borderColor: '#28a745', borderDash: [5, 5], borderWidth: 2, pointRadius: 0 });
         }
-      }
-    });
-  `);
-  w.document.write("<\/script></body></html>");
-  w.document.close();
-}
-
-    /* ---------- Highlighter (unchanged) ---------- */
-    function setHiEnabled(on){
-      ['hiStart','hiEnd','hiUp','hiDown','hiClear'].forEach(id=>{ const el=document.getElementById(id); el.disabled=!on; });
-      document.getElementById('hiHint').textContent = on ? 'Use sliders or click-drag on the table.' : 'Turn on to use sliders or click-drag on the table.';
-      if(!on) clearBand();
-    }
-    document.getElementById('hiEnable').addEventListener('change', (e)=>{
-      setHiEnabled(e.target.checked);
-      localStorage.setItem('hiEnabled', e.target.checked ? '1' : '0');
-    });
-    (function restoreHiState(){
-      const on = localStorage.getItem('hiEnabled') === '1';
-      document.getElementById('hiEnable').checked = on; setHiEnabled(on);
-    })();
-
-    function initRangeHighlighter(depths){
-      const start = document.getElementById('hiStart');
-      const end = document.getElementById('hiEnd');
-      start.max = end.max = depths.length;
-      if(+start.value>depths.length) start.value = 1;
-      if(+end.value>depths.length) end.value = 1;
-
-      const syncLabels = () => {
-        document.getElementById('hiStartLbl').textContent = start.value;
-        document.getElementById('hiEndLbl').textContent = end.value;
-        const [s,e] = [Math.min(+start.value,+end.value), Math.max(+start.value,+end.value)];
-        const sDepth = depthAtRow(s), eDepth = depthAtRow(e);
-        document.getElementById('hiReadout').textContent = `Depths: ${sDepth} m → ${eDepth} m`;
-      };
-
-      start.oninput = ()=>{ if(!document.getElementById('hiEnable').checked) return; setRange(+start.value, +end.value); syncLabels(); };
-      end.oninput   = ()=>{ if(!document.getElementById('hiEnable').checked) return; setRange(+start.value, +end.value); syncLabels(); };
-      syncLabels();
-
-      document.getElementById('hiUp').onclick = ()=>{
-        if(!document.getElementById('hiEnable').checked) return;
-        const s=Math.max(1, +start.value-1), e=Math.max(1, +end.value-1);
-        start.value=s; end.value=e; setRange(s,e,true); syncLabels();
-      };
-      document.getElementById('hiDown').onclick = ()=>{
-        if(!document.getElementById('hiEnable').checked) return;
-        const limit = document.querySelectorAll('#resultTable tbody tr').length;
-        const s=Math.min(limit, +start.value+1), e=Math.min(limit, +end.value+1);
-        start.value=s; end.value=e; setRange(s,e,true); syncLabels();
-      };
-      document.getElementById('hiClear').onclick = ()=>{ clearBand(); };
+        
+        setTimeout(() => { animateDeployment(fullDatasets, chartMode); }, 10);
     }
 
-    function depthAtRow(idx){
-      const tr = document.querySelector(`#resultTable tbody tr:nth-child(${idx})`);
-      return tr ? tr.cells[0].textContent : '–';
+    /* 6. ANIMATION ENGINE */
+    function animateDeployment(fullDatasets, mode) {
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        if(deploymentTimer) clearInterval(deploymentTimer);
+        if (chart) chart.destroy();
+
+        const renderDatasets = fullDatasets.map(ds => ({ ...ds, data: [] }));
+
+        let maxX = 0; let maxY = 0;
+        fullDatasets.forEach(ds => { ds.data.forEach(p => { if(p.x > maxX) maxX = p.x; if(p.y > maxY) maxY = p.y; }); });
+        if(!maxX || maxX < 10) maxX = 100; if(!maxY || maxY < 10) maxY = 100;
+
+        initFilterGroup('minX', 0, maxX); initFilterGroup('maxX', maxX, maxX);
+        initFilterGroup('minY', 0, maxY); initFilterGroup('maxY', maxY, maxY);
+
+        let yTitle = 'Horizontal Layback (m)';
+        if(mode === 'length') yTitle = 'Arc Length (m)';
+        if(mode === 'angle') yTitle = 'Departure Angle (Vert °)';
+        if(mode === 'tension') yTitle = 'Top Tension (kg)';
+        document.getElementById('yLabel').innerText = mode.charAt(0).toUpperCase() + mode.slice(1);
+
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: { datasets: renderDatasets },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                animation: false, 
+                interaction: { mode: 'nearest', intersect: false, axis: 'xy' },
+                plugins: {
+                    tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.85)', titleFont: { size: 12 }, bodyFont: { size: 12 }, padding: 10, displayColors: true,
+                    callbacks: { label: function(c) { return c.dataset.label + ': ' + c.parsed.y.toFixed(2); } } }
+                },
+                scales: { 
+                    x: { type: 'linear', title: { display: true, text: 'Depth (m)' }, min: 0, max: maxX },
+                    y: { 
+                        // STANDARD Y-AXIS (0 at Bottom)
+                        title: { display: true, text: yTitle }, min: 0, max: maxY 
+                    } 
+                }
+            }
+        });
+
+        let frameIndex = 0;
+        deploymentTimer = setInterval(() => {
+            let changed = false;
+            fullDatasets.forEach((sourceDs, i) => {
+                if(frameIndex < sourceDs.data.length) {
+                    chart.data.datasets[i].data.push(sourceDs.data[frameIndex]);
+                    changed = true;
+                }
+            });
+            if(changed) { chart.update('none'); frameIndex++; } else { clearInterval(deploymentTimer); }
+        }, 15);
     }
-    function setRange(a,b,scroll=false){
-      if(!document.getElementById('hiEnable').checked) return;
-      const table = document.getElementById('resultTable'); if(!table) return;
-      const rows = [...table.querySelectorAll('tbody tr')];
-      rows.forEach(r=>r.classList.remove('band','cursor'));
-      const s = Math.max(1, Math.min(a,b)), e = Math.min(rows.length, Math.max(a,b));
-      for(let i=s-1;i<=e-1;i++) rows[i].classList.add('band');
-      rows[e-1]?.classList.add('cursor');
-      if(scroll && rows[s-1]) rows[s-1].scrollIntoView({block:'nearest'});
+
+    /* 7. UTILS */
+    function initFilterGroup(prefix, val, maxLimit) {
+        const slider = document.getElementById(prefix + 'Slider');
+        const box = document.getElementById(prefix + 'Box');
+        slider.max = Math.ceil(maxLimit); slider.value = Math.ceil(val); box.value = Math.ceil(val);
     }
-    function hookRowSelection(){
-      const tbody = document.querySelector('#resultTable tbody'); if(!tbody) return;
-      let dragging=false, startRow=null;
-      tbody.addEventListener('mousedown', (e)=>{
-        if(!document.getElementById('hiEnable').checked) return;
-        const tr=e.target.closest('tr'); if(!tr) return;
-        dragging=true; startRow=+tr.dataset.row; setRange(startRow,startRow); updateRangeSliders(startRow,startRow);
-      });
-      tbody.addEventListener('mousemove', (e)=>{
-        if(!dragging || !document.getElementById('hiEnable').checked) return;
-        const tr=e.target.closest('tr'); if(!tr) return;
-        setRange(startRow,+tr.dataset.row); updateRangeSliders(startRow,+tr.dataset.row);
-      });
-      window.addEventListener('mouseup', ()=> dragging=false);
+    function sync(prefix, source) {
+        const slider = document.getElementById(prefix + 'Slider');
+        const box = document.getElementById(prefix + 'Box');
+        if(source === 'Slider') box.value = slider.value; else slider.value = box.value;
     }
-    function updateRangeSliders(a,b){
-      const start=document.getElementById('hiStart'), end=document.getElementById('hiEnd');
-      start.value=Math.min(a,b); end.value=Math.max(a,b);
-      const sDepth=depthAtRow(+start.value), eDepth=depthAtRow(+end.value);
-      document.getElementById('hiStartLbl').textContent=start.value;
-      document.getElementById('hiEndLbl').textContent=end.value;
-      document.getElementById('hiReadout').textContent=`Depths: ${sDepth} m → ${eDepth} m`;
+    function applyFilters() {
+        if(!chart) return;
+        chart.options.scales.x.min = parseFloat(document.getElementById('minXBox').value);
+        chart.options.scales.x.max = parseFloat(document.getElementById('maxXBox').value);
+        chart.options.scales.y.min = parseFloat(document.getElementById('minYBox').value);
+        chart.options.scales.y.max = parseFloat(document.getElementById('maxYBox').value);
+        chart.update('none');
     }
-    function clearBand(){
-      const table = document.getElementById('resultTable'); if(!table) return;
-      [...table.querySelectorAll('tbody tr')].forEach(r=>r.classList.remove('band','cursor'));
-      document.getElementById('hiReadout').textContent = 'Depths: –';
+
+    // --- SELF-CONTAINED PRINT ENGINE ---
+    function printTableWindow() {
+        const wW = document.getElementById('wW').value;
+        const wA = document.getElementById('wA').value;
+        const sH = document.getElementById('sH').value;
+        const tableHtml = document.getElementById('mainTable').outerHTML;
+        
+        const w = window.open('', '_blank');
+        w.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Catenary Report</title>
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+                <style>
+                    :root {
+                        --brand: #004080; --text-main: #2c3e50; --text-muted: #6c757d; --border: #e0e6ed;
+                    }
+                    body { 
+                        font-family: 'Inter', sans-serif; padding: 40px; color: var(--text-main); 
+                        -webkit-print-color-adjust: exact; print-color-adjust: exact;
+                    }
+                    .meta-box {
+                        background: #f8f9fa; border: 1px solid #e2e8f0; border-left: 6px solid var(--brand);
+                        padding: 20px; margin-bottom: 30px; border-radius: 8px;
+                    }
+                    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+                    th { 
+                        background-color: #f1f5f9 !important; 
+                        color: #6c757d; 
+                        font-weight: 700; text-transform: uppercase; 
+                        padding: 10px 8px; border-bottom: 2px solid #e0e6ed;
+                        -webkit-print-color-adjust: exact; 
+                    }
+                    td { 
+                        padding: 8px 12px; border-bottom: 1px solid #f1f5f9; text-align: center; 
+                        font-variant-numeric: tabular-nums;
+                    }
+                    /* Ensure color styles from inline HTML carry over */
+                    td[style*="color"], th[style*="color"] { -webkit-print-color-adjust: exact; }
+                    
+                    @media print {
+                        @page { size: landscape; margin: 15mm; }
+                        .btn-print { display: none; }
+                        body { padding: 0; }
+                    }
+                    .btn-print { 
+                        background: var(--brand); color: white; border: none; padding: 10px 20px; 
+                        font-weight: 700; border-radius: 6px; cursor: pointer; margin-bottom: 20px;
+                    }
+                </style>
+            </head>
+            <body>
+                <button class="btn-print" onclick="window.print()">🖨 Print Report</button>
+                <div class="meta-box">
+                    <h2 style="margin-top:0; color:var(--brand); font-size:18px;">Catenary Analysis Report</h2>
+                    <div style="margin-top:10px; font-size:13px;">
+                        <strong>Configuration:</strong> Water Wt: ${wW} kg/m | Air Wt: ${wA} kg/m | Sheave H: ${sH} m
+                    </div>
+                </div>
+                ${tableHtml}
+            </body>
+            </html>
+        `);
+        w.document.close();
     }
-  </script>
+
+    function popChartWindow() {
+        const currentData = chart.config.data;
+        const currentOptions = chart.config.options;
+        const wW = document.getElementById('wW').value;
+        const wA = document.getElementById('wA').value;
+        
+        const w = window.open('', '_blank');
+        w.document.write(`<html><head><title>Chart</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script><style>
+            @media print { @page { size: landscape; } body { margin: 0; } .btn-print { display: none; } canvas { max-width: 100%; } }
+            body { font-family: 'Inter', sans-serif; padding: 20px; }
+            .meta { margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-left: 5px solid #004080; border-radius:6px; }
+            .btn-print { background: #004080; color: white; border: none; padding: 10px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-bottom: 10px; }
+        </style></head><body>
+            <button class="btn-print" onclick="window.print()">🖨 Print Chart</button>
+            <div class="meta"><strong>Catenary Profile</strong> | Wt Water: ${wW} | Wt Air: ${wA}</div>
+            <div style="height:80vh"><canvas id="popChart"></canvas></div>
+            <script>new Chart(document.getElementById('popChart'),{type:'line',data:${JSON.stringify(currentData)},options:{...${JSON.stringify(currentOptions)},maintainAspectRatio:false}});<\/script>
+        </body></html>`);
+        w.document.close();
+    }
+
+    const slider = document.getElementById('hlSlider');
+    slider.oninput = function() { highlightRow(parseInt(this.value)); };
+    function highlightRow(idx) {
+        if(idx < 1 || idx > totalRows) return;
+        slider.value = idx;
+        const prev = document.querySelector('.highlighted-row');
+        if(prev) prev.classList.remove('highlighted-row');
+        const row = document.getElementById(`row-${idx}`);
+        if(row) {
+            row.classList.add('highlighted-row'); row.scrollIntoView({block:'center',behavior:'smooth'});
+            document.getElementById('hlReadout').innerText = row.cells[0].innerText + " m"; document.getElementById('hlToolbar').classList.add('hl-active');
+        }
+    }
+    function moveHighlight(dir) { let current = parseInt(slider.value)||0; highlightRow(current+dir); }
+    function clearHighlight() {
+        const prev = document.querySelector('.highlighted-row');
+        if(prev) prev.classList.remove('highlighted-row');
+        slider.value = 0; document.getElementById('hlReadout').innerText = "--"; document.getElementById('hlToolbar').classList.remove('hl-active');
+    }
+    
+    function solveLive() { 
+        const chartMode = Array.from(document.querySelectorAll('.p-check:checked')).map(c => c.value)[0];
+        if(chartMode !== 'layback') {
+            alert("⚠️ Please select 'Layback' in Section 3 to use the Solver.");
+            return;
+        }
+        solverActive = true; 
+        runMain(); 
+        document.getElementById('solverPanel').style.display='block'; 
+    }
+    function clearSolver() { solverActive = false; document.getElementById('solverPanel').style.display='none'; document.getElementById('obsL').value=""; document.getElementById('obsD').value=""; runMain(); }
+    
+    window.onload = () => { initDropdown(); updateTensionTags(); runMain(); };
+</script>
 </body>
 </html>
-
-
-
-
-
