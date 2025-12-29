@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Catenary Suite - Production Master</title>
+    <title>Catenary Suite - Multi-Device</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -49,9 +49,12 @@
             body { flex-direction: column; }
             
             .sidebar, .table-view, .chart-view {
-                display: none; width: 100%; height: 100dvh; 
+                display: none; width: 100%; 
+                height: 100dvh; /* Adapts to browser bars */
                 border: none; padding: 15px; 
-                overflow-y: auto; padding-bottom: 140px !important; 
+                overflow-y: auto; 
+                /* Critical Buffer for Bottom Nav */
+                padding-bottom: 140px !important; 
                 -webkit-overflow-scrolling: touch;
             }
 
@@ -95,11 +98,13 @@
         }
         input[type="number"] { -webkit-appearance: none; -moz-appearance: textfield; }
         
+        /* DROPDOWN FIX: Extra padding to prevent text overlapping the arrow */
         select {
             -webkit-appearance: none; appearance: none; cursor: pointer; background-color: #fff;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: right 8px center;
-            padding-right: 32px; 
+            background-repeat: no-repeat; 
+            background-position: right 12px center; /* Moved slightly right */
+            padding-right: 45px; /* Increased padding to prevent overlap */
         }
         input:focus, select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(0,64,128,0.1); outline: none; }
         
@@ -147,14 +152,12 @@
         .cascade-row { animation: waterfall 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; opacity: 0; }
         @keyframes waterfall { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- CHART CONTROLS (Compact) --- */
+        /* --- CHART CONTROLS --- */
         .chart-controls { padding: 15px; background: #fff; border: 1px solid var(--border); border-radius: 8px; margin-top: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-        .range-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
-        .range-label { font-size: 11px; font-weight: 700; color: var(--text-muted); width: 50px; text-transform: uppercase; }
-        .range-inputs { display: flex; flex: 1; gap: 6px; align-items: center; min-width: 150px; }
-        
-        /* Smaller inputs for mobile */
-        .range-box { width: 45px; padding: 4px; text-align: center; font-size: 11px; border: 1px solid #cbd5e0; border-radius: 4px; font-weight: 600; color: var(--text-main); }
+        .range-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; align-items: center; }
+        .range-label { font-size: 11px; font-weight: 700; color: var(--text-muted); width: 60px; text-transform: uppercase; }
+        .range-inputs { display: flex; flex: 1; gap: 8px; align-items: center; min-width: 160px; }
+        .range-box { width: 50px; padding: 6px; text-align: center; font-size: 12px; border: 1px solid #cbd5e0; border-radius: 4px; font-weight: 600; color: var(--text-main); }
         .hybrid-slider { flex: 1; accent-color: var(--brand); cursor: pointer; height: 4px; }
 
         /* --- SOLVER PANEL --- */
@@ -166,21 +169,17 @@
 
         /* --- MODAL --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(3px); z-index: 2000; display: none; align-items: center; justify-content: center; }
-        .modal-card { background: white; padding: 25px; border-radius: 12px; width: 700px; max-width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
+        .modal-card { background: white; padding: 30px; border-radius: 12px; width: 700px; max-width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
         .math-row { font-family: 'Courier New', monospace; background: #f1f5f9; padding: 12px; margin: 8px 0; border-radius: 6px; font-size: 13px; border-left: 4px solid var(--brand); color: #334155; }
         .help-section { margin-bottom: 24px; border-bottom: 1px solid #e2e8f0; padding-bottom: 16px; }
         .help-title { margin:0 0 8px 0; color:var(--text-main); font-size:16px; font-weight:700; }
         .help-text { font-size:13px; line-height:1.6; color:#475569; margin-bottom:8px; }
 
-        /* --- HIGHLIGHTER (Mobile Safe) --- */
-        .hl-toolbar { 
-            display: flex; flex-wrap: wrap; align-items: center; gap: 8px; 
-            background: #fff; border: 1px solid var(--border); border-bottom: none; 
-            padding: 10px 15px; border-radius: 8px 8px 0 0; justify-content: center;
-        }
+        /* --- HIGHLIGHTER --- */
+        .hl-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--border); border-bottom: none; padding: 10px 15px; border-radius: 8px 8px 0 0; justify-content: center; }
         .hl-active { background: #fffbeb; border-color: #fcd34d; }
         .hl-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-        .hl-slider { flex: 1; min-width: 120px; accent-color: #f59e0b; cursor: pointer; }
+        .hl-slider { flex: 1; accent-color: #f59e0b; cursor: pointer; min-width: 120px; }
         .hl-btn { padding: 4px 10px; font-size: 11px; cursor: pointer; background: white; border: 1px solid #d1d5db; border-radius: 4px; font-weight: 600; color: var(--text-main); }
     </style>
 </head>
@@ -197,7 +196,7 @@
             <h4 class="help-title">1. The "Hanging Chain" Concept</h4>
             <p class="help-text">
                 A <strong>Catenary</strong> is the natural shape a cable takes when hanging under its own weight. Unlike a simple parabola, a catenary is governed by Hyperbolic functions. 
-                <br>• High Tension = Large 'a' = Flat curve.
+                <br>• High Tension = Large 'a' = Flat, tight curve.
                 <br>• Low Tension = Small 'a' = Deep, sagging curve.
             </p>
             <div style="background:#f8fafc; padding:12px; border-left:4px solid var(--brand); margin:10px 0;">
@@ -265,7 +264,7 @@
             <label class="big-check"><input type="checkbox" class="p-check" value="tension"> <span>Tension</span></label>
         </div>
 
-        <button class="btn btn-primary" onclick="runMain()">GENERATE DATA</button>
+        <button class="btn btn-primary" onclick="runMain(); if(window.innerWidth<=1024) switchTab('tab-chart');">GENERATE DATA</button>
 
         <div class="section-title" style="margin-top:30px; color:var(--accent); border-color:var(--accent);">4. Raw Data Solver</div>
         <p class="instruction">Enter ANY 2 values to solve.</p>
@@ -581,6 +580,8 @@
             options: {
                 responsive: true, maintainAspectRatio: false,
                 animation: false, 
+                // Fix for chart padding on mobile
+                layout: { padding: { left: 10, right: 20, top: 20, bottom: 10 } },
                 interaction: { mode: 'nearest', intersect: false, axis: 'xy' },
                 plugins: {
                     tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.85)', titleFont: { size: 12 }, bodyFont: { size: 12 }, padding: 10, displayColors: true,
