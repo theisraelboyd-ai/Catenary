@@ -2,175 +2,210 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Catenary Suite - Educational Edition</title>
+    <title>Catenary Suite - Titanium Pro</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --brand: #004080; --bg: #f4f7f9; --panel: #ffffff;
-            --border: #e0e6ed; --accent: #28a745; --danger: #dc3545; --sidebar-w: 360px;
-            --text-main: #2c3e50; --text-muted: #6c757d;
+            --brand: #004080; --brand-dark: #003366; --bg: #f4f7f9; --panel: #ffffff;
+            --border: #e0e6ed; --accent: #28a745; --danger: #dc3545; 
+            --sidebar-w: 360px;
+            --text-main: #2c3e50; --text-muted: #64748b;
             --hl-color: #fff9c4;
         }
 
-        body { margin: 0; font-family: 'Inter', sans-serif; background-color: var(--bg); display: flex; height: 100vh; overflow: hidden; color: var(--text-main); }
+        body { 
+            margin: 0; font-family: 'Inter', sans-serif; background-color: var(--bg); 
+            display: flex; height: 100vh; overflow: hidden; color: var(--text-main); 
+        }
 
-        /* --- LAYOUT --- */
-        .sidebar { width: var(--sidebar-w); background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; padding: 20px; box-shadow: 4px 0 12px rgba(0,0,0,0.03); z-index: 20; }
-        .table-view { flex: 1.6; display: flex; flex-direction: column; padding: 20px; border-right: 1px solid var(--border); background: #fff; }
-        .chart-view { flex: 1; display: flex; flex-direction: column; padding: 20px; background: #f8f9fa; }
+        /* --- DESKTOP LAYOUT --- */
+        .app-view { display: flex; width: 100%; height: 100%; transition: transform 0.3s ease; }
+        
+        .sidebar { 
+            width: var(--sidebar-w); background: var(--panel); 
+            border-right: 1px solid var(--border); display: flex; 
+            flex-direction: column; overflow-y: auto; padding: 20px; 
+            box-shadow: 4px 0 12px rgba(0,0,0,0.03); z-index: 20; 
+        }
+        .table-view { 
+            flex: 1.6; display: flex; flex-direction: column; 
+            padding: 20px; border-right: 1px solid var(--border); background: #fff; 
+        }
+        .chart-view { 
+            flex: 1; display: flex; flex-direction: column; 
+            padding: 20px; background: #f8f9fa; 
+        }
 
+        /* --- MOBILE NAV (Hidden on Desktop) --- */
+        .mobile-nav { display: none; }
+
+        /* --- MOBILE RESPONSIVE OVERRIDE --- */
         @media screen and (max-width: 1024px) {
-            body { flex-direction: column; height: auto; overflow-y: auto; }
-            .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 2px solid var(--border); overflow: visible; padding: 15px; }
-            .table-view { width: 100%; height: 600px; border-right: none; padding: 15px; }
-            .chart-view { width: 100%; height: auto; min-height: 500px; padding: 15px; }
+            body { flex-direction: column; }
+            
+            /* Hide all views by default on mobile, JS will toggle them */
+            .sidebar, .table-view, .chart-view {
+                display: none; width: 100%; height: calc(100vh - 60px); 
+                border: none; padding: 15px; overflow-y: auto;
+            }
+
+            .active-mobile-view { display: flex !important; animation: fadeIn 0.3s ease-out; }
+
+            /* Bottom Navigation Bar */
+            .mobile-nav {
+                display: grid; grid-template-columns: 1fr 1fr 1fr;
+                height: 60px; background: #fff; border-top: 1px solid #ddd;
+                position: fixed; bottom: 0; width: 100%; z-index: 1000;
+                box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            }
+            .nav-item {
+                display: flex; flex-direction: column; align-items: center; justify-content: center;
+                font-size: 10px; font-weight: 600; color: var(--text-muted); cursor: pointer;
+                border-top: 3px solid transparent; transition: all 0.2s;
+            }
+            .nav-item.active { color: var(--brand); border-top-color: var(--brand); background: #f8faff; }
+            .nav-icon { font-size: 18px; margin-bottom: 3px; }
         }
 
-        /* --- HEADERS --- */
-        .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 8px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- UI ELEMENTS --- */
+        .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 15px; }
         .panel-title { font-size: 14px; font-weight: 700; text-transform: uppercase; color: var(--brand); letter-spacing: 0.5px; }
-        
-        .section-title { margin: 24px 0 6px 0; font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
-        
-        .instruction { font-size: 12px; color: #64748b; margin-bottom: 15px; line-height: 1.4; font-weight: 400; }
-        .panel-instruction { font-size: 12px; color: #64748b; margin-bottom: 15px; margin-top:-5px; }
+        .section-title { margin: 24px 0 8px 0; font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+        .instruction { font-size: 12px; color: #64748b; margin-bottom: 12px; line-height: 1.5; }
+        .panel-instruction { font-size: 12px; color: #64748b; margin-bottom: 12px; margin-top:-5px; }
 
-        /* --- INPUTS --- */
         .input-row { display: grid; grid-template-columns: 1fr 90px; gap: 12px; margin-bottom: 10px; align-items: center; font-size: 13px; font-weight: 500; }
-        input[type="number"], select { 
-            padding: 8px; border: 1px solid #cbd5e0; border-radius: 6px; 
-            font-size: 13px; font-family: inherit; text-align: center; color: var(--text-main); 
-            transition: all 0.2s;
-        }
-        input:focus, select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(0,64,128,0.1); outline: none; }
+       /* --- REPLACE THIS SECTION IN YOUR CSS --- */
+
+/* Shared Styles for Inputs and Selects */
+input[type="number"], select { 
+    padding: 8px; 
+    border: 1px solid #cbd5e0; 
+    border-radius: 6px; 
+    font-size: 13px; 
+    text-align: center; 
+    color: var(--text-main); 
+    transition: all 0.2s; 
+    font-family: inherit;
+}
+
+/* Specifics for Number Inputs (Hides spinner arrows) */
+input[type="number"] { 
+    -webkit-appearance: none; 
+    -moz-appearance: textfield; 
+}
+
+/* Specifics for Dropdowns (Adds custom SVG Arrow) */
+select {
+    -webkit-appearance: none; 
+    appearance: none;
+    cursor: pointer;
+    background-color: #fff;
+    /* This adds the arrow icon on the right */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 32px; /* Make space for the arrow so text doesn't overlap */
+}
+
+input:focus, select:focus { 
+    border-color: var(--brand); 
+    box-shadow: 0 0 0 3px rgba(0,64,128,0.1); 
+    outline: none; 
+}
         
-        .solver-input input { border-color: var(--accent); background-color: #f0fdf4; }
-        .solver-input input:focus { box-shadow: 0 0 0 3px rgba(40,167,69,0.1); }
-
-        /* --- CONTROLS --- */
-        .param-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .big-check { 
-            display: flex; align-items: center; gap: 10px; padding: 10px; 
-            border: 1px solid var(--border); border-radius: 8px; 
-            cursor: pointer; transition: 0.2s; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-        }
-        .big-check:hover { border-color: var(--brand); transform: translateY(-1px); }
-        .big-check span { font-size: 12px; font-weight: 600; color: var(--text-main); }
-
-        .tension-tag { display: inline-flex; align-items: center; background: #eef2ff; color: var(--brand); padding: 4px 10px; border-radius: 20px; margin: 3px; font-size: 11px; font-weight: 700; border: 1px solid #c7d2fe; }
-        .tension-tag span { margin-left: 6px; cursor: pointer; color: #ef4444; font-weight: 900; }
-
-        /* --- BUTTONS --- */
         .btn { padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 8px; font-size: 13px; transition: all 0.2s; }
         .btn-primary { background: var(--brand); color: white; box-shadow: 0 4px 6px rgba(0,64,128,0.2); }
-        .btn-primary:hover { background: #003366; transform: translateY(-1px); box-shadow: 0 6px 8px rgba(0,64,128,0.25); }
+        .btn-primary:hover { background: #003366; transform: translateY(-1px); }
         .btn-lite { background: #fff; border: 1px solid var(--border); color: var(--text-main); padding: 8px; }
-        .btn-lite:hover { background: #f8f9fa; border-color: #cbd5e0; }
         .btn-md { padding: 6px 16px; font-size: 12px; width: auto; background: #fff; border: 1px solid var(--brand); color: var(--brand); border-radius: 6px; }
-        .btn-md:hover { background: #f0f7ff; }
         .btn-info { font-size: 11px; background: none; border: none; color: var(--text-muted); text-decoration: underline; cursor: pointer; padding: 0; margin-bottom: 10px; text-align: left; }
 
         .solver-actions { display: grid; grid-template-columns: 3fr 1fr; gap: 8px; margin-top: 8px; }
         .btn-solver { background: var(--accent); color: white; margin-top: 0; box-shadow: 0 4px 6px rgba(40,167,69,0.2); }
-        .btn-solver:hover { background: #218838; transform: translateY(-1px); }
         .btn-clear { background: #fff1f0; color: var(--danger); border: 1px solid #ffa39e; margin-top: 0; font-size: 11px; }
-        .btn-clear:hover { background: #ffccc7; }
 
-        /* --- TABLE --- */
-        .table-wrapper { 
-            flex: 1; overflow: auto; 
-            border: 1px solid var(--border); border-radius: 8px; 
-            background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+        /* --- SIDEBAR QUICK RESULT BOX --- */
+        .sidebar-result {
+            margin-top: 10px; padding: 12px; background: #f0fdf4; 
+            border: 1px solid #bbf7d0; border-radius: 8px; 
+            border-left: 4px solid var(--accent); display: none;
+            animation: fadeIn 0.3s ease-out;
         }
+        .sb-res-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .sb-res-label { font-size: 11px; font-weight: 700; color: #166534; text-transform: uppercase; }
+        .sb-res-val { font-size: 13px; font-weight: 800; color: #14532d; }
+
+        .param-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .big-check { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: 0.2s; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+        .big-check input { transform: scale(1.3); cursor: pointer; }
+        .big-check span { font-size: 12px; font-weight: 600; }
+        .tension-tag { display: inline-flex; align-items: center; background: #eef2ff; color: var(--brand); padding: 4px 10px; border-radius: 20px; margin: 3px; font-size: 11px; font-weight: 700; border: 1px solid #c7d2fe; }
+        .tension-tag span { margin-left: 6px; cursor: pointer; color: #ef4444; font-weight: 900; }
+
+        /* --- TABLE STYLING --- */
+        .table-wrapper { flex: 1; overflow: auto; border: 1px solid var(--border); border-radius: 8px; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
         table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; text-align: center; }
-        
-        th { 
-            position: sticky; top: 0; z-index: 10;
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(8px);
-            padding: 12px 8px;
-            font-weight: 700; color: var(--text-muted);
-            border-bottom: 2px solid var(--border);
-            text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;
-        }
+        th { position: sticky; top: 0; z-index: 10; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(8px); padding: 12px 8px; font-weight: 700; color: var(--text-muted); border-bottom: 2px solid var(--border); text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
         th:first-child, td:first-child { position: sticky; left: 0; z-index: 11; background: #fff; border-right: 2px solid var(--border); }
         th:first-child { z-index: 12; }
-
-        td { 
-            padding: 8px 12px; 
-            border-bottom: 1px solid #f1f5f9; 
-            font-variant-numeric: tabular-nums; 
-            transition: background 0.1s;
-        }
-        
+        td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; font-variant-numeric: tabular-nums; }
         tr:hover td { background-color: #f8fafc; }
         tr.highlighted-row td { background-color: var(--hl-color) !important; border-top: 1px solid #fce788; border-bottom: 1px solid #fce788; font-weight: 700; color: #333; }
-
-        @keyframes waterfall { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
+        
         .cascade-row { animation: waterfall 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; opacity: 0; }
+        @keyframes waterfall { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- CHART SECTION --- */
-        .chart-controls { 
-            padding: 15px; background: #fff; 
-            border: 1px solid var(--border); border-radius: 8px; 
-            margin-top: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-        }
+        /* --- CHART CONTROLS --- */
+        .chart-controls { padding: 15px; background: #fff; border: 1px solid var(--border); border-radius: 8px; margin-top: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
         .range-group { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
         .range-label { font-size: 11px; font-weight: 700; color: var(--text-muted); width: 60px; text-transform: uppercase; }
         .range-inputs { display: flex; flex: 1; gap: 8px; align-items: center; }
         .range-box { width: 55px; padding: 6px; text-align: center; font-size: 12px; border: 1px solid #cbd5e0; border-radius: 4px; font-weight: 600; color: var(--text-main); }
         .hybrid-slider { flex: 1; accent-color: var(--brand); cursor: pointer; height: 4px; }
 
-        /* --- SOLVER PANEL --- */
-        .solver-panel { 
-            background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; 
-            padding: 16px; margin-bottom: 20px; display: none; 
-            border-left: 4px solid var(--accent); box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-        }
+        /* --- CHART SOLVER PANEL --- */
+        .solver-panel { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin-bottom: 20px; display: none; border-left: 4px solid var(--accent); box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
         .solver-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
         .res-item { display: flex; flex-direction: column; }
         .res-label { font-size: 10px; color: #166534; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; } 
         .res-val { font-size: 18px; font-weight: 800; color: #14532d; font-family: 'Segoe UI', sans-serif; }
 
         /* --- MODAL --- */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); z-index: 100; display: none; align-items: center; justify-content: center; }
-        .modal-card { background: white; padding: 30px; border-radius: 12px; width: 700px; max-width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); max-height:90vh; overflow-y:auto; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(3px); z-index: 2000; display: none; align-items: center; justify-content: center; }
+        .modal-card { background: white; padding: 30px; border-radius: 12px; width: 700px; max-width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
         .math-row { font-family: 'Courier New', monospace; background: #f1f5f9; padding: 12px; margin: 8px 0; border-radius: 6px; font-size: 13px; border-left: 4px solid var(--brand); color: #334155; }
         .help-section { margin-bottom: 24px; border-bottom: 1px solid #e2e8f0; padding-bottom: 16px; }
         .help-title { margin:0 0 8px 0; color:var(--text-main); font-size:16px; font-weight:700; }
         .help-text { font-size:13px; line-height:1.6; color:#475569; margin-bottom:8px; }
 
-        /* --- HIGHLIGHTER TOOLBAR --- */
+        /* --- HIGHLIGHTER --- */
         .hl-toolbar { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--border); border-bottom: none; padding: 10px 15px; border-radius: 8px 8px 0 0; }
         .hl-active { background: #fffbeb; border-color: #fcd34d; }
         .hl-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
         .hl-slider { flex: 1; accent-color: #f59e0b; cursor: pointer; }
         .hl-btn { padding: 4px 10px; font-size: 11px; cursor: pointer; background: white; border: 1px solid #d1d5db; border-radius: 4px; font-weight: 600; color: var(--text-main); }
-        .hl-btn:hover { background: #f3f4f6; }
     </style>
 </head>
 <body>
 
 <div id="mathModal" class="modal-overlay" onclick="toggleMath(false)">
     <div class="modal-card" onclick="event.stopPropagation()">
-        <div style="border-bottom:2px solid #e2e8f0; margin-bottom:20px; padding-bottom:10px;">
-            <h3 style="margin:0; color:var(--brand); font-size:20px;">Catenary Engine Reference</h3>
-            <p style="margin:5px 0 0 0; color:#64748b; font-size:12px;">Theory, Physics & Calculation Logic</p>
-        </div>
+        <h3 style="margin-top:0; color:var(--brand); border-bottom:2px solid #e2e8f0; padding-bottom:12px;">Catenary Engine Reference</h3>
         
         <div class="help-section">
             <h4 class="help-title">1. The Physics Model</h4>
-            <p class="instruction">This software models a <strong>"Composite Catenary"</strong>. Unlike simple calculators, it accounts for the cable transitioning from water into air, maintaining physical continuity at the surface.</p>
-            
+            <p class="help-text">This software models a <strong>"Composite Catenary"</strong>. Unlike simple calculators, it accounts for the cable transitioning from water into air, maintaining physical continuity at the surface.</p>
             <div style="background:#f8fafc; padding:12px; border-left:3px solid var(--accent); margin:10px 0;">
                 <strong style="color:var(--text-main); display:block; margin-bottom:5px; font-size:12px;">A. The "Chain" Equation</strong>
                 <p class="instruction" style="margin-bottom:8px;">The fundamental shape is defined by the Catenary Parameter (<i>a</i>), which is the ratio of Horizontal Tension to Unit Weight.</p>
                 <div class="math-row"><i>a</i> = H / w</div>
                 <div class="math-row">y = <i>a</i> · [ cosh( x / <i>a</i> ) - 1 ]</div>
             </div>
-
             <div style="background:#f8fafc; padding:12px; border-left:3px solid var(--brand); margin:10px 0;">
                 <strong style="color:var(--text-main); display:block; margin-bottom:5px; font-size:12px;">B. Forces at the Sheave (Top Tension)</strong>
                 <p class="instruction" style="margin-bottom:8px;">Top Tension is the vector sum of the constant Horizontal Tension (<i>H</i>) and the accumulated Vertical Weight (<i>V<sub>tot</sub></i>) of the suspended line.</p>
@@ -189,20 +224,10 @@
 
         <div class="help-section">
             <h4 class="help-title" style="color:var(--accent);">3. The "Tri-Modal" Solver</h4>
-            <p class="instruction">This is a <strong>Reverse Engineering Engine</strong>. In field operations, you often know the ROV position (Layback/Depth) but do not know the exact Tension required to achieve it. The Solver calculates this for you.</p>
-            
-            <p class="instruction" style="margin-top:10px;"><strong>The Algorithm (Newton-Raphson):</strong><br>
-            The catenary equation cannot be rearranged algebraically to solve for Tension (<i>H</i>). Instead, this tool uses numerical iteration:</p>
-            <ol style="font-size:12px; color:#475569; padding-left:20px; line-height:1.6;">
-                <li>It "guesses" a Tension value.</li>
-                <li>It calculates where the cable <em>would</em> be with that tension.</li>
-                <li>It measures the error (distance from your input).</li>
-                <li>It intelligently adjusts the guess and repeats (approx. 50 times/sec) until the error is zero.</li>
-            </ol>
-
+            <p class="instruction">This is a <strong>Reverse Engineering Engine</strong> using Newton-Raphson iteration.</p>
             <p class="instruction" style="margin-top:10px;"><strong>Supported Modes:</strong>
             <br>• <strong>Layback + Depth:</strong> Finds the tension required to hit a specific coordinate (X,Y).
-            <br>• <strong>Layback + Angle:</strong> Iterates Tension until the calculated Top Angle matches your input (useful for stress cone monitoring).
+            <br>• <strong>Layback + Angle:</strong> Iterates Tension until the calculated Top Angle matches your input.
             <br>• <strong>Depth + Angle:</strong> Iterates Tension to match angle at a fixed depth.</p>
         </div>
         
@@ -210,118 +235,147 @@
     </div>
 </div>
 
-<div class="sidebar">
-    <h3 style="margin-bottom:5px; color:var(--brand);">Catenary Suite</h3>
-    <button class="btn-info" onclick="toggleMath(true)">ⓘ Physics & Solver Guide</button>
-    
-    <div class="section-title">1. Environmental Inputs</div>
-    <p class="instruction">Configure the physical properties of the cable and the deployment geometry.</p>
-    <div class="input-row"><span>Wt Water (kg/m)</span><input type="number" id="wW" value="50"></div>
-    <div class="input-row"><span>Wt Air (kg/m)</span><input type="number" id="wA" value="60"></div>
-    <div class="input-row"><span>Sheave Height (m)</span><input type="number" id="sH" value="1"></div>
-    <div class="input-row"><span>Sheave Radius (m)</span><input type="number" id="sR" value="5"></div>
-    <div class="input-row"><span>Max Depth (m)</span><input type="number" id="mD" value="100"></div>
-    <div class="input-row"><span>Depth Step (m)</span><input type="number" id="dS" value="5"></div>
+<div class="app-view">
 
-    <div class="section-title">2. Tension Comparison</div>
-    <p class="instruction">Select one or more Bottom Tensions to generate comparative profiles.</p>
-    <div class="input-row">
-        <span>Select Tension</span>
-        <select id="tSelect">
-            </select>
-    </div>
-    <button class="btn btn-lite" onclick="addTension()">+ Add to Comparison</button>
-    <div id="tList" style="margin-top:8px; min-height:20px;"></div>
+    <div id="tab-config" class="sidebar active-mobile-view">
+        <h3 style="margin-bottom:5px; color:var(--brand);">Catenary Suite</h3>
+        <button class="btn-info" onclick="toggleMath(true)">ⓘ Physics & Solver Guide</button>
+        
+        <div class="section-title">1. Environmental Inputs</div>
+        <p class="instruction">Configure cable & geometry.</p>
+        <div class="input-row"><span>Wt Water (kg/m)</span><input type="number" id="wW" value="50"></div>
+        <div class="input-row"><span>Wt Air (kg/m)</span><input type="number" id="wA" value="60"></div>
+        <div class="input-row"><span>Sheave Height (m)</span><input type="number" id="sH" value="1"></div>
+        <div class="input-row"><span>Sheave Radius (m)</span><input type="number" id="sR" value="5"></div>
+        <div class="input-row"><span>Max Depth (m)</span><input type="number" id="mD" value="100"></div>
+        <div class="input-row"><span>Depth Step (m)</span><input type="number" id="dS" value="5"></div>
 
-    <div class="section-title">3. Table & Chart Mode</div>
-    <p class="instruction">Choose which parameter to display in the main data table and on the chart Y-Axis.</p>
-    <div class="param-grid">
-        <label class="big-check"><input type="checkbox" class="p-check" value="layback" checked> <span>Layback</span></label>
-        <label class="big-check"><input type="checkbox" class="p-check" value="length" checked> <span>Length</span></label>
-        <label class="big-check"><input type="checkbox" class="p-check" value="angle"> <span>Angle</span></label>
-        <label class="big-check"><input type="checkbox" class="p-check" value="tension"> <span>Tension</span></label>
-    </div>
-
-    <button class="btn btn-primary" onclick="runMain()">GENERATE PROFILE & TABLE</button>
-
-    <div class="section-title" style="margin-top:30px; color:var(--accent); border-color:var(--accent);">4. Raw Data Solver</div>
-    <p class="instruction" style="margin-bottom:10px;"><strong>Enter ANY 2 values</strong> to solve for the 3rd + Tension.</p>
-    <div class="input-row solver-input"><span>Observed Layback</span><input type="number" id="obsL" placeholder="(m)"></div>
-    <div class="input-row solver-input"><span>Observed Depth</span><input type="number" id="obsD" placeholder="(m)"></div>
-    <div class="input-row solver-input"><span>Observed Angle (°)</span><input type="number" id="obsA" placeholder="(Deg)"></div>
-    
-    <div class="solver-actions">
-        <button class="btn btn-solver" onclick="solveLive()">CALCULATE 'AS-LAID'</button>
-        <button class="btn btn-clear" onclick="clearSolver()">CLEAR</button>
-    </div>
-</div>
-
-<div class="table-view">
-    <div class="panel-header">
-        <span class="panel-title">Calculated Results</span>
-        <button class="btn btn-md" onclick="printTableWindow()">🖨 Print Table</button>
-    </div>
-    <p class="panel-instruction">Comprehensive tabular breakdown of the selected parameters at every depth step. Use the slider to highlight rows.</p>
-    <div id="hlToolbar" class="hl-toolbar">
-        <span class="hl-label">Row Highlighter:</span>
-        <input type="range" id="hlSlider" class="hl-slider" min="0" max="0" value="0" disabled>
-        <span id="hlReadout" style="font-size:12px; font-weight:bold; min-width:30px; text-align:right;">--</span>
-        <button class="hl-btn" onclick="moveHighlight(-1)">▲</button>
-        <button class="hl-btn" onclick="moveHighlight(1)">▼</button>
-        <button class="hl-btn" onclick="clearHighlight()">Clear</button>
-    </div>
-    <div class="table-wrapper">
-        <table id="mainTable">
-            <thead id="tableHdr"></thead>
-            <tbody id="tableBdy"></tbody>
-        </table>
-    </div>
-</div>
-
-<div class="chart-view">
-    <div id="solverPanel" class="solver-panel">
-        <div style="font-size:11px; font-weight:bold; color:#166534; border-bottom:1px solid #86efac; margin-bottom:12px;">SOLVER RESULTS (AS-LAID)</div>
-        <div class="solver-grid">
-            <div class="res-item"><span class="res-label">Total Length</span><span class="res-val highlight" id="resLen">--</span></div>
-            <div class="res-item"><span class="res-label">Bottom Tension</span><span class="res-val" id="resBot">--</span></div>
-            <div class="res-item"><span class="res-label">Calculated Missing</span><span class="res-val" id="resMissing">--</span></div>
+        <div class="section-title">2. Tension Comparison</div>
+        <div class="input-row">
+            <span>Select Tension</span>
+            <select id="tSelect"></select>
         </div>
-    </div>
+        <button class="btn btn-lite" onclick="addTension()">+ Add to Comparison</button>
+        <div id="tList" style="margin-top:8px; min-height:20px;"></div>
 
-    <div class="panel-header">
-        <span class="panel-title">Dynamic Profile</span>
-        <button class="btn btn-md" onclick="popChartWindow()">⤢ Pop-out Chart</button>
-    </div>
-    <p class="panel-instruction">Visual representation of the cable parameter vs. water depth. Use the controls below to zoom or filter the axes.</p>
+        <div class="section-title">3. Table & Chart Mode</div>
+        <div class="param-grid">
+            <label class="big-check"><input type="checkbox" class="p-check" value="layback" checked> <span>Layback</span></label>
+            <label class="big-check"><input type="checkbox" class="p-check" value="length" checked> <span>Length</span></label>
+            <label class="big-check"><input type="checkbox" class="p-check" value="angle"> <span>Angle</span></label>
+            <label class="big-check"><input type="checkbox" class="p-check" value="tension"> <span>Tension</span></label>
+        </div>
 
-    <div style="flex:1; background:white; border:1px solid var(--border); padding:5px; position:relative; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.03);">
-        <canvas id="mainChart"></canvas>
-    </div>
+        <button class="btn btn-primary" onclick="runMain(); if(window.innerWidth<=1024) switchTab('tab-chart');">GENERATE DATA</button>
 
-    <div class="chart-controls">
-        <div class="range-group">
-            <span class="range-label" id="xLabel">Depth</span>
-            <div class="range-inputs">
-                <input type="number" id="minXBox" class="range-box" placeholder="Min" value="0" onchange="sync('minX', 'Box')">
-                <input type="range" id="minXSlider" class="hybrid-slider" min="0" max="100" value="0" oninput="syncVisual('minX')" onchange="syncFinal('minX')">
-                <input type="range" id="maxXSlider" class="hybrid-slider" min="0" max="100" value="100" oninput="syncVisual('maxX')" onchange="syncFinal('maxX')">
-                <input type="number" id="maxXBox" class="range-box" placeholder="Max" value="100" onchange="sync('maxX', 'Box')">
+        <div class="section-title" style="margin-top:30px; color:var(--accent); border-color:var(--accent);">4. Raw Data Solver</div>
+        <p class="instruction">Enter ANY 2 values to solve.</p>
+        <div class="input-row solver-input"><span>Obs Layback</span><input type="number" id="obsL" placeholder="(m)"></div>
+        <div class="input-row solver-input"><span>Obs Depth</span><input type="number" id="obsD" placeholder="(m)"></div>
+        <div class="input-row solver-input"><span>Obs Angle</span><input type="number" id="obsA" placeholder="(Deg)"></div>
+        <div class="solver-actions">
+            <button class="btn btn-solver" onclick="solveLive()">CALC 'AS-LAID'</button>
+            <button class="btn btn-clear" onclick="clearSolver()">CLEAR</button>
+        </div>
+        
+        <div id="sidebarSolverResult" class="sidebar-result">
+            <div class="sb-res-row">
+                <span class="sb-res-label">Target Tension</span>
+                <span class="sb-res-val" id="sbResBot">--</span>
+            </div>
+            <div class="sb-res-row">
+                <span class="sb-res-label">Total Length</span>
+                <span class="sb-res-val" id="sbResLen">--</span>
+            </div>
+            <div class="sb-res-row" style="border-top:1px solid #bbf7d0; padding-top:4px; margin-top:4px;">
+                <span class="sb-res-label" id="sbResExtraLabel">Result</span>
+                <span class="sb-res-val" id="sbResExtraVal">--</span>
             </div>
         </div>
-        <div class="range-group">
-            <span class="range-label" id="yLabel">Value</span>
-            <div class="range-inputs">
-                <input type="number" id="minYBox" class="range-box" placeholder="Min" value="0" onchange="sync('minY', 'Box')">
-                <input type="range" id="minYSlider" class="hybrid-slider" min="0" max="100" value="0" oninput="syncVisual('minY')" onchange="syncFinal('minY')">
-                <input type="range" id="maxYSlider" class="hybrid-slider" min="0" max="100" value="100" oninput="syncVisual('maxY')" onchange="syncFinal('maxY')">
-                <input type="number" id="maxYBox" class="range-box" placeholder="Max" value="100" onchange="sync('maxY', 'Box')">
+    </div>
+
+    <div id="tab-table" class="table-view">
+        <div class="panel-header">
+            <span class="panel-title">Calculated Results</span>
+            <button class="btn btn-md" onclick="printTableWindow()">🖨 Print</button>
+        </div>
+        <p class="panel-instruction">Comprehensive tabular breakdown.</p>
+        <div id="hlToolbar" class="hl-toolbar">
+            <span class="hl-label">Row Highlighter:</span>
+            <input type="range" id="hlSlider" class="hl-slider" min="0" max="0" value="0" disabled>
+            <span id="hlReadout" style="font-size:12px; font-weight:bold; min-width:30px; text-align:right;">--</span>
+            <button class="hl-btn" onclick="moveHighlight(-1)">▲</button>
+            <button class="hl-btn" onclick="moveHighlight(1)">▼</button>
+            <button class="hl-btn" onclick="clearHighlight()">Clear</button>
+        </div>
+        <div class="table-wrapper">
+            <table id="mainTable">
+                <thead id="tableHdr"></thead>
+                <tbody id="tableBdy"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="tab-chart" class="chart-view">
+        <div id="solverPanel" class="solver-panel">
+            <div style="font-size:11px; font-weight:bold; color:#166534; border-bottom:1px solid #86efac; margin-bottom:12px;">SOLVER RESULTS (AS-LAID)</div>
+            <div class="solver-grid">
+                <div class="res-item"><span class="res-label">Total Length</span><span class="res-val highlight" id="resLen">--</span></div>
+                <div class="res-item"><span class="res-label">Bottom Tension</span><span class="res-val" id="resBot">--</span></div>
+                <div class="res-item"><span class="res-label">Calculated Missing</span><span class="res-val" id="resMissing">--</span></div>
             </div>
         </div>
+
+        <div class="panel-header">
+            <span class="panel-title">Dynamic Profile</span>
+            <button class="btn btn-md" onclick="popChartWindow()">⤢ Pop-out</button>
+        </div>
+        
+        <div style="flex:1; background:white; border:1px solid var(--border); padding:5px; position:relative; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.03);">
+            <canvas id="mainChart"></canvas>
+        </div>
+
+        <div class="chart-controls">
+            <div class="range-group">
+                <span class="range-label" id="xLabel">Depth</span>
+                <div class="range-inputs">
+                    <input type="number" id="minXBox" class="range-box" placeholder="Min" value="0" onchange="sync('minX', 'Box')">
+                    <input type="range" id="minXSlider" class="hybrid-slider" min="0" max="100" value="0" oninput="syncVisual('minX')" onchange="syncFinal('minX')">
+                    <input type="range" id="maxXSlider" class="hybrid-slider" min="0" max="100" value="100" oninput="syncVisual('maxX')" onchange="syncFinal('maxX')">
+                    <input type="number" id="maxXBox" class="range-box" placeholder="Max" value="100" onchange="sync('maxX', 'Box')">
+                </div>
+            </div>
+            <div class="range-group">
+                <span class="range-label" id="yLabel">Value</span>
+                <div class="range-inputs">
+                    <input type="number" id="minYBox" class="range-box" placeholder="Min" value="0" onchange="sync('minY', 'Box')">
+                    <input type="range" id="minYSlider" class="hybrid-slider" min="0" max="100" value="0" oninput="syncVisual('minY')" onchange="syncFinal('minY')">
+                    <input type="range" id="maxYSlider" class="hybrid-slider" min="0" max="100" value="100" oninput="syncVisual('maxY')" onchange="syncFinal('maxY')">
+                    <input type="number" id="maxYBox" class="range-box" placeholder="Max" value="100" onchange="sync('maxY', 'Box')">
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="mobile-nav">
+    <div class="nav-item active" onclick="switchTab('tab-config', this)">
+        <span class="nav-icon">⚙️</span>
+        <span>Config</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('tab-table', this)">
+        <span class="nav-icon">📊</span>
+        <span>Data</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('tab-chart', this)">
+        <span class="nav-icon">📈</span>
+        <span>Graph</span>
     </div>
 </div>
 
 <script>
-    /* 1. MATH LIBRARY */
+    /* --- MATH ENGINE --- */
     const ACOSH = Math.acosh || function(x){ return Math.log(x + Math.sqrt((x-1)*(x+1))); };
     const SINH  = Math.sinh  || function(x){ const e=Math.exp(x), ei=1/e; return (e-ei)/2; };
 
@@ -333,8 +387,7 @@
             const f = a * (Math.cosh(term) - 1) - depth;
             const df = (Math.cosh(term) - 1) - term*Math.sinh(term);
             if(Math.abs(f) < tol) return a;
-            a = a - f/df;
-            if(a <= 0.1) a = 0.1; 
+            a = a - f/df; if(a <= 0.1) a = 0.1; 
         }
         return a;
     }
@@ -345,7 +398,7 @@
         return (sH - sR) + (Math.PI * sR / 2);
     }
 
-    /* 2. APP STATE */
+    /* --- STATE --- */
     let activeTensions = [400];
     let solverActive = false;
     let solverTarget = { x:0, y:0 }; 
@@ -355,26 +408,70 @@
     const MAX_RENDER_LIMIT = 5000;
     let deploymentTimer = null;
 
-    /* 3. INITIALIZATION */
+    /* --- INIT --- */
     function initDropdown() {
         const select = document.getElementById('tSelect');
         select.innerHTML = ""; 
         for(let i=250; i<=2000; i+=50){
             const opt = document.createElement('option');
-            opt.value = i;
-            opt.innerText = i + " kg";
+            opt.value = i; opt.innerText = i + " kg";
             if(i===400) opt.selected = true;
             select.appendChild(opt);
         }
     }
 
-    /* 4. UI LOGIC */
+    /* --- MOBILE NAVIGATION --- */
+    function switchTab(tabId, el) {
+        if(window.innerWidth > 1024) return; 
+        document.querySelectorAll('.sidebar, .table-view, .chart-view').forEach(div => {
+            div.classList.remove('active-mobile-view');
+        });
+        document.getElementById(tabId).classList.add('active-mobile-view');
+        if(el) {
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            el.classList.add('active');
+        } else {
+            const index = (tabId === 'tab-config') ? 0 : (tabId === 'tab-table') ? 1 : 2;
+            const items = document.querySelectorAll('.nav-item');
+            items.forEach(item => item.classList.remove('active'));
+            items[index].classList.add('active');
+        }
+        window.scrollTo(0,0);
+        if(tabId === 'tab-chart' && chart) {
+            setTimeout(() => { chart.resize(); }, 100);
+        }
+    }
+
+    /* --- SWIPE GESTURE --- */
+    let touchStartX = 0; let touchEndX = 0;
+    document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, false);
+    document.addEventListener('touchend', e => {
+        touchEndX = e.changedTouches[0].screenX; handleSwipe();
+    }, false);
+
+    function handleSwipe() {
+        if(window.innerWidth > 1024) return;
+        if(event.target.tagName === 'CANVAS') return;
+        const limit = 50; 
+        if (touchEndX < touchStartX - limit) {
+            const current = document.querySelector('.active-mobile-view').id;
+            if(current === 'tab-config') switchTab('tab-table');
+            else if(current === 'tab-table') switchTab('tab-chart');
+        }
+        if (touchEndX > touchStartX + limit) {
+            const current = document.querySelector('.active-mobile-view').id;
+            if(current === 'tab-chart') switchTab('tab-table');
+            else if(current === 'tab-table') switchTab('tab-config');
+        }
+    }
+
+    /* --- UI LOGIC --- */
     function toggleMath(show) { document.getElementById('mathModal').style.display = show ? 'flex' : 'none'; }
     function addTension() { let val = parseInt(document.getElementById('tSelect').value); if (!activeTensions.includes(val)) { activeTensions.push(val); updateTensionTags(); } }
     function updateTensionTags() { document.getElementById('tList').innerHTML = activeTensions.map(t => `<span class="tension-tag">${t}kg <span onclick="removeT(${t})">&times;</span></span>`).join(''); }
     function removeT(t) { activeTensions = activeTensions.filter(x => x !== t); updateTensionTags(); }
 
-    /* 5. MAIN ENGINE */
+    /* --- MAIN ENGINE --- */
     function runMain() {
         const wW = parseFloat(document.getElementById('wW').value);
         const wA = parseFloat(document.getElementById('wA').value);
@@ -469,7 +566,6 @@
         if(solverActive && chartMode === 'layback') {
             const solvedA = solverTarget.a;
             const targetD = solverTarget.y; 
-            
             const solverPoints = [];
             for(let k=0; k<=50; k++) {
                 const d_i = (targetD * k) / 50;
@@ -482,7 +578,7 @@
         setTimeout(() => { animateDeployment(fullDatasets, chartMode); }, 10);
     }
 
-    /* 6. ANIMATION ENGINE */
+    /* --- CHART & CONTROLS --- */
     function animateDeployment(fullDatasets, mode) {
         const ctx = document.getElementById('mainChart').getContext('2d');
         if(deploymentTimer) clearInterval(deploymentTimer);
@@ -534,34 +630,15 @@
         }, 15);
     }
 
-    /* 7. DYNAMIC SLIDER CONTROLS (Fix for Crashing) */
     function initFilterGroup(prefix, val, maxLimit) {
         const slider = document.getElementById(prefix + 'Slider');
         const box = document.getElementById(prefix + 'Box');
         slider.max = Math.ceil(maxLimit); slider.value = Math.ceil(val); box.value = Math.ceil(val);
     }
+    function syncVisual(prefix) { document.getElementById(prefix + 'Box').value = document.getElementById(prefix + 'Slider').value; }
+    function syncFinal(prefix) { applyFilters(); }
+    function sync(prefix, source) { if(source==='Box') { document.getElementById(prefix+'Slider').value = document.getElementById(prefix+'Box').value; applyFilters(); } }
     
-    // VISUAL UPDATE (On Drag): Updates number box instantly
-    function syncVisual(prefix) {
-        const slider = document.getElementById(prefix + 'Slider');
-        const box = document.getElementById(prefix + 'Box');
-        box.value = slider.value;
-    }
-    
-    // FINAL UPDATE (On Release or Box Enter): Updates Chart
-    function syncFinal(prefix) {
-        applyFilters(); 
-    }
-    
-    function sync(prefix, source) {
-        const slider = document.getElementById(prefix + 'Slider');
-        const box = document.getElementById(prefix + 'Box');
-        if(source === 'Box') {
-            slider.value = box.value;
-            applyFilters();
-        }
-    }
-
     function applyFilters() {
         if(!chart) return;
         chart.options.scales.x.min = parseFloat(document.getElementById('minXBox').value);
@@ -571,37 +648,19 @@
         chart.update('none');
     }
 
-    /* 8. PRINT ENGINE */
+    /* --- PRINT --- */
     function printTableWindow() {
         const meta = document.querySelector('.sidebar .input-row').parentNode.innerHTML; 
-        const wW = document.getElementById('wW').value;
-        const wA = document.getElementById('wA').value;
-        const sH = document.getElementById('sH').value;
+        const wW = document.getElementById('wW').value; const wA = document.getElementById('wA').value; const sH = document.getElementById('sH').value;
         const tableHtml = document.getElementById('mainTable').outerHTML;
-        
         const w = window.open('', '_blank');
-        w.document.write(`<!DOCTYPE html><html><head><title>Print Table</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><style>
-            :root { --brand: #004080; --text-main: #2c3e50; --text-muted: #6c757d; --border: #e0e6ed; }
-            body { font-family: 'Inter', sans-serif; padding: 40px; color: var(--text-main); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .meta-box { background: #f8f9fa; border: 1px solid #e2e8f0; border-left: 6px solid var(--brand); padding: 20px; margin-bottom: 30px; border-radius: 8px; }
-            table { width: 100%; border-collapse: collapse; font-size: 11px; }
-            th { background-color: #f1f5f9 !important; color: #6c757d; font-weight: 700; text-transform: uppercase; padding: 10px 8px; border-bottom: 2px solid #e0e6ed; -webkit-print-color-adjust: exact; }
-            td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; text-align: center; font-variant-numeric: tabular-nums; }
-            td[style*="color"], th[style*="color"] { -webkit-print-color-adjust: exact; }
-            @media print { @page { size: landscape; margin: 15mm; } .btn-print { display: none; } body { padding: 0; } }
-            .btn-print { background: var(--brand); color: white; border: none; padding: 10px 20px; font-weight: 700; border-radius: 6px; cursor: pointer; margin-bottom: 20px; }
-        </style></head><body><button class="btn-print" onclick="window.print()">🖨 Print Report</button><div class="meta-box"><h2 style="margin-top:0; color:var(--brand); font-size:18px;">Catenary Analysis Report</h2><div style="margin-top:10px; font-size:13px;"><strong>Configuration:</strong> Water Wt: ${wW} kg/m | Air Wt: ${wA} kg/m | Sheave H: ${sH} m</div></div>${tableHtml}</body></html>`);
-        w.document.close();
+        w.document.write(`<!DOCTYPE html><html><head><title>Print Table</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><style>:root { --brand: #004080; --text-main: #2c3e50; --text-muted: #6c757d; --border: #e0e6ed; } body { font-family: 'Inter', sans-serif; padding: 40px; color: var(--text-main); -webkit-print-color-adjust: exact; print-color-adjust: exact; } .meta-box { background: #f8f9fa; border: 1px solid #e2e8f0; border-left: 6px solid var(--brand); padding: 20px; margin-bottom: 30px; border-radius: 8px; } table { width: 100%; border-collapse: collapse; font-size: 11px; } th { background-color: #f1f5f9 !important; color: #6c757d; font-weight: 700; text-transform: uppercase; padding: 10px 8px; border-bottom: 2px solid #e0e6ed; -webkit-print-color-adjust: exact; } td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; text-align: center; font-variant-numeric: tabular-nums; } td[style*="color"], th[style*="color"] { -webkit-print-color-adjust: exact; } @media print { @page { size: landscape; margin: 15mm; } .btn-print { display: none; } body { padding: 0; } } .btn-print { background: var(--brand); color: white; border: none; padding: 10px 20px; font-weight: 700; border-radius: 6px; cursor: pointer; margin-bottom: 20px; }</style></head><body><button class="btn-print" onclick="window.print()">🖨 Print Report</button><div class="meta-box"><h2 style="margin-top:0; color:var(--brand); font-size:18px;">Catenary Analysis Report</h2><div style="margin-top:10px; font-size:13px;"><strong>Configuration:</strong> Water Wt: ${wW} kg/m | Air Wt: ${wA} kg/m | Sheave H: ${sH} m</div></div>${tableHtml}</body></html>`); w.document.close();
     }
 
     function popChartWindow() {
-        const currentData = chart.config.data;
-        const currentOptions = chart.config.options;
-        const wW = document.getElementById('wW').value;
-        const wA = document.getElementById('wA').value;
+        const currentData = chart.config.data; const currentOptions = chart.config.options; const wW = document.getElementById('wW').value; const wA = document.getElementById('wA').value;
         const w = window.open('', '_blank');
-        w.document.write(`<html><head><title>Chart</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script><style>@media print { @page { size: landscape; } body { margin: 0; } .btn-print { display: none; } canvas { max-width: 100%; } } body { font-family: 'Inter', sans-serif; padding: 20px; } .meta { margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-left: 5px solid #004080; border-radius:6px; } .btn-print { background: #004080; color: white; border: none; padding: 10px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-bottom: 10px; }</style></head><body><button class="btn-print" onclick="window.print()">🖨 Print Chart</button><div class="meta"><strong>Catenary Profile</strong> | Wt Water: ${wW} | Wt Air: ${wA}</div><div style="height:80vh"><canvas id="popChart"></canvas></div><script>new Chart(document.getElementById('popChart'),{type:'line',data:${JSON.stringify(currentData)},options:{...${JSON.stringify(currentOptions)},maintainAspectRatio:false}});<\/script></body></html>`);
-        w.document.close();
+        w.document.write(`<html><head><title>Chart</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script><style>@media print { @page { size: landscape; } body { margin: 0; } .btn-print { display: none; } canvas { max-width: 100%; } } body { font-family: 'Inter', sans-serif; padding: 20px; } .meta { margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-left: 5px solid #004080; border-radius:6px; } .btn-print { background: #004080; color: white; border: none; padding: 10px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-bottom: 10px; }</style></head><body><button class="btn-print" onclick="window.print()">🖨 Print Chart</button><div class="meta"><strong>Catenary Profile</strong> | Wt Water: ${wW} | Wt Air: ${wA}</div><div style="height:80vh"><canvas id="popChart"></canvas></div><script>new Chart(document.getElementById('popChart'),{type:'line',data:${JSON.stringify(currentData)},options:{...${JSON.stringify(currentOptions)},maintainAspectRatio:false}});<\/script></body></html>`); w.document.close();
     }
 
     const slider = document.getElementById('hlSlider');
@@ -626,10 +685,7 @@
     
     function solveLive() { 
         const chartMode = Array.from(document.querySelectorAll('.p-check:checked')).map(c => c.value)[0];
-        if(chartMode !== 'layback') {
-            alert("⚠️ Please select 'Layback' in Section 3 to use the Solver.");
-            return;
-        }
+        if(chartMode !== 'layback') { alert("⚠️ Please select 'Layback' in Section 3 to use the Solver."); return; }
 
         const wW = parseFloat(document.getElementById('wW').value);
         const wA = parseFloat(document.getElementById('wA').value);
@@ -638,25 +694,17 @@
         const airLen = calcAirLength(sH, sR);
         const airWt = airLen * wA;
 
-        // Get Inputs
         const inL = parseFloat(document.getElementById('obsL').value);
         const inD = parseFloat(document.getElementById('obsD').value);
         const inA = parseFloat(document.getElementById('obsA').value);
 
         let validInputs = 0;
-        if(!isNaN(inL)) validInputs++;
-        if(!isNaN(inD)) validInputs++;
-        if(!isNaN(inA)) validInputs++;
-
-        if(validInputs !== 2) {
-            alert("⚠️ Please enter exactly TWO values in Section 4 (Layback, Depth, or Angle).");
-            return;
-        }
+        if(!isNaN(inL)) validInputs++; if(!isNaN(inD)) validInputs++; if(!isNaN(inA)) validInputs++;
+        if(validInputs !== 2) { alert("⚠️ Please enter exactly TWO values in Section 4."); return; }
 
         let solvedH = 0, totalLen = 0, angleVert = 0, finalA = 0;
         let resMissingLabel = "", resMissingVal = "";
 
-        // CASE 1: L + D -> Solve H
         if(!isNaN(inL) && !isNaN(inD)) {
             finalA = solveAByLayback(inL, inD);
             solvedH = finalA * wW;
@@ -664,74 +712,70 @@
             totalLen = sWater + airLen;
             const V_tot = (sWater * wW) + airWt;
             angleVert = 90 - (Math.atan(V_tot / solvedH) * 180 / Math.PI);
-            
-            resMissingLabel = "CALCULATED ANGLE";
-            resMissingVal = angleVert.toFixed(1) + " °";
+            resMissingLabel = "CALCULATED ANGLE"; resMissingVal = angleVert.toFixed(1) + " °";
             solverTarget = { a: finalA, y: inD, x: inL };
         }
-
-        // CASE 2: L + A -> Solve H (Bisection)
         else if(!isNaN(inL) && !isNaN(inA)) {
             let low = 1, high = 100000;
             for(let k=0; k<60; k++) {
-                let mid = (low+high)/2;
-                let a = mid / wW;
-                let sW = a * SINH(inL / a);
-                let V = (sW * wW) + airWt;
+                let mid = (low+high)/2; let a = mid / wW;
+                let sW = a * SINH(inL / a); let V = (sW * wW) + airWt;
                 let angCalc = 90 - (Math.atan(V/mid) * 180 / Math.PI);
                 if(angCalc < inA) low = mid; else high = mid;
             }
-            solvedH = (low+high)/2;
-            finalA = solvedH / wW;
+            solvedH = (low+high)/2; finalA = solvedH / wW;
             const calcD = finalA * (Math.cosh(inL/finalA) - 1);
             const sWater = finalA * SINH(inL / finalA);
             totalLen = sWater + airLen;
-            
-            resMissingLabel = "CALCULATED DEPTH";
-            resMissingVal = calcD.toFixed(2) + " m";
-            angleVert = inA;
-            solverTarget = { a: finalA, y: calcD, x: inL };
+            resMissingLabel = "CALCULATED DEPTH"; resMissingVal = calcD.toFixed(2) + " m";
+            angleVert = inA; solverTarget = { a: finalA, y: calcD, x: inL };
         }
-
-        // CASE 3: D + A -> Solve H (Bisection)
         else if(!isNaN(inD) && !isNaN(inA)) {
             let low = 1, high = 100000;
             for(let k=0; k<60; k++) {
-                let mid = (low+high)/2;
-                let a = mid / wW;
-                let x = a * ACOSH(inD / a + 1);
-                let sW = a * SINH(x / a);
-                let V = (sW * wW) + airWt;
+                let mid = (low+high)/2; let a = mid / wW;
+                let x = a * ACOSH(inD / a + 1); let sW = a * SINH(x / a); let V = (sW * wW) + airWt;
                 let angCalc = 90 - (Math.atan(V/mid) * 180 / Math.PI);
                 if(angCalc < inA) low = mid; else high = mid;
             }
-            solvedH = (low+high)/2;
-            finalA = solvedH / wW;
+            solvedH = (low+high)/2; finalA = solvedH / wW;
             const calcL = finalA * ACOSH(inD/finalA + 1);
             const sWater = finalA * SINH(calcL / finalA);
             totalLen = sWater + airLen;
-            
-            resMissingLabel = "CALC. LAYBACK";
-            resMissingVal = calcL.toFixed(2) + " m";
-            angleVert = inA;
-            solverTarget = { a: finalA, y: inD, x: calcL };
+            resMissingLabel = "CALC. LAYBACK"; resMissingVal = calcL.toFixed(2) + " m";
+            angleVert = inA; solverTarget = { a: finalA, y: inD, x: calcL };
         }
 
-        document.getElementById('resLen').innerText = totalLen.toFixed(2) + " m";
-        document.getElementById('resBot').innerText = solvedH.toFixed(0) + " kg";
+        // UPDATE BOTH DISPLAYS (Chart Panel & Sidebar)
+        const tStr = solvedH.toFixed(0) + " kg";
+        const lStr = totalLen.toFixed(2) + " m";
+        
+        document.getElementById('resLen').innerText = lStr;
+        document.getElementById('resBot').innerText = tStr;
         document.getElementById('resMissing').innerText = resMissingVal;
         
+        // Update Chart Panel Label
         const labelEl = document.querySelector("#solverPanel .res-item:nth-child(3) .res-label");
         if(labelEl) labelEl.innerText = resMissingLabel;
+
+        // Update Sidebar Quick Result
+        document.getElementById('sbResBot').innerText = tStr;
+        document.getElementById('sbResLen').innerText = lStr;
+        document.getElementById('sbResExtraLabel').innerText = resMissingLabel;
+        document.getElementById('sbResExtraVal').innerText = resMissingVal;
+        document.getElementById('sidebarSolverResult').style.display = 'block';
 
         solverActive = true; 
         runMain(); // Trigger chart update
         document.getElementById('solverPanel').style.display='block'; 
+        
+        if(window.innerWidth <= 1024) switchTab('tab-chart');
     }
 
     function clearSolver() { 
         solverActive = false; 
         document.getElementById('solverPanel').style.display='none'; 
+        document.getElementById('sidebarSolverResult').style.display='none';
         document.getElementById('obsL').value=""; 
         document.getElementById('obsD').value=""; 
         document.getElementById('obsA').value=""; 
