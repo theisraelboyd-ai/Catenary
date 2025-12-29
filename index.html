@@ -156,40 +156,86 @@
 
 <div id="mathModal" class="modal-overlay" onclick="toggleMath(false)">
     <div class="modal-card" onclick="event.stopPropagation()">
-        <div style="border-bottom:2px solid #e2e8f0; margin-bottom:15px; padding-bottom:10px;">
-            <h3 style="margin:0; color:var(--brand); font-size:22px;">Catenary Engine Reference</h3>
-            <p style="margin:5px 0 0 0; color:#64748b; font-size:13px;">Theory, Mechanics & Usage Guide</p>
+        
+        <div style="border-bottom:2px solid #e2e8f0; margin-bottom:20px; padding-bottom:15px;">
+            <h3 style="margin:0; color:var(--brand); font-size:24px; font-weight:800;">Catenary Physics Engine</h3>
+            <p style="margin:5px 0 0 0; color:#64748b; font-size:14px; font-weight:500;">A Comprehensive Guide to Subsea Cable Mechanics</p>
         </div>
         
         <div class="help-section">
-            <h4 class="help-title">1. The "Hanging Chain" Concept</h4>
-            <p class="help-text">A <strong>Catenary</strong> is the natural shape a cable takes when hanging under its own weight. Unlike a simple parabola, a catenary is governed by Hyperbolic functions.</p>
-            <div style="background:#f8fafc; padding:12px; border-left:4px solid var(--brand); margin:10px 0;">
-                <strong style="color:var(--text-main); display:block; margin-bottom:5px; font-size:11px; text-transform:uppercase;">The Governing Equation</strong>
-                <div class="math-row">y = a &middot; [ cosh( x / a ) - 1 ]</div>
+            <h4 class="help-title">1. What is a "Catenary"?</h4>
+            <p class="help-text">
+                Imagine holding a heavy chain between your hands. The shape it naturally forms under its own weight is called a <strong>Catenary</strong>. While it looks like a simple curve (a parabola), it is actually a much more complex shape governed by "Hyperbolic" geometry.
+            </p>
+            <p class="help-text">
+                The key to understanding this curve is the <strong>Catenary Parameter (<i>a</i>)</strong>. Think of <i>a</i> as the "Stiffness" of the curve:
+            </p>
+            <ul style="font-size:13px; color:#475569; padding-left:20px; line-height:1.6; margin-bottom:15px;">
+                <li><strong>High Tension</strong> = Large <i>a</i> = The curve is flat and tight.</li>
+                <li><strong>Low Tension</strong> = Small <i>a</i> = The curve is deep and sagging.</li>
+            </ul>
+            
+            <div style="background:#f8fafc; padding:15px; border-left:4px solid var(--brand); margin:10px 0; border-radius:4px;">
+                <strong style="color:var(--text-main); display:block; margin-bottom:5px; font-size:11px; text-transform:uppercase; letter-spacing:0.5px;">The Governing Formula</strong>
+                <div class="math-row" style="font-size:14px;">y = a &middot; [ cosh( x / a ) - 1 ]</div>
+                <p style="font-size:11px; color:#64748b; margin:5px 0 0 0; line-height:1.4;">
+                    <em>Where <strong>y</strong> is depth, <strong>x</strong> is horizontal distance, and <strong>cosh</strong> is the "Hyperbolic Cosine" function.</em>
+                </p>
             </div>
         </div>
 
         <div class="help-section">
-            <h4 class="help-title">2. Forces & Geometry</h4>
-            <div style="background:#f0fdf4; padding:12px; border-left:4px solid var(--accent); margin:10px 0;">
-                <strong style="color:#166534; display:block; margin-bottom:5px; font-size:11px; text-transform:uppercase;">Calculating Top Tension</strong>
-                <div class="math-row">T<sub>top</sub> = &radic;( H&sup2; + V<sub>total</sub>&sup2; )</div>
+            <h4 class="help-title">2. Forces & The "Triangle of Tension"</h4>
+            <p class="help-text">
+                The tension in the cable is not the same everywhere. It is lowest at the bottom (where it only pulls horizontally) and highest at the top (where it must support the entire weight of the line).
+            </p>
+            <p class="help-text">
+                We calculate the Top Tension by treating it as the long side (hypotenuse) of a right-angled triangle:
+            </p>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
+                <div style="background:#f0fdf4; padding:12px; border-radius:4px; border:1px solid #bbf7d0;">
+                    <strong style="color:#15803d; font-size:11px;">SIDE A: HORIZONTAL</strong>
+                    <div style="font-size:12px; color:#14532d; margin-top:4px;">Constant Pull (H)</div>
+                </div>
+                <div style="background:#f0fdf4; padding:12px; border-radius:4px; border:1px solid #bbf7d0;">
+                    <strong style="color:#15803d; font-size:11px;">SIDE B: VERTICAL</strong>
+                    <div style="font-size:12px; color:#14532d; margin-top:4px;">Total Weight (V)</div>
+                </div>
             </div>
-            <p class="help-text"><strong>Departure Angle (&phi;):</strong> This is the angle of the cable as it leaves the sheave, measured from the vertical (0&deg; = Straight Down).</p>
+
+            <div class="math-row" style="margin-top:10px; background:#e0f2fe; border-color:#0284c7; color:#0369a1;">
+                Top Tension = &radic;( H&sup2; + V&sup2; )
+            </div>
         </div>
 
         <div class="help-section">
             <h4 class="help-title">3. The Solver (Reverse Engineering)</h4>
-            <p class="help-text"><strong>The "Hot or Cold" Game (Newton-Raphson Method):</strong></p>
-            <ol style="font-size:13px; color:#475569; padding-left:20px; line-height:1.6;">
-                <li>The computer "guesses" a tension.</li>
-                <li>It calculates where the cable <em>would</em> be.</li>
-                <li>It measures the error and calculates the slope to make a smarter second guess.</li>
-                <li>It repeats this ~50 times until the error is 0.00m.</li>
+            <p class="help-text">
+                <strong>The Problem:</strong> In the field, you know <em>where</em> the ROV is (e.g., "Depth 50m, Layback 120m"), but the math formulas only work if you know the Tension. You cannot easily rearrange the Catenary equation to solve for Tension directly.
+            </p>
+            <p class="help-text">
+                <strong>The Solution:</strong> This tool uses a numerical method called <strong>Newton-Raphson Iteration</strong>. It plays a rapid game of "Hot or Cold" with the physics engine:
+            </p>
+            <ol style="font-size:13px; color:#475569; padding-left:25px; line-height:1.6; margin-top:8px;">
+                <li style="margin-bottom:6px;">The computer <strong>guesses</strong> a tension (e.g., 500kg).</li>
+                <li style="margin-bottom:6px;">It calculates where the cable <em>would</em> be with that tension.</li>
+                <li style="margin-bottom:6px;">It measures the <strong>error</strong> (e.g., "We are 5.2m too short").</li>
+                <li style="margin-bottom:6px;">It calculates the slope of the error curve to make a highly precise second guess.</li>
+                <li>It repeats this process approx. 50 times in a split second until the error is <strong>0.00m</strong>.</li>
             </ol>
         </div>
-        <div style="text-align:right;"><button class="btn btn-primary" style="width:auto; padding:8px 24px;" onclick="toggleMath(false)">Close Manual</button></div>
+
+        <div style="background:#f9fafb; padding:15px; border-radius:6px; border:1px solid #e5e7eb; margin-top:10px;">
+            <strong style="font-size:12px; color:#374151;">HOW THIS TOOL HELPS:</strong>
+            <p style="font-size:12px; color:#6b7280; margin:5px 0 0 0; line-height:1.5;">
+                By using the "As-Laid" solver, you can validate your deck tension. If the solver says you need <strong>600kg</strong> to reach the ROV's position, but your winch reads <strong>450kg</strong>, you immediately know that external forces (like current drag) are acting on your line.
+            </p>
+        </div>
+        
+        <div style="text-align:right; margin-top:20px;">
+            <button class="btn btn-primary" style="width:auto; padding:10px 30px;" onclick="toggleMath(false)">Close Reference</button>
+        </div>
     </div>
 </div>
 
