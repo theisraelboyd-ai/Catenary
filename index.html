@@ -16,25 +16,25 @@
             --sidebar-w: 360px;
             --text-main: #1f2937; --text-muted: #6b7280;
             --hl-color: #fff9c4;
+            --crit-bg: #fff1f2; --crit-text: #9f1239; --crit-border: #fca5a5;
         }
 
         body { margin: 0; font-family: 'Inter', sans-serif; background-color: var(--bg); display: flex; height: 100vh; overflow: hidden; color: var(--text-main); }
 
-        /* --- DESKTOP LAYOUT --- */
+        /* --- LAYOUT --- */
         .app-view { display: flex; width: 100%; height: 100%; }
         .sidebar { width: var(--sidebar-w); background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; padding: 20px; box-shadow: 2px 0 5px rgba(0,0,0,0.05); z-index: 20; }
         .table-view { flex: 1.6; display: flex; flex-direction: column; padding: 20px; border-right: 1px solid var(--border); background: #fff; }
         .chart-view { flex: 1; display: flex; flex-direction: column; padding: 20px; background: #f8f9fa; }
 
-        /* --- MOBILE NAV (Hidden on Desktop) --- */
+        /* --- MOBILE NAV --- */
         .mobile-nav { display: none; }
-
         @media screen and (max-width: 1024px) {
             body { flex-direction: column; }
-            .sidebar, .table-view, .chart-view { display: none; width: 100%; height: 100dvh; border: none; padding: 15px; overflow-y: auto; padding-bottom: 140px !important; -webkit-overflow-scrolling: touch; }
+            .sidebar, .table-view, .chart-view { display: none; width: 100%; height: 100dvh; border: none; padding: 15px; overflow-y: auto; padding-bottom: 140px !important; }
             .active-mobile-view { display: flex !important; animation: fadeIn 0.2s ease-out; }
-            .mobile-nav { display: grid; grid-template-columns: 1fr 1fr 1fr; height: 60px; background: #fff; border-top: 1px solid #ddd; position: fixed; bottom: 0; width: 100%; z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); padding-bottom: env(safe-area-inset-bottom); }
-            .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: var(--text-muted); cursor: pointer; border-top: 3px solid transparent; transition: all 0.2s; user-select: none; }
+            .mobile-nav { display: grid; grid-template-columns: 1fr 1fr 1fr; height: 60px; background: #fff; border-top: 1px solid #ddd; position: fixed; bottom: 0; width: 100%; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
+            .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: var(--text-muted); cursor: pointer; border-top: 3px solid transparent; }
             .nav-item.active { color: var(--brand); border-top-color: var(--brand); background: #f8faff; }
             .nav-icon { font-size: 18px; margin-bottom: 3px; }
         }
@@ -44,88 +44,65 @@
         .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px; }
         .panel-title { font-size: 14px; font-weight: 700; text-transform: uppercase; color: var(--brand); letter-spacing: 0.5px; }
         .section-title { margin: 20px 0 8px 0; font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
-        .instruction { font-size: 12px; color: #4b5563; margin-bottom: 12px; line-height: 1.4; }
+        .instruction { font-size: 12px; color: #4b5563; margin-bottom: 12px; }
         .panel-instruction { font-size: 12px; color: #4b5563; margin-bottom: 12px; margin-top:-5px; }
 
-        /* Standard Inputs */
+        /* Inputs & Buttons */
         .input-row { display: grid; grid-template-columns: 1fr 125px; gap: 10px; margin-bottom: 8px; align-items: center; font-size: 13px; font-weight: 500; }
-        
-        input[type="number"], select { 
-            padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 4px; 
-            font-size: 14px; text-align: center; color: var(--text-main); 
-            transition: border 0.2s; font-family: inherit; width: 100%; background: #fff;
-        }
-        input[type="number"] { -webkit-appearance: none; -moz-appearance: textfield; }
-        select { -webkit-appearance: none; appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 40px; }
-        input:focus, select:focus { border-color: var(--brand); outline: 2px solid rgba(0,64,128,0.1); outline-offset: -1px; }
-        
-        /* Buttons */
+        input[type="number"], select { padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px; text-align: center; width: 100%; font-family: inherit; }
         .btn { padding: 10px; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 8px; font-size: 13px; transition: all 0.2s; }
-        .btn-primary { background: var(--brand); color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .btn-primary:hover { background: #003366; transform: translateY(-1px); }
+        .btn-primary { background: var(--brand); color: white; }
         .btn-lite { background: #fff; border: 1px solid #d1d5db; color: var(--text-main); padding: 8px; }
         .btn-md { padding: 5px 12px; font-size: 11px; width: auto; background: #fff; border: 1px solid var(--brand); color: var(--brand); border-radius: 4px; }
+        .btn-danger { background: #fff1f0; color: #e11d48; border: 1px solid #fda4af; cursor: pointer; }
+        .btn-danger:hover { background: #fee2e2; }
         .btn-info { font-size: 11px; background: none; border: none; color: var(--text-muted); text-decoration: underline; cursor: pointer; padding: 0; margin-bottom: 10px; text-align: left; }
 
         .solver-actions { display: grid; grid-template-columns: 3fr 1fr; gap: 8px; margin-top: 8px; }
-        .btn-solver { background: var(--accent); color: white; margin-top: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .btn-clear { background: #fff1f0; color: var(--danger); border: 1px solid #ffa39e; margin-top: 0; font-size: 11px; border-radius: 4px; }
+        .btn-solver { background: var(--accent); color: white; margin-top: 0; }
+        .btn-clear { background: #fff1f0; color: var(--danger); border: 1px solid #ffa39e; margin-top: 0; }
 
-        /* Sidebar Result */
-        .sidebar-result { margin-top: 10px; padding: 10px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; border-left: 4px solid var(--accent); display: none; animation: fadeIn 0.3s ease-out; }
+        .sidebar-result { margin-top: 10px; padding: 10px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; border-left: 4px solid var(--accent); display: none; }
         .sb-res-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
         .sb-res-label { font-size: 10px; font-weight: 700; color: #166534; text-transform: uppercase; }
         .sb-res-val { font-size: 13px; font-weight: 700; color: #14532d; }
 
-        /* Checkboxes */
         .param-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .big-check { display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer; transition: 0.2s; background: #fff; }
-        .big-check input { transform: scale(1.1); cursor: pointer; }
+        .big-check { display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer; background: #fff; }
         .big-check span { font-size: 12px; font-weight: 600; }
         .tension-tag { display: inline-flex; align-items: center; background: #eef2ff; color: var(--brand); padding: 3px 8px; border-radius: 4px; margin: 3px; font-size: 11px; font-weight: 700; border: 1px solid #c7d2fe; }
-        .tension-tag span { margin-left: 6px; cursor: pointer; color: #ef4444; font-weight: 900; }
+        .tension-tag span { margin-left: 6px; cursor: pointer; color: #ef4444; }
 
         /* --- TABLE --- */
         .table-wrapper { flex: 1; overflow: auto; border: 1px solid var(--border); border-radius: 4px; background: #fff; }
         table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; text-align: center; }
         th { position: sticky; top: 0; z-index: 10; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(8px); padding: 10px 6px; font-weight: 700; color: var(--text-muted); border-bottom: 2px solid var(--border); text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; }
+        
+        /* Sticky Left Column */
         th:first-child, td:first-child { position: sticky; left: 0; z-index: 11; background: #fff; border-right: 2px solid var(--border); }
         th:first-child { z-index: 12; }
+        
         td { padding: 6px 8px; border-bottom: 1px solid #f1f5f9; font-variant-numeric: tabular-nums; }
         tr:hover td { background-color: #f8fafc; }
         tr.highlighted-row td { background-color: var(--hl-color) !important; border-top: 1px solid #fce788; border-bottom: 1px solid #fce788; font-weight: 700; color: #333; }
+        
+        /* CELL-SPECIFIC Critical Styling */
+        td.cell-crit { 
+            background-color: var(--crit-bg); 
+            color: var(--crit-text);
+        }
+        
         .cascade-row { animation: waterfall 0.3s ease-out forwards; opacity: 0; }
         @keyframes waterfall { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- CHART CONTROLS (TINY BOXES) --- */
-        .chart-controls { 
-            padding: 12px; background: #fff; border: 1px solid var(--border); 
-            border-radius: 4px; margin-top: 15px; 
-        }
-        
-        .range-group { 
-            display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; 
-            border-bottom: 1px solid #e5e7eb; padding-bottom: 10px;
-        }
+        /* --- CHART CONTROLS --- */
+        .chart-controls { padding: 12px; background: #fff; border: 1px solid var(--border); border-radius: 4px; margin-top: 15px; }
+        .range-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px; }
         .range-group:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
-
-        .range-header {
-            display: flex; justify-content: space-between; align-items: center; width: 100%;
-        }
-        .range-label { font-size: 10px; font-weight: 800; color: #4b5563; text-transform: uppercase; letter-spacing: 0.5px; }
-        
-        /* Spring push to the right */
+        .range-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .range-label { font-size: 10px; font-weight: 800; color: #4b5563; text-transform: uppercase; }
         .range-values { display: flex; align-items: center; gap: 5px; margin-left: auto; }
-        
-        /* TINY INPUTS */
-        .micro-input { 
-            width: 45px !important; /* Force width */
-            flex: 0 0 45px; /* Prevent flex grow */
-            padding: 2px 0 !important; /* Minimal padding */
-            text-align: center; font-size: 11px; height: 24px;
-            border: 1px solid #d1d5db; border-radius: 3px; font-weight: 600; color: var(--text-main); 
-        }
-        
+        .micro-input { width: 45px !important; flex: 0 0 45px; padding: 2px 0 !important; text-align: center; font-size: 11px; height: 24px; border: 1px solid #d1d5db; border-radius: 3px; font-weight: 600; color: var(--text-main); }
         .slider-row { display: flex; width: 100%; margin-top: 6px; }
         .hybrid-slider { flex: 1; accent-color: var(--brand); cursor: pointer; height: 4px; width: 100%; }
 
@@ -156,93 +133,167 @@
 
 <div id="mathModal" class="modal-overlay" onclick="toggleMath(false)">
     <div class="modal-card" onclick="event.stopPropagation()">
-        
-        <div style="border-bottom:2px solid #e2e8f0; margin-bottom:20px; padding-bottom:15px;">
-            <h3 style="margin:0; color:var(--brand); font-size:24px; font-weight:800;">Catenary Physics Engine</h3>
-            <p style="margin:5px 0 0 0; color:#64748b; font-size:14px; font-weight:500;">A Comprehensive Guide to Subsea Cable Mechanics</p>
+     <div style="border-bottom: 1px solid #e2e8f0; margin-bottom: 25px; padding-bottom: 15px;">
+            <h2 style="margin: 0; color: var(--brand); font-family: 'Georgia', serif; font-size: 26px; font-weight: 700; letter-spacing: -0.5px;">The Physics of Cable Deployment</h2>
+            <p style="margin: 8px 0 0 0; color: #64748b; font-size: 15px; font-weight: 400; line-height: 1.6; font-style: italic;">
+                A comprehensive field guide to the mechanics, mathematics, and operational realities governing this analysis engine.
+            </p>
         </div>
-        
+
         <div class="help-section">
-            <h4 class="help-title">1. What is a "Catenary"?</h4>
-            <p class="help-text">
-                Imagine holding a heavy chain between your hands. The shape it naturally forms under its own weight is called a <strong>Catenary</strong>. While it looks like a simple curve (a parabola), it is actually a much more complex shape governed by "Hyperbolic" geometry.
-            </p>
-            <p class="help-text">
-                The key to understanding this curve is the <strong>Catenary Parameter (<i>a</i>)</strong>. Think of <i>a</i> as the "Stiffness" of the curve:
-            </p>
-            <ul style="font-size:13px; color:#475569; padding-left:20px; line-height:1.6; margin-bottom:15px;">
-                <li><strong>High Tension</strong> = Large <i>a</i> = The curve is flat and tight.</li>
-                <li><strong>Low Tension</strong> = Small <i>a</i> = The curve is deep and sagging.</li>
-            </ul>
+            <h4 class="help-title" style="font-family: 'Georgia', serif; color: var(--brand); border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 15px;">1. First Principles: The Catenary & Parameter 'a'</h4>
             
-            <div style="background:#f8fafc; padding:15px; border-left:4px solid var(--brand); margin:10px 0; border-radius:4px;">
-                <strong style="color:var(--text-main); display:block; margin-bottom:5px; font-size:11px; text-transform:uppercase; letter-spacing:0.5px;">The Governing Formula</strong>
-                <div class="math-row" style="font-size:14px;">y = a &middot; [ cosh( x / a ) - 1 ]</div>
-                <p style="font-size:11px; color:#64748b; margin:5px 0 0 0; line-height:1.4;">
-                    <em>Where <strong>y</strong> is depth, <strong>x</strong> is horizontal distance, and <strong>cosh</strong> is the "Hyperbolic Cosine" function.</em>
+            <p class="help-text">
+                Let us begin with the basics. When a uniform flexible cable hangs under its own weight between two points, it does not form a parabola, nor a straight line. It forms a specific geometric shape known as a <strong>Catenary</strong>.
+            </p>
+            <p class="help-text">
+                The shape of this curve is governed by a single "Master Number" known as the <strong>Catenary Parameter (a)</strong>. You can think of <em>a</em> as the "Stiffness" of the curve.
+            </p>
+            
+            <div style="background: #f0f9ff; padding: 15px; border-left: 4px solid #0ea5e9; margin: 15px 0; border-radius: 4px;">
+                <strong style="color: #0369a1; font-size: 13px; text-transform: uppercase;">The Definition of 'a'</strong>
+                <p style="margin: 5px 0 0 0; font-size: 14px; color: #0c4a6e; font-family: 'Courier New', monospace; font-weight: 600;">
+                    a = H / q
+                </p>
+                <p style="margin: 5px 0 0 0; font-size: 13px; color: #334155; line-height: 1.5;">
+                    Where <strong>H</strong> is the Horizontal Tension (pull) and <strong>q</strong> is the Weight of the cable per metre.
+                </p>
+            </div>
+
+            <ul style="padding-left: 20px; margin-top: 10px; list-style-type: circle; color: #475569; font-size: 13px; line-height: 1.6;">
+                <li><strong>High Tension:</strong> <em>a</em> is large. The curve is flat and tight (like a guitar string).</li>
+                <li><strong>Low Tension:</strong> <em>a</em> is small. The curve is deep and baggy (like a slack chain).</li>
+            </ul>
+        </div>
+
+        <div class="help-section">
+            <h4 class="help-title" style="font-family: 'Georgia', serif; color: var(--brand); border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 15px;">2. The Shallow Water Problem: Air vs. Water</h4>
+            
+            <p class="help-text">
+                Standard calculators assume the cable is entirely underwater. In deep water, this is a safe assumption. However, in shallow water (e.g., shore landings), we encounter a significant physical change.
+            </p>
+            <p class="help-text">
+                Imagine you are standing on a high balcony lowering a heavy chain down to a swimming pool below:
+            </p>
+            <ul style="padding-left: 20px; margin-top: 10px; margin-bottom: 15px; list-style-type: square; color: #475569; font-size: 13px; line-height: 1.6;">
+                <li><strong>In Water (q_1):</strong> The moment the chain hits the water, it becomes lighter due to buoyancy. The water supports it, allowing it to form a gentle curve.</li>
+                <li><strong>In Air (q_2):</strong> The section hanging from your hands to the surface has no support. It bears its full weight. It pulls down aggressively, creating a steep, heavy curve.</li>
+            </ul>
+            <p class="help-text">
+                <strong>The Solution:</strong> This engine uses a "Two-Segment" approach. We calculate the "Air Curve" and the "Water Curve" separately using their respective weights, and then mathematically fuse them at the sea surface. This eliminates the "ghost" errors found in simpler calculators.
+            </p>
+        </div>
+
+        <div class="help-section">
+            <h4 class="help-title" style="font-family: 'Georgia', serif; color: var(--brand); border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 15px;">3. Friction: The Invisible Helper</h4>
+            
+            <p class="help-text">
+                Friction is often viewed as an enemy in engineering, but in cable laying, it is a vital tool.
+            </p>
+            <p class="help-text">
+                As the cable passes over the overboard chute (sheave), it bends and grips the steel surface. This interaction is governed by the <strong>Capstan Equation</strong> (Euler-Eytelwein formula).
+            </p>
+            
+            <div style="background: #fffbeb; padding: 15px; border-radius: 4px; border: 1px solid #fcd34d; margin: 15px 0;">
+                <strong style="color: #92400e; font-size: 13px; text-transform: uppercase;">How Friction Helps You</strong>
+                <p style="margin: 5px 0 0 0; font-size: 13px; color: #78350f; line-height: 1.6;">
+                    The friction "holds back" the weight of the suspended cable. If the tension on the cable hanging off the stern is <strong>3,000 kg</strong>, the friction might absorb <strong>1,000 kg</strong> of that load. Your winch only "sees" <strong>2,000 kg</strong>.
+                </p>
+                <p style="margin: 8px 0 0 0; font-size: 13px; color: #78350f; line-height: 1.6;">
+                    This tool calculates exactly how much mechanical advantage the chute provides. If you underestimate friction, you might think your winch is safe when the cable is actually near breaking point.
                 </p>
             </div>
         </div>
 
         <div class="help-section">
-            <h4 class="help-title">2. Forces & The "Triangle of Tension"</h4>
-            <p class="help-text">
-                The tension in the cable is not the same everywhere. It is lowest at the bottom (where it only pulls horizontally) and highest at the top (where it must support the entire weight of the line).
-            </p>
-            <p class="help-text">
-                We calculate the Top Tension by treating it as the long side (hypotenuse) of a right-angled triangle:
-            </p>
+            <h4 class="help-title" style="font-family: 'Georgia', serif; color: var(--brand); border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 15px;">4. The "Critical Zone" (Hatched Red Area)</h4>
             
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
-                <div style="background:#f0fdf4; padding:12px; border-radius:4px; border:1px solid #bbf7d0;">
-                    <strong style="color:#15803d; font-size:11px;">SIDE A: HORIZONTAL</strong>
-                    <div style="font-size:12px; color:#14532d; margin-top:4px;">Constant Pull (H)</div>
-                </div>
-                <div style="background:#f0fdf4; padding:12px; border-radius:4px; border:1px solid #bbf7d0;">
-                    <strong style="color:#15803d; font-size:11px;">SIDE B: VERTICAL</strong>
-                    <div style="font-size:12px; color:#14532d; margin-top:4px;">Total Weight (V)</div>
-                </div>
-            </div>
-
-            <div class="math-row" style="margin-top:10px; background:#e0f2fe; border-color:#0284c7; color:#0369a1;">
-                Top Tension = &radic;( H&sup2; + V&sup2; )
-            </div>
+            <p class="help-text">
+                You will observe a hatched red zone on the Dynamic Profile chart. This represents the <strong>Critical Water Depth (CWD)</strong>.
+            </p>
+            <p class="help-text">
+                For any given tension, there is a specific depth where the "Air Segment" becomes the dominant force. If your operation enters this red zone:
+            </p>
+            <ul style="padding-left: 20px; margin-top: 5px; list-style-type: circle; color: #475569; font-size: 13px;">
+                <li>The physics become unstable.</li>
+                <li>The Minimum Bending Radius (MBR) tightens rapidly.</li>
+                <li>Small vessel movements cause massive tension spikes.</li>
+            </ul>
+            <p class="help-text">
+                The boundary line is calculated using a high-order polynomial derived from the reference paper. It serves as a "No-Go" or "High-Caution" warning for the deck team.
+            </p>
         </div>
 
         <div class="help-section">
-            <h4 class="help-title">3. The Solver (Reverse Engineering)</h4>
-            <p class="help-text">
-                <strong>The Problem:</strong> In the field, you know <em>where</em> the ROV is (e.g., "Depth 50m, Layback 120m"), but the math formulas only work if you know the Tension. You cannot easily rearrange the Catenary equation to solve for Tension directly.
-            </p>
-            <p class="help-text">
-                <strong>The Solution:</strong> This tool uses a numerical method called <strong>Newton-Raphson Iteration</strong>. It plays a rapid game of "Hot or Cold" with the physics engine:
-            </p>
-            <ol style="font-size:13px; color:#475569; padding-left:25px; line-height:1.6; margin-top:8px;">
-                <li style="margin-bottom:6px;">The computer <strong>guesses</strong> a tension (e.g., 500kg).</li>
-                <li style="margin-bottom:6px;">It calculates where the cable <em>would</em> be with that tension.</li>
-                <li style="margin-bottom:6px;">It measures the <strong>error</strong> (e.g., "We are 5.2m too short").</li>
-                <li style="margin-bottom:6px;">It calculates the slope of the error curve to make a highly precise second guess.</li>
-                <li>It repeats this process approx. 50 times in a split second until the error is <strong>0.00m</strong>.</li>
-            </ol>
+            <h4 class="help-title" style="font-family: 'Georgia', serif; color: var(--brand); border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 15px;">5. The Mathematical Formulary</h4>
+            <p class="help-text">For those wishing to verify the engine's output manually:</p>
+            
+            <div style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                
+                <div style="margin-bottom: 25px;">
+                    <strong style="font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">I. Geometry (The Curve)</strong>
+                    <div style="font-family: 'Courier New', monospace; font-size: 13px; color: #334155; background: white; padding: 8px; border: 1px solid #cbd5e1; margin-top: 5px;">
+                        y = a · [cosh(x / a) - 1]
+                    </div>
+                    <p style="font-size: 11px; color: #94a3b8; margin-top: 4px;">("cosh" is the Hyperbolic Cosine function)</p>
+                </div>
+
+                <div style="margin-bottom: 25px;">
+                    <strong style="font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">II. Top Tension (Forces)</strong>
+                    <div style="font-family: 'Courier New', monospace; font-size: 13px; color: #334155; background: white; padding: 8px; border: 1px solid #cbd5e1; margin-top: 5px;">
+                        Top Tension = &radic;( H² + V² )
+                    </div>
+                    <p style="font-size: 11px; color: #94a3b8; margin-top: 4px;">(Where H is Bottom Tension, V is Total Suspended Weight)</p>
+                </div>
+
+                <div style="margin-bottom: 25px;">
+                    <strong style="font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">III. Capstan Friction (Winch Load)</strong>
+                    <div style="font-family: 'Courier New', monospace; font-size: 13px; color: #334155; background: white; padding: 8px; border: 1px solid #cbd5e1; margin-top: 5px;">
+                        T_winch = T_sheave / e^(μ · &theta;)
+                    </div>
+                    <p style="font-size: 11px; color: #94a3b8; margin-top: 4px;">(Where &theta; is the exit angle in radians)</p>
+                </div>
+
+                <div>
+                    <strong style="font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">IV. Critical Water Depth (The Red Zone)</strong>
+                    <div style="font-family: 'Courier New', monospace; font-size: 13px; color: #334155; background: white; padding: 8px; border: 1px solid #cbd5e1; margin-top: 5px;">
+                        CWD = 0.069H<sup>4</sup> - 1.23H<sup>3</sup> + 6.54H<sup>2</sup> + 2.9H + 3.15
+                    </div>
+                    <p style="font-size: 11px; color: #94a3b8; margin-top: 4px;">(Where H is Bottom Tension in Tonnes-Force)</p>
+                </div>
+
+            </div>
         </div>
 
-        <div style="background:#f9fafb; padding:15px; border-radius:6px; border:1px solid #e5e7eb; margin-top:10px;">
-            <strong style="font-size:12px; color:#374151;">HOW THIS TOOL HELPS:</strong>
-            <p style="font-size:12px; color:#6b7280; margin:5px 0 0 0; line-height:1.5;">
-                By using the "As-Laid" solver, you can validate your deck tension. If the solver says you need <strong>600kg</strong> to reach the ROV's position, but your winch reads <strong>450kg</strong>, you immediately know that external forces (like current drag) are acting on your line.
+        <div style="margin-top: 40px; border-top: 1px solid #cbd5e1; padding-top: 20px;">
+            <p style="font-size: 13px; color: #334155; font-weight: 700; text-transform: uppercase; margin-bottom: 10px;">Primary Scientific Reference</p>
+            <p style="font-size: 13px; color: #475569; margin: 0; line-height: 1.6;">
+                This engine has been calibrated against the theoretical framework established in:
+                <br><br>
+                <strong>Mamatsopoulos, V.A., Michailides, C., Theotokoglou, E.E., & Onoufriou, T. (2020).</strong><br> 
+                <em>"Critical Water Depth and Installation Curves for Submarine Cable Deployment Process."</em><br> 
+                Journal of Marine Science and Engineering, 8(11), 838.
             </p>
+            <div style="margin-top: 15px;">
+                <a href="https://doi.org/10.3390/jmse8110838" target="_blank" style="display: inline-block; background: #f1f5f9; color: var(--brand); padding: 8px 15px; border-radius: 4px; text-decoration: none; font-weight: 600; font-size: 12px; border: 1px solid #cbd5e1;">
+                    Read Full Paper (MDPI) &rarr;
+                </a>
+            </div>
         </div>
-        
-        <div style="text-align:right; margin-top:20px;">
-            <button class="btn btn-primary" style="width:auto; padding:10px 30px;" onclick="toggleMath(false)">Close Reference</button>
+
+        <div style="text-align: center; margin-top: 40px; margin-bottom: 10px;">
+            <button class="btn btn-primary" style="width: auto; padding: 12px 40px; font-weight: 600; letter-spacing: 0.5px;" onclick="toggleMath(false)">Return to Analysis</button>
         </div>
-    </div>
+       </div>
 </div>
 
 <div class="app-view">
     <div id="tab-config" class="sidebar active-mobile-view">
-        <h3 style="margin-bottom:5px; color:var(--brand);">Catenary Suite</h3>
-        <button class="btn-info" onclick="toggleMath(true)">ⓘ Physics & Solver Guide</button>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+            <h3 style="margin:0; color:var(--brand);">Catenary Suite</h3>
+            <button class="btn btn-danger btn-md" onclick="resetAll()" style="font-size:10px; padding:4px 8px;">↻ Reset All</button>
+        </div>
+        <button class="btn-info" onclick="toggleMath(true)">Read Me - Guide</button>
         
         <div class="section-title">1. Environmental Inputs</div>
         <p class="instruction">Configure cable & geometry.</p>
@@ -250,6 +301,7 @@
         <div class="input-row"><span>Wt Air (kg/m)</span><input type="number" id="wA" value="60" inputmode="decimal"></div>
         <div class="input-row"><span>Sheave Height (m)</span><input type="number" id="sH" value="1" inputmode="decimal"></div>
         <div class="input-row"><span>Sheave Radius (m)</span><input type="number" id="sR" value="5" inputmode="decimal"></div>
+        <div class="input-row"><span>Sheave Friction (μ)</span><input type="number" id="fric" value="0.3" step="0.1" inputmode="decimal"></div>
         <div class="input-row"><span>Max Depth (m)</span><input type="number" id="mD" value="100" inputmode="decimal"></div>
         <div class="input-row"><span>Depth Step (m)</span><input type="number" id="dS" value="5" inputmode="decimal"></div>
 
@@ -277,7 +329,7 @@
         <div class="input-row solver-input"><span>Obs Depth</span><input type="number" id="obsD" placeholder="(m)" inputmode="decimal"></div>
         <div class="input-row solver-input"><span>Obs Angle</span><input type="number" id="obsA" placeholder="(Deg)" inputmode="decimal"></div>
         <div class="solver-actions">
-            <button class="btn btn-solver" onclick="solveLive()">CALC 'AS-LAID'</button>
+            <button class="btn btn-solver" onclick="solveLive()">Live Catenary Calc</button>
             <button class="btn btn-clear" onclick="clearSolver()">CLEAR</button>
         </div>
         
@@ -293,7 +345,10 @@
             <span class="panel-title">Calculated Results</span>
             <button class="btn btn-md" onclick="printTableWindow()">🖨 Print</button>
         </div>
-        <p class="panel-instruction">Comprehensive tabular breakdown.</p>
+        <p class="panel-instruction">
+            Comprehensive tabular breakdown. 
+            <span style="color:#e11d48; font-size:11px; margin-left:8px; font-weight:700;">(Red Highlight = Critical Zone: Air weight dominates)</span>
+        </p>
         <div id="hlToolbar" class="hl-toolbar">
             <span class="hl-label">Row Highlighter:</span>
             <input type="range" id="hlSlider" class="hl-slider" min="0" max="0" value="0" disabled>
@@ -309,7 +364,7 @@
 
     <div id="tab-chart" class="chart-view">
         <div id="solverPanel" class="solver-panel">
-            <div style="font-size:11px; font-weight:bold; color:#166534; border-bottom:1px solid #86efac; margin-bottom:12px;">SOLVER RESULTS (AS-LAID)</div>
+            <div style="font-size:11px; font-weight:bold; color:#166534; border-bottom:1px solid #86efac; margin-bottom:12px;">Live Catenary Results</div>
             <div class="solver-grid">
                 <div class="res-item"><span class="res-label">Total Length</span><span class="res-val highlight" id="resLen">--</span></div>
                 <div class="res-item"><span class="res-label">Bottom Tension</span><span class="res-val" id="resBot">--</span></div>
@@ -320,6 +375,9 @@
         <div class="panel-header">
             <span class="panel-title">Dynamic Profile</span>
             <button class="btn btn-md" onclick="popChartWindow()">⤢ Pop-out</button>
+        </div>
+        <div style="font-size:11px; color:#555; background:#fff; padding:6px 10px; border:1px solid #eee; border-radius:4px; margin-bottom:10px;">
+            <span style="color:#e11d48; font-weight:800;">▨ CWD ZONE:</span> The <span style="color:#e11d48; text-decoration: underline dashed;">hatched red area</span> represents the Critical Zone. Curves inside this area are unstable/air-dominated.
         </div>
         
         <div style="flex:1; background:white; border:1px solid var(--border); padding:5px; position:relative; border-radius:4px; box-shadow:0 2px 4px rgba(0,0,0,0.03); min-height: 250px;">
@@ -370,6 +428,45 @@
     const ACOSH = Math.acosh || function(x){ return Math.log(x + Math.sqrt((x-1)*(x+1))); };
     const SINH  = Math.sinh  || function(x){ const e=Math.exp(x), ei=1/e; return (e-ei)/2; };
 
+    // --- PHYSICS ENGINE ---
+    function getCriticalDepth(H_kgf) {
+        const H_tf = H_kgf / 1000.0;
+        return (0.0698 * Math.pow(H_tf, 4)) - (1.2321 * Math.pow(H_tf, 3)) 
+             + (6.5376 * Math.pow(H_tf, 2)) + (2.9029 * H_tf) + 3.1488;
+    }
+
+    function solveTwoSegmentSystem(H, WD, wW, wA, chuteH, chuteR, mu) {
+        const a1 = H / wW; 
+        const term1 = (WD / a1) + 1;
+        const x1 = a1 * ACOSH(term1); 
+        const L1 = a1 * SINH(x1 / a1); 
+        const V_surf = L1 * wW; 
+
+        const a2 = H / wA;
+        const L_virt_start = V_surf / wA; 
+        const y_virt_start = Math.sqrt(Math.pow(L_virt_start, 2) + Math.pow(a2, 2));
+        const y_virt_end = y_virt_start + chuteH;
+        
+        const x_virt_start = a2 * ACOSH(y_virt_start / a2);
+        const x_virt_end   = a2 * ACOSH(y_virt_end / a2);
+        const x2 = x_virt_end - x_virt_start; 
+        
+        const L_virt_end = Math.sqrt(Math.pow(y_virt_end, 2) - Math.pow(a2, 2));
+        const L2 = L_virt_end - L_virt_start; 
+
+        const V_out = V_surf + (L2 * wA); 
+        const theta_rad = Math.atan(V_out / H); 
+        const theta_deg = (theta_rad * 180) / Math.PI; 
+        
+        const wrap_angle = (Math.PI / 2) - theta_rad;
+        const L_wrap = (chuteR > 0) ? (chuteR * wrap_angle) : 0;
+
+        const T_cable = Math.sqrt(Math.pow(H, 2) + Math.pow(V_out, 2));
+        const T_winch = T_cable / Math.exp(mu * theta_rad);
+
+        return { layback: x1 + x2, length: L1 + L2 + L_wrap, angle: 90 - theta_deg, tension: T_winch, cwd: getCriticalDepth(H) };
+    }
+
     function solveAByLayback(x, depth, tol=1e-5, maxIt=50) {
         if(x <= 0 || depth <= 0) return 100;
         let a = (x*x) / (2*depth); if(a < 1) a = 10;
@@ -389,24 +486,59 @@
         return (sH - sR) + (Math.PI * sR / 2);
     }
 
-    let activeTensions = [400];
+    // --- GRAPHICS UTILS ---
+    function createDiagonalPattern(color = '#e11d48') {
+        const shape = document.createElement('canvas');
+        shape.width = 20; shape.height = 20; // Increased density for print
+        const c = shape.getContext('2d');
+        c.strokeStyle = color;
+        c.lineWidth = 2; 
+        c.beginPath(); c.moveTo(0,20); c.lineTo(20,0); c.stroke();
+        return c.createPattern(shape, 'repeat');
+    }
+
+    // --- APP LOGIC ---
+    let activeTensions = [250];
     let solverActive = false;
     let solverTarget = { x:0, y:0 }; 
     let chart;
     let totalRows = 0;
     const colors = ['#004080', '#c0392b', '#8e44ad', '#f39c12', '#2c3e50'];
-    const MAX_RENDER_LIMIT = 5000;
     let deploymentTimer = null;
 
     function initDropdown() {
         const select = document.getElementById('tSelect');
         select.innerHTML = ""; 
-        for(let i=250; i<=2000; i+=50){
+        for(let i=150; i<=2000; i+=50){
             const opt = document.createElement('option');
             opt.value = i; opt.innerText = i + " kg";
-            if(i===400) opt.selected = true;
+            if(i===250) opt.selected = true;
             select.appendChild(opt);
         }
+    }
+
+    function resetAll() {
+        // Reset Inputs
+        document.getElementById('wW').value = "50";
+        document.getElementById('wA').value = "60";
+        document.getElementById('sH').value = "1";
+        document.getElementById('sR').value = "5";
+        document.getElementById('fric').value = "0.3";
+        document.getElementById('mD').value = "100";
+        document.getElementById('dS').value = "5";
+        
+        // Wipe Data
+        activeTensions = []; 
+        document.getElementById('tList').innerHTML = ""; 
+        initDropdown();
+        clearSolver();
+
+        // Check checkboxes
+        document.querySelectorAll('.p-check').forEach(c => c.checked = false);
+        document.querySelector('.p-check[value="layback"]').checked = true;
+
+        // Run blank
+        runMain();
     }
 
     function switchTab(tabId, el) {
@@ -431,7 +563,7 @@
     }
 
     function toggleMath(show) { document.getElementById('mathModal').style.display = show ? 'flex' : 'none'; }
-    function addTension() { let val = parseInt(document.getElementById('tSelect').value); if (!activeTensions.includes(val)) { activeTensions.push(val); updateTensionTags(); } }
+    function addTension() { let val = parseInt(document.getElementById('tSelect').value); if (!activeTensions.includes(val)) { activeTensions.push(val); activeTensions.sort((a,b)=>a-b); updateTensionTags(); } }
     function updateTensionTags() { document.getElementById('tList').innerHTML = activeTensions.map(t => `<span class="tension-tag">${t}kg <span onclick="removeT(${t})">&times;</span></span>`).join(''); }
     function removeT(t) { activeTensions = activeTensions.filter(x => x !== t); updateTensionTags(); }
 
@@ -440,6 +572,7 @@
         const wA = parseFloat(document.getElementById('wA').value);
         const sH = parseFloat(document.getElementById('sH').value);
         const sR = parseFloat(document.getElementById('sR').value);
+        const mu = parseFloat(document.getElementById('fric').value) || 0;
         const mD = parseFloat(document.getElementById('mD').value);
         const dS = parseFloat(document.getElementById('dS').value);
         const selectedParams = Array.from(document.querySelectorAll('.p-check:checked')).map(c => c.value);
@@ -462,50 +595,45 @@
         });
         document.getElementById('tableHdr').innerHTML = headHtml;
 
-        const airLen = calcAirLength(sH, sR);
-        const airWt = airLen * wA; 
-
         let bdyHtml = "";
         const fullDatasets = [];
+        const boundaryPoints = []; 
         let rowCount = 0;
-
-        for (let d = 0; d <= mD; d += dS) {
+        
+        // Loop from Step to Max Depth
+        for (let d = dS; d <= mD; d += dS) {
             rowCount++;
             let row = `<td>${d}</td>`;
-            activeTensions.forEach((t, i) => {
-                const a = t / wW;
-                let x = 0, s = 0, angle = 0, tension = 0, valid = true;
-                const color = colors[i % colors.length];
+            let anyCriticalInRow = false; 
 
-                if (a <= 0.01 || (d/a) > 200) { valid = false; } 
-                else {
-                    x = a * ACOSH(d / a + 1);
-                    const sWater = a * SINH(x / a);
-                    if (x > MAX_RENDER_LIMIT) x = MAX_RENDER_LIMIT;
-                    
-                    s = sWater + airLen; 
-                    const V_water = sWater * wW;
-                    const V_total = V_water + airWt; 
-                    
-                    tension = Math.sqrt(t*t + V_total*V_total); 
-                    const angleRad = Math.atan(V_total / t);
-                    angle = 90 - ((angleRad * 180) / Math.PI); 
-                }
+            activeTensions.forEach((t, i) => {
+                const color = colors[i % colors.length];
+                let valid = true;
+                let isCellCrit = false;
+                
+                let res = { layback:0, length:0, angle:0, tension:0, cwd:0 };
+                try {
+                    res = solveTwoSegmentSystem(t, d, wW, wA, sH, sR, mu);
+                } catch(e) { valid = false; }
+
+                if (d < res.cwd) { isCellCrit = true; anyCriticalInRow = true; }
 
                 if(valid) {
                     selectedParams.forEach(p => {
                         let val = "";
-                        if(p === 'layback') val = x.toFixed(2);
-                        if(p === 'length') val = s.toFixed(2);
-                        if(p === 'angle') val = angle.toFixed(1) + "°";
-                        if(p === 'tension') val = tension.toFixed(0);
-                        row += `<td style="color:${color}; font-weight:600;">${val}</td>`;
+                        if(p === 'layback') val = res.layback.toFixed(2);
+                        if(p === 'length') val = res.length.toFixed(2);
+                        if(p === 'angle') val = res.angle.toFixed(1) + "°";
+                        if(p === 'tension') val = res.tension.toFixed(0);
+                        
+                        let cellClass = isCellCrit ? 'cell-crit' : '';
+                        row += `<td class="${cellClass}" style="color:${color}; font-weight:600;">${val}</td>`;
                     });
                     
-                    let plotVal = x;
-                    if(chartMode === 'length') plotVal = s;
-                    if(chartMode === 'angle') plotVal = angle;
-                    if(chartMode === 'tension') plotVal = tension;
+                    let plotVal = res.layback;
+                    if(chartMode === 'length') plotVal = res.length;
+                    if(chartMode === 'angle') plotVal = res.angle;
+                    if(chartMode === 'tension') plotVal = res.tension;
 
                     if(!fullDatasets[i]) fullDatasets[i] = { 
                         label: t+'kg', data: [], 
@@ -517,15 +645,47 @@
                     if(!fullDatasets[i]) fullDatasets[i] = { label: t+'kg', data: [], borderColor: colors[i % colors.length] };
                 }
             });
+
+            if(anyCriticalInRow) {
+                row = row.replace('<td>', '<td class="cell-crit" style="border-left: 4px solid #e11d48; font-weight:bold;">');
+            }
+
             bdyHtml += `<tr id="row-${rowCount}" class="cascade-row" style="animation-delay: ${rowCount * 0.01}s">${row}</tr>`;
         }
         
-        document.getElementById('tableBdy').innerHTML = bdyHtml;
-        totalRows = rowCount;
-        const slider = document.getElementById('hlSlider');
-        slider.max = totalRows; slider.disabled = false;
-        clearHighlight();
+        // --- ADD HASHED CWD ZONE (BACKGROUND) ---
+        // Generates a physics-based Critical Zone curve independent of selection
+        if(chartMode === 'layback') {
+           const cwdBackground = [];
+           
+           // Start at 0,0 to anchor the shading
+           cwdBackground.push({x: 0, y: 0}); 
+           
+           // Step through theoretical tensions to build the zone boundary
+           for(let h=50; h<=30000; h+=100) {
+               const cDepth = getCriticalDepth(h);
+               // Ensure we cover the full chart height even if max depth is small
+               if(cDepth > Math.max(mD * 1.5, 200)) break; 
+               try {
+                   const res = solveTwoSegmentSystem(h, cDepth, wW, wA, sH, sR, mu);
+                   cwdBackground.push({x: cDepth, y: res.layback});
+               } catch(e){}
+           }
+           
+           if(cwdBackground.length > 0) {
+               fullDatasets.unshift({
+                   label: 'Critical Zone',
+                   data: cwdBackground,
+                   borderColor: 'rgba(225, 29, 72, 0.0)', // Invisible line
+                   borderWidth: 0,
+                   pointRadius: 0,
+                   fill: 'end', // Fills UP/LEFT (Above the curve)
+                   backgroundColor: createDiagonalPattern('rgba(220, 38, 38, 0.25)') // Stronger Red Hatching
+               });
+           }
+        }
 
+        // --- ADD SOLVER LINE IF ACTIVE ---
         if(solverActive && chartMode === 'layback') {
             const solvedA = solverTarget.a;
             const targetD = solverTarget.y; 
@@ -538,6 +698,12 @@
             fullDatasets.push({ label: 'As-Laid Target', data: solverPoints, borderColor: '#28a745', borderDash: [5, 5], borderWidth: 2, pointRadius: 0 });
         }
         
+        document.getElementById('tableBdy').innerHTML = bdyHtml;
+        totalRows = rowCount;
+        const slider = document.getElementById('hlSlider');
+        slider.max = totalRows; slider.disabled = false;
+        clearHighlight();
+
         setTimeout(() => { animateDeployment(fullDatasets, chartMode); }, 10);
     }
 
@@ -549,7 +715,11 @@
         const renderDatasets = fullDatasets.map(ds => ({ ...ds, data: [] }));
 
         let maxX = 0; let maxY = 0;
-        fullDatasets.forEach(ds => { ds.data.forEach(p => { if(p.x > maxX) maxX = p.x; if(p.y > maxY) maxY = p.y; }); });
+        fullDatasets.forEach(ds => { 
+            if(ds.label !== 'Critical Zone') { // Ignore background zone for scaling
+                ds.data.forEach(p => { if(p.x > maxX) maxX = p.x; if(p.y > maxY) maxY = p.y; }); 
+            }
+        });
         if(!maxX || maxX < 10) maxX = 100; if(!maxY || maxY < 10) maxY = 100;
 
         initFilterGroup('minX', 0, maxX); initFilterGroup('maxX', maxX, maxX);
@@ -592,8 +762,8 @@
                     changed = true;
                 }
             });
-            if(changed) { chart.update('none'); frameIndex++; } else { clearInterval(deploymentTimer); }
-        }, 15);
+            if(changed) { chart.update('none'); frameIndex+=2; } else { clearInterval(deploymentTimer); }
+        }, 10);
     }
 
     function initFilterGroup(prefix, val, maxLimit) {
@@ -619,13 +789,22 @@
         const wW = document.getElementById('wW').value; const wA = document.getElementById('wA').value; const sH = document.getElementById('sH').value;
         const tableHtml = document.getElementById('mainTable').outerHTML;
         const w = window.open('', '_blank');
-        w.document.write(`<!DOCTYPE html><html><head><title>Print Table</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><style>:root { --brand: #004080; --text-main: #2c3e50; --text-muted: #6c757d; --border: #e0e6ed; } body { font-family: 'Inter', sans-serif; padding: 40px; color: var(--text-main); -webkit-print-color-adjust: exact; print-color-adjust: exact; } .meta-box { background: #f8f9fa; border: 1px solid #e2e8f0; border-left: 6px solid var(--brand); padding: 20px; margin-bottom: 30px; border-radius: 8px; } table { width: 100%; border-collapse: collapse; font-size: 11px; } th { background-color: #f1f5f9 !important; color: #6c757d; font-weight: 700; text-transform: uppercase; padding: 10px 8px; border-bottom: 2px solid #e0e6ed; -webkit-print-color-adjust: exact; } td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; text-align: center; font-variant-numeric: tabular-nums; } td[style*="color"], th[style*="color"] { -webkit-print-color-adjust: exact; } @media print { @page { size: landscape; margin: 15mm; } .btn-print { display: none; } body { padding: 0; } } .btn-print { background: var(--brand); color: white; border: none; padding: 10px 20px; font-weight: 700; border-radius: 6px; cursor: pointer; margin-bottom: 20px; }</style></head><body><button class="btn-print" onclick="window.print()">🖨 Print Report</button><div class="meta-box"><h2 style="margin-top:0; color:var(--brand); font-size:18px;">Catenary Analysis Report</h2><div style="margin-top:10px; font-size:13px;"><strong>Configuration:</strong> Water Wt: ${wW} kg/m | Air Wt: ${wA} kg/m | Sheave H: ${sH} m</div></div>${tableHtml}</body></html>`); w.document.close();
+        w.document.write(`<!DOCTYPE html><html><head><title>Print Table</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><style>:root { --brand: #004080; --text-main: #2c3e50; --text-muted: #6c757d; --border: #e0e6ed; --crit-bg: #fff1f2; --crit-text: #9f1239; } body { font-family: 'Inter', sans-serif; padding: 40px; color: var(--text-main); -webkit-print-color-adjust: exact; print-color-adjust: exact; } .meta-box { background: #f8f9fa; border: 1px solid #e2e8f0; border-left: 6px solid var(--brand); padding: 20px; margin-bottom: 30px; border-radius: 8px; } table { width: 100%; border-collapse: collapse; font-size: 11px; } th { background-color: #f1f5f9 !important; color: #6c757d; font-weight: 700; text-transform: uppercase; padding: 10px 8px; border-bottom: 2px solid #e0e6ed; -webkit-print-color-adjust: exact; } td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; text-align: center; font-variant-numeric: tabular-nums; } td[style*="color"], th[style*="color"] { -webkit-print-color-adjust: exact; } .cell-crit { background-color: var(--crit-bg) !important; color: var(--crit-text) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } @media print { @page { size: landscape; margin: 15mm; } .btn-print { display: none; } body { padding: 0; } } .btn-print { background: var(--brand); color: white; border: none; padding: 10px 20px; font-weight: 700; border-radius: 6px; cursor: pointer; margin-bottom: 20px; }</style></head><body><button class="btn-print" onclick="window.print()">🖨 Print Report</button><div class="meta-box"><h2 style="margin-top:0; color:var(--brand); font-size:18px;">Catenary Analysis Report</h2><div style="margin-top:10px; font-size:13px;"><strong>Configuration:</strong> Water Wt: ${wW} kg/m | Air Wt: ${wA} kg/m | Sheave H: ${sH} m</div></div>${tableHtml}</body></html>`); w.document.close();
     }
 
     function popChartWindow() {
         const currentData = chart.config.data; const currentOptions = chart.config.options; const wW = document.getElementById('wW').value; const wA = document.getElementById('wA').value;
         const w = window.open('', '_blank');
-        w.document.write(`<html><head><title>Chart</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script><style>@media print { @page { size: landscape; } body { margin: 0; } .btn-print { display: none; } canvas { max-width: 100%; } } body { font-family: 'Inter', sans-serif; padding: 20px; } .meta { margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-left: 5px solid #004080; border-radius:6px; } .btn-print { background: #004080; color: white; border: none; padding: 10px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-bottom: 10px; }</style></head><body><button class="btn-print" onclick="window.print()">🖨 Print Chart</button><div class="meta"><strong>Catenary Profile</strong> | Wt Water: ${wW} | Wt Air: ${wA}</div><div style="height:80vh"><canvas id="popChart"></canvas></div><script>new Chart(document.getElementById('popChart'),{type:'line',data:${JSON.stringify(currentData)},options:{...${JSON.stringify(currentOptions)},maintainAspectRatio:false}});<\/script></body></html>`); w.document.close();
+        
+        // NOTE: We must rebuild the pattern in the new window because JSON.stringify destroys it.
+        w.document.write(`<html><head><title>Chart</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script><style>@media print { @page { size: landscape; } body { margin: 0; } .btn-print { display: none; } canvas { max-width: 100%; } } body { font-family: 'Inter', sans-serif; padding: 20px; } .meta { margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-left: 5px solid #004080; border-radius:6px; } .btn-print { background: #004080; color: white; border: none; padding: 10px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-bottom: 10px; }</style></head><body><button class="btn-print" onclick="window.print()">🖨 Print Chart</button><div class="meta"><strong>Catenary Profile</strong> | Wt Water: ${wW} | Wt Air: ${wA}</div><div style="height:80vh"><canvas id="popChart"></canvas></div><script>
+        function createPattern(color) { const shape = document.createElement('canvas'); shape.width = 20; shape.height = 20; const c = shape.getContext('2d'); c.strokeStyle = color; c.lineWidth = 2; c.beginPath(); c.moveTo(0,20); c.lineTo(20,0); c.stroke(); return c.createPattern(shape, 'repeat'); }
+        const chartData = ${JSON.stringify(currentData)};
+        if(chartData.datasets.length > 0 && chartData.datasets[0].label === 'Critical Zone') {
+            chartData.datasets[0].backgroundColor = createPattern('rgba(220, 38, 38, 0.4)');
+            chartData.datasets[0].fill = 'end';
+        }
+        new Chart(document.getElementById('popChart'),{type:'line',data:chartData,options:{...${JSON.stringify(currentOptions)},maintainAspectRatio:false, animation:false}});<\/script></body></html>`); w.document.close();
     }
 
     const slider = document.getElementById('hlSlider');
