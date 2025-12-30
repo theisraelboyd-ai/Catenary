@@ -142,24 +142,19 @@
 
         <div class="help-section">
             <h4 class="help-title" style="font-family: 'Georgia', serif; color: var(--brand); border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 15px;">1. First Principles: The Catenary & Parameter 'a'</h4>
-            
             <p class="help-text">
                 Let us begin with the basics. When a uniform flexible cable hangs under its own weight between two points, it does not form a parabola, nor a straight line. It forms a specific geometric shape known as a <strong>Catenary</strong>.
             </p>
             <p class="help-text">
                 The shape of this curve is governed by a single "Master Number" known as the <strong>Catenary Parameter (a)</strong>. You can think of <em>a</em> as the "Stiffness" of the curve.
             </p>
-            
             <div style="background: #f0f9ff; padding: 15px; border-left: 4px solid #0ea5e9; margin: 15px 0; border-radius: 4px;">
                 <strong style="color: #0369a1; font-size: 13px; text-transform: uppercase;">The Definition of 'a'</strong>
-                <p style="margin: 5px 0 0 0; font-size: 14px; color: #0c4a6e; font-family: 'Courier New', monospace; font-weight: 600;">
-                    a = H / q
-                </p>
+                <p style="margin: 5px 0 0 0; font-size: 14px; color: #0c4a6e; font-family: 'Courier New', monospace; font-weight: 600;">a = H / q</p>
                 <p style="margin: 5px 0 0 0; font-size: 13px; color: #334155; line-height: 1.5;">
                     Where <strong>H</strong> is the Horizontal Tension (pull) and <strong>q</strong> is the Weight of the cable per metre.
                 </p>
             </div>
-
             <ul style="padding-left: 20px; margin-top: 10px; list-style-type: circle; color: #475569; font-size: 13px; line-height: 1.6;">
                 <li><strong>High Tension:</strong> <em>a</em> is large. The curve is flat and tight (like a guitar string).</li>
                 <li><strong>Low Tension:</strong> <em>a</em> is small. The curve is deep and baggy (like a slack chain).</li>
@@ -168,7 +163,6 @@
 
         <div class="help-section">
             <h4 class="help-title" style="font-family: 'Georgia', serif; color: var(--brand); border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 15px;">2. The Shallow Water Problem: Air vs. Water</h4>
-            
             <p class="help-text">
                 Standard calculators assume the cable is entirely underwater. In deep water, this is a safe assumption. However, in shallow water (e.g., shore landings), we encounter a significant physical change.
             </p>
@@ -176,8 +170,8 @@
                 Imagine you are standing on a high balcony lowering a heavy chain down to a swimming pool below:
             </p>
             <ul style="padding-left: 20px; margin-top: 10px; margin-bottom: 15px; list-style-type: square; color: #475569; font-size: 13px; line-height: 1.6;">
-                <li><strong>In Water (q_1):</strong> The moment the chain hits the water, it becomes lighter due to buoyancy. The water supports it, allowing it to form a gentle curve.</li>
-                <li><strong>In Air (q_2):</strong> The section hanging from your hands to the surface has no support. It bears its full weight. It pulls down aggressively, creating a steep, heavy curve.</li>
+                <li><strong>In Water ($q_1$):</strong> The moment the chain hits the water, it becomes lighter due to buoyancy. The water supports it, allowing it to form a gentle curve.</li>
+                <li><strong>In Air ($q_2$):</strong> The section hanging from your hands to the surface has no support. It bears its full weight. It pulls down aggressively, creating a steep, heavy curve.</li>
             </ul>
             <p class="help-text">
                 <strong>The Solution:</strong> This engine uses a "Two-Segment" approach. We calculate the "Air Curve" and the "Water Curve" separately using their respective weights, and then mathematically fuse them at the sea surface. This eliminates the "ghost" errors found in simpler calculators.
@@ -185,29 +179,24 @@
         </div>
 
         <div class="help-section">
-            <h4 class="help-title" style="font-family: 'Georgia', serif; color: var(--brand); border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 15px;">3. Friction: The Invisible Helper</h4>
-            
+            <h4 class="help-title" style="font-family: 'Georgia', serif; color: var(--brand); border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 15px;">3. Friction: The Mechanical Lever</h4>
             <p class="help-text">
-                Friction is often viewed as an enemy in engineering, but in cable laying, it is a vital tool.
+                In heavy power cable installation, friction is not an annoyance; it is a mechanical tool. As the cable passes over the overboard chute (sheave), the interaction is governed by the <strong>Capstan Equation</strong>.
             </p>
-            <p class="help-text">
-                As the cable passes over the overboard chute (sheave), it bends and grips the steel surface. This interaction is governed by the <strong>Capstan Equation</strong> (Euler-Eytelwein formula).
-            </p>
-            
             <div style="background: #fffbeb; padding: 15px; border-radius: 4px; border: 1px solid #fcd34d; margin: 15px 0;">
-                <strong style="color: #92400e; font-size: 13px; text-transform: uppercase;">How Friction Helps You</strong>
+                <strong style="color: #92400e; font-size: 13px; text-transform: uppercase;">Operational Context: Lubrication Strategy</strong>
                 <p style="margin: 5px 0 0 0; font-size: 13px; color: #78350f; line-height: 1.6;">
-                    The friction "holds back" the weight of the suspended cable. If the tension on the cable hanging off the stern is <strong>3,000 kg</strong>, the friction might absorb <strong>1,000 kg</strong> of that load. Your winch only "sees" <strong>2,000 kg</strong>.
+                    The friction coefficient (μ) determines how much the chute interacts with the cable.
                 </p>
-                <p style="margin: 8px 0 0 0; font-size: 13px; color: #78350f; line-height: 1.6;">
-                    This tool calculates exactly how much mechanical advantage the chute provides. If you underestimate friction, you might think your winch is safe when the cable is actually near breaking point.
-                </p>
+                <ul style="margin: 8px 0 0 0; padding-left: 20px; font-size: 13px; color: #78350f; line-height: 1.6;">
+                    <li><strong>Laying (High Friction/Dry):</strong> We typically keep the chute dry. The steel surface "grips" the cable, passively holding back the weight. This reduces the load on the tensioner significantly.</li>
+                    <li><strong>Recovery (Low Friction/Wet):</strong> When hauling in, that same friction fights against the winch, adding drag. We apply water here purely for <strong>lubrication</strong>—to lower the friction coefficient, allowing the cable to slide easier and reducing torque demand.</li>
+                </ul>
             </div>
         </div>
 
         <div class="help-section">
             <h4 class="help-title" style="font-family: 'Georgia', serif; color: var(--brand); border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 15px;">4. The "Critical Zone" (Hatched Red Area)</h4>
-            
             <p class="help-text">
                 You will observe a hatched red zone on the Dynamic Profile chart. This represents the <strong>Critical Water Depth (CWD)</strong>.
             </p>
@@ -220,7 +209,7 @@
                 <li>Small vessel movements cause massive tension spikes.</li>
             </ul>
             <p class="help-text">
-                The boundary line is calculated using a high-order polynomial derived from the reference paper. It serves as a "No-Go" or "High-Caution" warning for the deck team.
+                The boundary line is calculated using a high-order polynomial derived from the reference paper. It serves as a strict caution indicator for the deck team.
             </p>
         </div>
 
@@ -229,7 +218,6 @@
             <p class="help-text">For those wishing to verify the engine's output manually:</p>
             
             <div style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                
                 <div style="margin-bottom: 25px;">
                     <strong style="font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">I. Geometry (The Curve)</strong>
                     <div style="font-family: 'Courier New', monospace; font-size: 13px; color: #334155; background: white; padding: 8px; border: 1px solid #cbd5e1; margin-top: 5px;">
@@ -241,7 +229,7 @@
                 <div style="margin-bottom: 25px;">
                     <strong style="font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">II. Top Tension (Forces)</strong>
                     <div style="font-family: 'Courier New', monospace; font-size: 13px; color: #334155; background: white; padding: 8px; border: 1px solid #cbd5e1; margin-top: 5px;">
-                        Top Tension = &radic;( H² + V² )
+                        Top Tension = √ ( H² + V² )
                     </div>
                     <p style="font-size: 11px; color: #94a3b8; margin-top: 4px;">(Where H is Bottom Tension, V is Total Suspended Weight)</p>
                 </div>
@@ -261,8 +249,52 @@
                     </div>
                     <p style="font-size: 11px; color: #94a3b8; margin-top: 4px;">(Where H is Bottom Tension in Tonnes-Force)</p>
                 </div>
-
             </div>
+        </div>
+
+        <div class="help-section">
+            <h4 class="help-title" style="font-family: 'Georgia', serif; color: var(--brand); border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 15px;">6. Operational User Guide</h4>
+            <p class="help-text">How to utilize the Catenary Suite for mission planning and live monitoring.</p>
+
+            <div style="margin-bottom: 20px;">
+                <strong style="color: var(--brand); font-size: 14px;">Section 1: Environmental Inputs (Mission Parameters)</strong>
+                <p class="help-text">
+                    This is where you define the physical constraints of the operation. Ensure you input the distinct weights for <strong>Water</strong> and <strong>Air</strong>—the difference between these two drives the physics engine. Set your friction (micro) based on your mode: <strong>0.3-0.5</strong> for laying, <strong>0.1-0.2</strong> for recovery.
+                </p>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <strong style="color: var(--brand); font-size: 14px;">Section 2: Tension Comparison (Scenario Building)</strong>
+                <p class="help-text">
+                    Cable laying is rarely static. Use the <strong>"Add to Comparison"</strong> button to layer multiple tension curves onto the graph (e.g., Minimum, Target, Maximum). This creates an "Operating Envelope" on the chart, allowing the bridge team to visualize the safe window.
+                </p>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <strong style="color: var(--brand); font-size: 14px;">Section 4: The "As-Laid" Solver (Field Verification)</strong>
+                <p class="help-text">
+                    During operations, you often know the ROV position (Depth/Layback) but need to verify the tension. Input your observed data here and click <strong>"Calc 'As-Laid'"</strong>. The system will reverse-calculate the required bottom tension and plot a <span style="color:#16a34a; font-weight:bold;">Green Target Line</span> on the chart for visual comparison.
+                </p>
+            </div>
+        </div>
+
+        <div class="help-section">
+            <h4 class="help-title" style="font-family: 'Georgia', serif; color: var(--brand); border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 15px;">7. Field Tools & Features</h4>
+            
+            <ul style="padding-left: 20px; list-style-type: disc; color: #475569; font-size: 13px; line-height: 1.6;">
+                <li style="margin-bottom: 10px;">
+                    <strong>The "Live Laying" Highlighter:</strong> Located above the table. Use the slider or arrow buttons to highlight your current depth row. This acts as a digital ruler for the Shift Supervisor during live ops.
+                </li>
+                <li style="margin-bottom: 10px;">
+                    <strong>Chart Scaling (Targeting):</strong> Use the sliders below the chart to zoom in. If you are doing a shore landing (0-20m), restrict the X-Axis to focus purely on the Touch Down Point (TDP).
+                </li>
+                <li style="margin-bottom: 10px;">
+                    <strong>Reporting:</strong> Use <strong>"Print Table"</strong> for a high-contrast report where Critical Zones are clearly marked in red. Use <strong>"Pop-out"</strong> on the chart to move the graph to a secondary bridge monitor.
+                </li>
+                <li>
+                    <strong>System Reset:</strong> The "Reset All" button (top right) performs a hard reset, clearing all data and restoring default physics constants.
+                </li>
+            </ul>
         </div>
 
         <div style="margin-top: 40px; border-top: 1px solid #cbd5e1; padding-top: 20px;">
