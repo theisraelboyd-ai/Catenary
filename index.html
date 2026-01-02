@@ -170,8 +170,8 @@
                 Imagine you are standing on a high balcony lowering a heavy chain down to a swimming pool below:
             </p>
             <ul style="padding-left: 20px; margin-top: 10px; margin-bottom: 15px; list-style-type: square; color: #475569; font-size: 13px; line-height: 1.6;">
-                <li><strong>In Water (q_1):</strong> The moment the chain hits the water, it becomes lighter due to buoyancy. The water supports it, allowing it to form a gentle curve.</li>
-                <li><strong>In Air (q_2):</strong> The section hanging from your hands to the surface has no support. It bears its full weight. It pulls down aggressively, creating a steep, heavy curve.</li>
+                <li><strong>In Water ($q_1$):</strong> The moment the chain hits the water, it becomes lighter due to buoyancy. The water supports it, allowing it to form a gentle curve.</li>
+                <li><strong>In Air ($q_2$):</strong> The section hanging from your hands to the surface has no support. It bears its full weight. It pulls down aggressively, creating a steep, heavy curve.</li>
             </ul>
             <p class="help-text">
                 <strong>The Solution:</strong> This engine uses a "Two-Segment" approach. We calculate the "Air Curve" and the "Water Curve" separately using their respective weights, and then mathematically fuse them at the sea surface. This eliminates the "ghost" errors found in simpler calculators.
@@ -301,7 +301,7 @@
             <h4 class="help-title" style="font-family: 'Georgia', serif; color: var(--brand); border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 15px;">A Note on Angle Discrepancies: The "Stiffness Offset"</h4>
             
             <p class="help-text">
-                You may observe a small discrepancy (typically 2°–5°) between the <strong>Exit Angle</strong> calculated by this tool and the reading on your deck clinometer. This is not a calculation error; it is a physical phenomenon known as <strong>Bending Stiffness (EI)</strong>.
+                You may observe a small discrepancy (typically 2°–5°) between the <strong>Exit Angle</strong> calculated by this tool and the reading on your deck clinometer. This is not a calculation error; it is a physical phenomenon known as <strong>Bending Stiffness ($EI$)</strong>.
             </p>
             
             <div style="margin-top: 15px;">
@@ -749,16 +749,30 @@
         }
 
         // --- ADD SOLVER LINE IF ACTIVE ---
-        if(solverActive && chartMode === 'layback') {
-            const solvedA = solverTarget.a;
-            const targetD = solverTarget.y; 
+        // This draws the 'Live Catenary' using the exact tension calculated by the solver
+        if(solverActive && chartMode === 'layback' && solverTarget.h > 0) {
             const solverPoints = [];
-            for(let k=0; k<=50; k++) {
-                const d_i = (targetD * k) / 50;
-                const x_i = solvedA * ACOSH(d_i / solvedA + 1);
-                solverPoints.push({ x: d_i, y: x_i });
+            
+            // We re-run the physics engine using the Calculated Bottom Tension (solverTarget.h)
+            // This ensures the green line follows the exact Two-Segment physics, not a guess.
+            // We iterate from Depth 0 to Max Depth (mD) to draw the full profile.
+            for(let d_step=0; d_step<=mD; d_step+= (mD/100)) { // 100 steps for smoothness
+                try {
+                    const r = solveTwoSegmentSystem(solverTarget.h, d_step, wW, wA, sH, sR, mu);
+                    solverPoints.push({x: d_step, y: r.layback});
+                } catch(e) {}
             }
-            fullDatasets.push({ label: 'As-Laid Target', data: solverPoints, borderColor: '#28a745', borderDash: [5, 5], borderWidth: 2, pointRadius: 0 });
+            
+            // Push the "Live Catenary" dataset to the chart
+            fullDatasets.push({ 
+                label: 'Live Catenary', 
+                data: solverPoints, 
+                borderColor: '#16a34a', // Bright Green to stand out
+                borderDash: [6, 4],     // Dashed line to differentiate from static data
+                borderWidth: 2, 
+                pointRadius: 0,
+                tension: 0.4            // Slight smoothing
+            });
         }
         
         document.getElementById('tableBdy').innerHTML = bdyHtml;
@@ -894,100 +908,106 @@
         const chartMode = Array.from(document.querySelectorAll('.p-check:checked')).map(c => c.value)[0];
         if(chartMode !== 'layback') { alert("⚠️ Please select 'Layback' in Section 3 to use the Solver."); return; }
 
+        // 1. Get Environmental Data
         const wW = parseFloat(document.getElementById('wW').value);
         const wA = parseFloat(document.getElementById('wA').value);
         const sH = parseFloat(document.getElementById('sH').value);
         const sR = parseFloat(document.getElementById('sR').value);
-        const airLen = calcAirLength(sH, sR);
-        const airWt = airLen * wA;
-
+        const mu = parseFloat(document.getElementById('fric').value) || 0;
+        
+        // 2. Get User Observations
         const inL = parseFloat(document.getElementById('obsL').value);
         const inD = parseFloat(document.getElementById('obsD').value);
         const inA = parseFloat(document.getElementById('obsA').value);
 
+        // 3. Validation
         let validInputs = 0;
-        if(!isNaN(inL)) validInputs++; if(!isNaN(inD)) validInputs++; if(!isNaN(inA)) validInputs++;
-        if(validInputs !== 2) { alert("⚠️ Please enter exactly TWO values in Section 4."); return; }
+        if(!isNaN(inL) && inL > 0) validInputs++; 
+        if(!isNaN(inD) && inD > 0) validInputs++; 
+        if(!isNaN(inA) && inA > 0) validInputs++;
+        if(validInputs !== 2) { alert("⚠️ Please enter exactly TWO positive values in Section 4."); return; }
 
-        let solvedH = 0, totalLen = 0, angleVert = 0, finalA = 0;
-        let resMissingLabel = "", resMissingVal = "";
+        // 4. Binary Search Setup
+        let solvedH = 0;
+        let finalRes = null;
+        let iterations = 0;
+        let low = 1, high = 1000000; // 1000 Tonne limit
 
-        if(!isNaN(inL) && !isNaN(inD)) {
-            finalA = solveAByLayback(inL, inD);
-            solvedH = finalA * wW;
-            const sWater = finalA * SINH(inL / finalA);
-            totalLen = sWater + airLen;
-            const V_tot = (sWater * wW) + airWt;
-            angleVert = 90 - (Math.atan((sWater * wW) / solvedH) * 180 / Math.PI);
-            resMissingLabel = "CALCULATED ANGLE"; resMissingVal = angleVert.toFixed(1) + " °";
-            solverTarget = { a: finalA, y: inD, x: inL };
-        }
-        else if(!isNaN(inL) && !isNaN(inA)) {
-            let low = 1, high = 100000;
-            for(let k=0; k<60; k++) {
-                let mid = (low+high)/2; let a = mid / wW;
-                let sW = a * SINH(inL / a); let V = (sW * wW) + airWt;
-                let angCalc = 90 - (Math.atan(sW * wW / mid) * 180 / Math.PI);
-                if(angCalc < inA) low = mid; else high = mid;
+        // SCENARIO A: Known Depth & Layback -> Find Tension
+        if(!isNaN(inD) && !isNaN(inL)) {
+            while(iterations < 100) {
+                let mid = (low + high) / 2;
+                let r = solveTwoSegmentSystem(mid, inD, wW, wA, sH, sR, mu);
+                if(r.layback < inL) low = mid; // Needs more tension to stretch further
+                else high = mid;
+                solvedH = mid;
+                if(Math.abs(r.layback - inL) < 0.05) break; 
+                iterations++;
             }
-            solvedH = (low+high)/2; finalA = solvedH / wW;
-            const calcD = finalA * (Math.cosh(inL/finalA) - 1);
-            const sWater = finalA * SINH(inL / finalA);
-            totalLen = sWater + airLen;
-            resMissingLabel = "CALCULATED DEPTH"; resMissingVal = calcD.toFixed(2) + " m";
-            angleVert = inA; solverTarget = { a: finalA, y: calcD, x: inL };
+            finalRes = solveTwoSegmentSystem(solvedH, inD, wW, wA, sH, sR, mu);
+            document.getElementById('resMissing').innerText = finalRes.angle.toFixed(1) + " °";
+            document.querySelector("#solverPanel .res-item:nth-child(3) .res-label").innerText = "CALCULATED ANGLE";
         }
+        
+        // SCENARIO B: Known Depth & Angle -> Find Tension
         else if(!isNaN(inD) && !isNaN(inA)) {
-            let low = 1, high = 100000;
-            for(let k=0; k<60; k++) {
-                let mid = (low+high)/2; let a = mid / wW;
-                let x = a * ACOSH(inD / a + 1); let sW = a * SINH(x / a); let V = (sW * wW) + airWt;
-                let angCalc = 90 - (Math.atan(V/mid) * 180 / Math.PI);
-                if(angCalc < inA) low = mid; else high = mid;
+            while(iterations < 100) {
+                let mid = (low + high) / 2;
+                let r = solveTwoSegmentSystem(mid, inD, wW, wA, sH, sR, mu);
+                // Angle is from vertical (0=down, 90=flat).
+                if(r.angle < inA) low = mid; // Angle too steep, need more tension to flatten
+                else high = mid;
+                solvedH = mid;
+                if(Math.abs(r.angle - inA) < 0.05) break; 
+                iterations++;
             }
-            solvedH = (low+high)/2; finalA = solvedH / wW;
-            const calcL = finalA * ACOSH(inD/finalA + 1);
-            const sWater = finalA * SINH(calcL / finalA);
-            totalLen = sWater + airLen;
-            resMissingLabel = "CALC. LAYBACK"; resMissingVal = calcL.toFixed(2) + " m";
-            angleVert = inA; solverTarget = { a: finalA, y: inD, x: calcL };
+            finalRes = solveTwoSegmentSystem(solvedH, inD, wW, wA, sH, sR, mu);
+            document.getElementById('resMissing').innerText = finalRes.layback.toFixed(2) + " m";
+            document.querySelector("#solverPanel .res-item:nth-child(3) .res-label").innerText = "CALCULATED LAYBACK";
         }
 
-        const tStr = solvedH.toFixed(0) + " kg";
-        const lStr = totalLen.toFixed(2) + " m";
-        
-        document.getElementById('resLen').innerText = lStr;
-        document.getElementById('resBot').innerText = tStr;
-        document.getElementById('resMissing').innerText = resMissingVal;
-        
-        const labelEl = document.querySelector("#solverPanel .res-item:nth-child(3) .res-label");
-        if(labelEl) labelEl.innerText = resMissingLabel;
+        // SCENARIO C: Unsafe
+        else {
+            alert("⚠️ Please provide DEPTH as one of your two values.");
+            return;
+        }
 
-        document.getElementById('sbResBot').innerText = tStr;
-        document.getElementById('sbResLen').innerText = lStr;
-        document.getElementById('sbResExtraLabel').innerText = resMissingLabel;
-        document.getElementById('sbResExtraVal').innerText = resMissingVal;
-        document.getElementById('sidebarSolverResult').style.display = 'block';
+        // 5. Output Results
+        if(finalRes) {
+            solverTarget = { h: solvedH, y: inD, x: finalRes.layback };
 
-        solverActive = true; 
-        runMain(); // Trigger chart update
-        document.getElementById('solverPanel').style.display='block'; 
-        
-        if(window.innerWidth <= 1024) switchTab('tab-chart');
-    }
-
-    function clearSolver() { 
-        solverActive = false; 
-        document.getElementById('solverPanel').style.display='none'; 
-        document.getElementById('sidebarSolverResult').style.display='none';
-        document.getElementById('obsL').value=""; 
-        document.getElementById('obsD').value=""; 
-        document.getElementById('obsA').value=""; 
-        runMain(); 
+            // MAIN PANEL (The green box)
+            document.getElementById('resLen').innerText = finalRes.length.toFixed(2) + " m";
+            
+            // FIX: Display solvedH (Bottom Tension) here, NOT finalRes.tension (Winch Tension)
+            document.getElementById('resBot').innerText = solvedH.toFixed(0) + " kg"; 
+            
+            // SIDEBAR RESULTS
+            // We display Bottom Tension as primary, but I've added Winch Tension as extra info just in case
+            document.getElementById('sbResBot').innerText = solvedH.toFixed(0) + " kg";
+            document.getElementById('sbResLen').innerText = finalRes.length.toFixed(2) + " m";
+            
+            // Re-purposing the "Result" box in sidebar to show the Calculated Missing Value
+            document.getElementById('sbResExtraVal').innerText = document.getElementById('resMissing').innerText;
+            document.getElementById('sbResExtraLabel').innerText = document.querySelector("#solverPanel .res-item:nth-child(3) .res-label").innerText;
+            
+            document.getElementById('sidebarSolverResult').style.display = 'block';
+            solverActive = true; 
+            runMain(); 
+            document.getElementById('solverPanel').style.display='block'; 
+            if(window.innerWidth <= 1024) switchTab('tab-chart');
+          ;
+ 
+            
+            // Trigger Chart Refresh
+            runMain(); 
+            
+            document.getElementById('solverPanel').style.display='block'; 
+            if(window.innerWidth <= 1024) switchTab('tab-chart');
+        }
     }
     
     window.onload = () => { initDropdown(); updateTensionTags(); runMain(); };
 </script>
 </body>
 </html>
-
