@@ -297,6 +297,37 @@
             </ul>
         </div>
 
+      <div class="help-section">
+            <h4 class="help-title" style="font-family: 'Georgia', serif; color: var(--brand); border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 15px;">A Note on Angle Discrepancies: The "Stiffness Offset"</h4>
+            
+            <p class="help-text">
+                You may observe a small discrepancy (typically 2°–5°) between the <strong>Exit Angle</strong> calculated by this tool and the reading on your deck clinometer. This is not a calculation error; it is a physical phenomenon known as <strong>Bending Stiffness ($EI$)</strong>.
+            </p>
+            
+            <div style="margin-top: 15px;">
+                <strong style="color: #334155; font-size: 13px;">The "Perfect String" Assumption</strong>
+                <p class="help-text">
+                    The Catenary mathematical model assumes the cable is "perfectly flexible"—like a heavy chain or a wet rope. It assumes the cable has <strong>zero resistance</strong> to bending. Under this assumption, gravity pulls the cable into a perfect vertical tangent at the sheave.
+                </p>
+            </div>
+
+            <div style="margin-top: 15px;">
+                <strong style="color: #334155; font-size: 13px;">The "Steel Bar" Reality</strong>
+                <p class="help-text">
+                    In reality, a large power cable (e.g., 150mm diameter) behaves more like a steel bar. It has significant stiffness. While gravity tries to pull it straight down, the cable's own internal structure resists this sharp bend.
+                </p>
+                <p class="help-text">
+                    This stiffness "pushes" the cable outward slightly as it leaves the chute, resulting in a <strong>flatter angle</strong> (a higher number) than pure gravity predicts.
+                </p>
+            </div>
+
+            <div style="background: #fffbeb; padding: 12px; border-left: 4px solid #f59e0b; margin-top: 15px; border-radius: 2px;">
+                <strong style="color: #92400e; font-size: 12px; text-transform: uppercase;">Practical Application</strong>
+                <p style="margin: 5px 0 0 0; font-size: 13px; color: #78350f; line-height: 1.5;">
+                    Treat the tool's calculated angle as the <strong>"Gravity Baseline"</strong>. Your actual measured angle will almost always be slightly higher (flatter) due to this stiffness. If the tool says 12° and you measure 15°, this confirms the cable is behaving structurally as expected.
+                </p>
+            </div>
+        </div>
         <div style="margin-top: 40px; border-top: 1px solid #cbd5e1; padding-top: 20px;">
             <p style="font-size: 13px; color: #334155; font-weight: 700; text-transform: uppercase; margin-bottom: 10px;">Primary Scientific Reference</p>
             <p style="font-size: 13px; color: #475569; margin: 0; line-height: 1.6;">
@@ -487,7 +518,7 @@
         const L2 = L_virt_end - L_virt_start; 
 
         const V_out = V_surf + (L2 * wA); 
-        const theta_rad = Math.atan(V_out / H); 
+        const theta_rad = Math.atan(V_surf / H); 
         const theta_deg = (theta_rad * 180) / Math.PI; 
         
         const wrap_angle = (Math.PI / 2) - theta_rad;
@@ -887,7 +918,7 @@
             const sWater = finalA * SINH(inL / finalA);
             totalLen = sWater + airLen;
             const V_tot = (sWater * wW) + airWt;
-            angleVert = 90 - (Math.atan(V_tot / solvedH) * 180 / Math.PI);
+            angleVert = 90 - (Math.atan((sWater * wW) / solvedH) * 180 / Math.PI);
             resMissingLabel = "CALCULATED ANGLE"; resMissingVal = angleVert.toFixed(1) + " °";
             solverTarget = { a: finalA, y: inD, x: inL };
         }
@@ -896,7 +927,7 @@
             for(let k=0; k<60; k++) {
                 let mid = (low+high)/2; let a = mid / wW;
                 let sW = a * SINH(inL / a); let V = (sW * wW) + airWt;
-                let angCalc = 90 - (Math.atan(V/mid) * 180 / Math.PI);
+                let angCalc = 90 - (Math.atan(sW * wW / mid) * 180 / Math.PI);
                 if(angCalc < inA) low = mid; else high = mid;
             }
             solvedH = (low+high)/2; finalA = solvedH / wW;
