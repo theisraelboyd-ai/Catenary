@@ -174,9 +174,13 @@
         .chart-canvas-wrap { flex:1; background:var(--chart-bg); border:1px solid var(--border); padding:4px; position:relative; border-radius:var(--radius-sm); box-shadow:var(--shadow-sm); min-height:220px; overflow:hidden; transition:background var(--transition); }
 
         /* Crosshair readout bubble */
-        #crosshairTooltip { position:absolute; pointer-events:none; display:none; background:var(--bg-2); border:1px solid var(--border-strong); border-radius:var(--radius-xs); padding:6px 10px; font-family:var(--font-mono); font-size:11px; color:var(--text-main); white-space:nowrap; z-index:50; box-shadow:var(--shadow-sm); line-height:1.6; }
-        #crosshairTooltip .ct-depth { color:var(--text-muted); font-size:9px; text-transform:uppercase; letter-spacing:0.6px; }
-        #crosshairTooltip .ct-val { color:var(--brand); font-weight:700; font-size:13px; }
+        #crosshairTooltip { position:absolute; pointer-events:none; display:none; background:var(--bg-2); border:1px solid var(--border-strong); border-radius:var(--radius-sm); padding:8px 12px; font-family:var(--font-mono); font-size:11px; color:var(--text-main); white-space:nowrap; z-index:50; box-shadow:var(--shadow-md); min-width:130px; }
+        #crosshairTooltip .ct-header { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); margin-bottom:6px; padding-bottom:5px; border-bottom:1px solid var(--border); }
+        #crosshairTooltip .ct-row { display:flex; align-items:center; gap:7px; margin-bottom:4px; }
+        #crosshairTooltip .ct-row:last-child { margin-bottom:0; }
+        #crosshairTooltip .ct-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+        #crosshairTooltip .ct-label { font-size:10px; color:var(--text-muted); flex:1; }
+        #crosshairTooltip .ct-val { font-weight:700; font-size:12px; margin-left:auto; }
 
         /* TDP badge */
         .tdp-badge { display:inline-flex; align-items:center; gap:5px; background:var(--accent-dim); border:1px solid var(--accent-border); border-radius:20px; padding:3px 10px; font-size:10px; font-weight:700; color:var(--accent); font-family:var(--font-mono); margin-left:8px; }
@@ -319,8 +323,10 @@
         <div class="input-row"><span>Depth Step (m)</span><input type="number" id="dS" value="5" inputmode="decimal"></div>
 
         <div class="section-title">2 · Tension Comparison</div>
-        <div class="input-row"><span>Select Tension</span><select id="tSelect"></select></div>
-        <button class="btn btn-lite" onclick="addTension()">+ Add to Comparison</button>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+            <select id="tSelect" style="flex:1;padding:7px 10px;border:1px solid var(--border-strong);border-radius:var(--radius-xs);font-size:13px;font-family:var(--font-mono);font-weight:600;color:var(--text-main);background:var(--bg-3);-webkit-appearance:none;appearance:none;min-width:0;"></select>
+            <button onclick="addTension()" style="padding:7px 14px;flex-shrink:0;background:var(--brand-dim);border:1px solid var(--brand);color:var(--brand);border-radius:var(--radius-xs);font-size:12px;font-weight:700;font-family:var(--font-sans);cursor:pointer;white-space:nowrap;transition:background 0.15s;">+ Add</button>
+        </div>
         <div id="tList" style="margin-top:8px;min-height:20px;"></div>
 
         <!-- Envelope shading toggle -->
@@ -408,10 +414,8 @@
         <div class="chart-canvas-wrap" id="chartWrap">
             <canvas id="mainChart"></canvas>
             <div id="crosshairTooltip">
-                <div class="ct-depth">DEPTH</div>
-                <div class="ct-val" id="ct-depth-val">-- m</div>
-                <div class="ct-depth" style="margin-top:4px;" id="ct-y-label">VALUE</div>
-                <div class="ct-val" id="ct-y-val">--</div>
+                <div class="ct-header" id="ct-depth-val">-- m</div>
+                <div id="ct-rows"></div>
             </div>
         </div>
         <div class="chart-controls">
@@ -736,7 +740,6 @@ function runMain(){
     if(showEnvelope && activeTensions.length >= 2 && chartMode === 'layback'){
         const minIdx=0, maxIdx=activeTensions.length-1;
         if(fullDatasets[minIdx] && fullDatasets[maxIdx]){
-            // Lower bound fill dataset (transparent, just for fill reference)
             fullDatasets.push({
                 label:'Envelope',
                 data: fullDatasets[minIdx].data.map(p=>({x:p.x,y:p.y})),
@@ -748,8 +751,8 @@ function runMain(){
                 label:'_env_top',
                 data: fullDatasets[maxIdx].data.map(p=>({x:p.x,y:p.y})),
                 borderColor:'transparent', borderWidth:0, pointRadius:0,
-                fill:{target:activeTensions.length, below:isDark()?'rgba(59,140,247,0.06)':'rgba(59,140,247,0.04)'},
-                backgroundColor:isDark()?'rgba(59,140,247,0.06)':'rgba(59,140,247,0.04)', tension:0.3, order:99
+                fill:{target:activeTensions.length, below:isDark()?'rgba(59,140,247,0.18)':'rgba(59,140,247,0.12)'},
+                backgroundColor:isDark()?'rgba(59,140,247,0.18)':'rgba(59,140,247,0.12)', tension:0.3, order:99
             });
         }
     }
@@ -876,36 +879,21 @@ function animateDeployment(fullDatasets, mode, tdpDepth){
         data: { datasets: datasetsWithGrad },
         options: {
             responsive: true, maintainAspectRatio: false, animation: false,
-            devicePixelRatio: window.devicePixelRatio || 2, // crisp on retina
+            devicePixelRatio: window.devicePixelRatio || 2,
             layout: { padding:{ left:8, right:18, top:18, bottom:8 } },
-            interaction: { mode:'index', intersect:false },
+            interaction: { mode:'nearest', intersect:false },
             plugins: {
                 legend: {
                     display: true,
                     labels: {
                         color: C.legend,
                         font: { size:11, family:'JetBrains Mono' },
-                        boxWidth: 14, boxHeight: 2, // thin line swatch
+                        boxWidth: 14, boxHeight: 2,
                         padding: 14,
                         filter: item => item.text !== '_env_top' && item.text !== 'Envelope'
                     }
                 },
-                tooltip: {
-                    enabled: true,
-                    backgroundColor: isDark()?'rgba(13,15,20,0.96)':'rgba(255,255,255,0.97)',
-                    titleColor: isDark()?'#e8eaf0':'#1a1f2e',
-                    bodyColor: isDark()?'#8b92a8':'#4a5168',
-                    borderColor: isDark()?'rgba(255,255,255,0.1)':'rgba(0,0,0,0.08)',
-                    borderWidth: 1, padding: 12, cornerRadius: 8, displayColors: true,
-                    callbacks: {
-                        title: items => `Depth: ${items[0].parsed.x.toFixed(1)} m`,
-                        label: c => {
-                            if(c.dataset.label==='_env_top'||c.dataset.label==='Envelope'||c.dataset.label==='Critical Zone') return null;
-                            return ` ${c.dataset.label}: ${c.parsed.y.toFixed(2)}`;
-                        },
-                        filter: item => item.dataset.label !== '_env_top' && item.dataset.label !== 'Envelope' && item.dataset.label !== 'Critical Zone'
-                    }
-                }
+                tooltip: { enabled: false }   // ← disabled — custom crosshair handles all readout
             },
             scales: {
                 x: {
@@ -935,46 +923,76 @@ function animateDeployment(fullDatasets, mode, tdpDepth){
         if(changed){chart.update('none');frameIndex+=2;}else{clearInterval(deploymentTimer);}
     },10);
 
-    // ── Crosshair mouse tracking ──
+    // ── Crosshair — shows all tensions at cursor depth ──
     const wrap = document.getElementById('chartWrap');
     const tip  = document.getElementById('crosshairTooltip');
-    const ctDepthVal = document.getElementById('ct-depth-val');
-    const ctYVal     = document.getElementById('ct-y-val');
-    const ctYLabel   = document.getElementById('ct-y-label');
-    ctYLabel.textContent = yTitle.toUpperCase();
+    const ctDepth = document.getElementById('ct-depth-val');
+    const ctRows  = document.getElementById('ct-rows');
+
+    // Helper: linear interpolate a dataset's y at a given x value
+    function interpY(pts, xVal){
+        for(let k=0;k<pts.length-1;k++){
+            if(xVal>=pts[k].x && xVal<=pts[k+1].x){
+                const t=(xVal-pts[k].x)/(pts[k+1].x-pts[k].x);
+                return pts[k].y+(pts[k+1].y-pts[k].y)*t;
+            }
+        }
+        return null;
+    }
 
     canvas.onmousemove = (e) => {
         const rect = canvas.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
         const ca = chart.chartArea;
-        if(mouseX < ca.left || mouseX > ca.right){ tip.style.display='none'; chart._crosshairX=undefined; chart.update('none'); return; }
+        if(mouseX < ca.left || mouseX > ca.right){
+            tip.style.display='none'; chart._crosshairX=undefined; chart.update('none'); return;
+        }
         chart._crosshairX = mouseX;
         chart.update('none');
-        // Get depth value at cursor
+
         const depthVal = chart.scales.x.getValueForPixel(mouseX);
-        ctDepthVal.textContent = depthVal.toFixed(1)+' m';
-        // Get first real dataset's interpolated y-value
-        let yVal='--';
-        const ds = chart.data.datasets.find(d=>d.label!=='Critical Zone'&&d.label!=='_env_top'&&d.label!=='Envelope'&&d.data.length>0);
-        if(ds){
-            // Linear interpolation
-            const pts = ds.data;
-            for(let k=0;k<pts.length-1;k++){
-                if(depthVal >= pts[k].x && depthVal <= pts[k+1].x){
-                    const t=(depthVal-pts[k].x)/(pts[k+1].x-pts[k].x);
-                    yVal=(pts[k].y+(pts[k+1].y-pts[k].y)*t).toFixed(2);
-                    break;
-                }
-            }
-        }
-        ctYVal.textContent = yVal;
-        // Position tooltip
-        let tx = e.clientX - rect.left + 14;
+        ctDepth.textContent = 'DEPTH  ' + depthVal.toFixed(1) + ' m';
+
+        // Build one row per real tension dataset
+        const SKIP = new Set(['Critical Zone','Envelope','_env_top','Live Catenary']);
+        let rowHtml = '';
+        chart.data.datasets.forEach((ds, i) => {
+            if(SKIP.has(ds.label) || !ds.data || ds.data.length===0) return;
+            const yVal = interpY(ds.data, depthVal);
+            if(yVal === null) return;
+            const col = ds.borderColor || COLORS[i%COLORS.length];
+            rowHtml += `<div class="ct-row">
+                <span class="ct-dot" style="background:${col};"></span>
+                <span class="ct-label">${ds.label}</span>
+                <span class="ct-val" style="color:${col};">${yVal.toFixed(2)}</span>
+            </div>`;
+        });
+        // Also add solver line if active
+        chart.data.datasets.forEach((ds) => {
+            if(ds.label!=='Live Catenary'||!ds.data||ds.data.length===0) return;
+            const yVal = interpY(ds.data, depthVal);
+            if(yVal===null) return;
+            rowHtml += `<div class="ct-row">
+                <span class="ct-dot" style="background:#22c882;border:1px dashed #22c882;"></span>
+                <span class="ct-label">Live</span>
+                <span class="ct-val" style="color:#22c882;">${yVal.toFixed(2)}</span>
+            </div>`;
+        });
+        ctRows.innerHTML = rowHtml || '<div class="ct-row"><span class="ct-label" style="color:var(--text-muted);">No data</span></div>';
+
+        // Position tooltip — keep inside wrap bounds
+        const tipW = tip.offsetWidth || 140;
+        const tipH = tip.offsetHeight || 80;
+        let tx = e.clientX - rect.left + 16;
         let ty = e.clientY - rect.top - 10;
-        if(tx + 130 > wrap.clientWidth) tx -= 150;
+        if(tx + tipW > wrap.clientWidth - 4) tx = mouseX - tipW - 16;
+        if(ty + tipH > wrap.clientHeight - 4) ty = wrap.clientHeight - tipH - 4;
+        if(ty < 4) ty = 4;
         tip.style.left = tx+'px'; tip.style.top = ty+'px'; tip.style.display='block';
     };
-    canvas.onmouseleave = () => { tip.style.display='none'; chart._crosshairX=undefined; chart.update('none'); };
+    canvas.onmouseleave = () => {
+        tip.style.display='none'; chart._crosshairX=undefined; chart.update('none');
+    };
 }
 
 /* ================================================================
@@ -1068,18 +1086,127 @@ function solveLive(){
 ================================================================ */
 function printTableWindow(){
     const wW=document.getElementById('wW').value,wA=document.getElementById('wA').value,sH=document.getElementById('sH').value;
-    const tableHtml=document.getElementById('mainTable').outerHTML;
+    const fric=document.getElementById('fric').value;
+    // Clone table and strip any dark inline styles so print is always light
+    const tableClone=document.getElementById('mainTable').cloneNode(true);
+    // Force all th backgrounds to white (they carry var(--panel) which resolves dark)
+    tableClone.querySelectorAll('th').forEach(th=>{ th.style.background='#f0f2f7'; th.style.color='#4a5168'; });
+    tableClone.querySelectorAll('td').forEach(td=>{ if(!td.classList.contains('cell-crit')) td.style.background=''; });
+    const tableHtml=tableClone.outerHTML;
     const w=window.open('','_blank');
-    w.document.write(`<!DOCTYPE html><html><head><title>Catenary Report</title><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"><style>body{font-family:'Space Grotesk',sans-serif;padding:32px;background:#fff;color:#1a1f2e;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.meta-box{background:#f0f2f7;border-left:5px solid #1a5fcc;padding:16px;margin-bottom:22px;border-radius:8px;}h2{margin:0;color:#1a5fcc;font-size:17px;}p{margin:6px 0 0;font-size:12px;color:#4a5168;}table{width:100%;border-collapse:collapse;font-size:11px;}th{background:#f0f2f7!important;color:#4a5168;font-weight:700;text-transform:uppercase;font-size:9px;letter-spacing:.6px;padding:8px;border-bottom:2px solid #dfe3ec;-webkit-print-color-adjust:exact;}td{padding:6px 10px;border-bottom:1px solid #eef1f6;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;}.cell-crit{background:#fef1f3!important;color:#b91c1c!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}@media print{@page{size:landscape;margin:12mm;}.btn-print{display:none;}body{padding:0;}}.btn-print{background:#1a5fcc;color:white;border:none;padding:10px 20px;font-weight:700;border-radius:6px;cursor:pointer;margin-bottom:16px;}</style></head><body><button class="btn-print" onclick="window.print()">🖨 Print</button><div class="meta-box"><h2>Catenary Analysis Report</h2><p>Water: ${wW} kg/m · Air: ${wA} kg/m · Sheave H: ${sH} m</p></div>${tableHtml}</body></html>`);
+    w.document.write(`<!DOCTYPE html><html><head><title>Catenary Report</title><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"><style>
+      /* Reset ALL CSS variables to light values so nothing inherits dark theme */
+      :root{--panel:#ffffff;--bg:#f0f2f7;--bg-2:#e8ebf2;--bg-3:#dfe3ec;--bg-4:#d6dae5;--panel-raised:#f8f9fc;--border:rgba(0,0,0,0.07);--border-strong:rgba(0,0,0,0.13);--border-light:#e8ebf0;--text-main:#1a1f2e;--text-sub:#4a5168;--text-muted:#8b92a8;--brand:#1a5fcc;--brand-dim:rgba(26,95,204,0.08);--brand-light:#1560a8;--brand-tint:#e8f0fa;--accent:#0e8a50;--danger:#d63b3b;--crit-bg:#fef1f3;--crit-text:#b91c1c;--crit-border:#f5a3af;--hl-color:#fefce8;--hl-border:#fde68a;--font-sans:'Space Grotesk',sans-serif;--font-mono:'JetBrains Mono',monospace;}
+      *{box-sizing:border-box;}
+      body{font-family:var(--font-sans);padding:32px;background:#fff;color:var(--text-main);-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+      .meta-box{background:#f0f2f7;border-left:5px solid var(--brand);padding:16px;margin-bottom:22px;border-radius:8px;}
+      h2{margin:0;color:var(--brand);font-size:17px;font-family:var(--font-sans);}
+      p{margin:6px 0 0;font-size:12px;color:var(--text-sub);}
+      table{width:100%;border-collapse:collapse;font-size:11px;}
+      th{background:#f0f2f7!important;color:var(--text-sub)!important;font-family:var(--font-sans);font-weight:700;text-transform:uppercase;font-size:9px;letter-spacing:.6px;padding:8px;border-bottom:2px solid #dfe3ec;-webkit-print-color-adjust:exact;}
+      td{padding:6px 10px;border-bottom:1px solid #eef1f6;text-align:center;font-family:var(--font-mono);font-size:11px;color:inherit;}
+      td:first-child,th:first-child{background:#f8f9fc!important;border-right:1px solid #dfe3ec;}
+      tr:nth-child(even) td{background:#fafbfc;}
+      .cell-crit{background:#fef1f3!important;color:#b91c1c!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+      .highlighted-row td{background:#fefce8!important;color:#92400e!important;}
+      @media print{@page{size:landscape;margin:12mm;}.btn-print{display:none;}body{padding:0;}}
+      .btn-print{background:var(--brand);color:white;border:none;padding:10px 20px;font-weight:700;font-family:var(--font-sans);border-radius:6px;cursor:pointer;margin-bottom:16px;}
+    </style></head><body>
+    <button class="btn-print" onclick="window.print()">🖨 Print Report</button>
+    <div class="meta-box">
+      <h2>Catenary Analysis Report</h2>
+      <p>Water: ${wW} kg/m &nbsp;·&nbsp; Air: ${wA} kg/m &nbsp;·&nbsp; Sheave H: ${sH} m &nbsp;·&nbsp; Friction μ: ${fric}</p>
+    </div>
+    ${tableHtml}
+    </body></html>`);
     w.document.close();
 }
 
 function popChartWindow(){
     if(!chart) return;
-    const currentData=chart.config.data, currentOptions=chart.config.options;
     const wW=document.getElementById('wW').value, wA=document.getElementById('wA').value;
-    const w=window.open('','_blank');
-    w.document.write(`<html><head><title>Catenary Chart</title><script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script><style>body{background:#0d0f14;padding:20px;font-family:sans-serif;margin:0;}.meta{margin-bottom:10px;padding:10px 14px;background:#161b27;border-left:4px solid #3b8cf7;border-radius:6px;color:#8b92a8;font-size:12px;}.bp{background:#3b8cf7;color:white;border:none;padding:9px 18px;font-weight:700;border-radius:6px;cursor:pointer;margin-bottom:12px;}@media print{@page{size:landscape;}.bp{display:none;}}</style></head><body><button class="bp" onclick="window.print()">🖨 Print</button><div class="meta"><strong style="color:#e8eaf0">Catenary Profile</strong> · Water: ${wW} kg/m · Air: ${wA} kg/m</div><div style="height:85vh"><canvas id="popChart"></canvas></div><script>function createPattern(c){const s=document.createElement('canvas');s.width=16;s.height=16;const x=s.getContext('2d');x.strokeStyle=c;x.lineWidth=1.5;x.beginPath();x.moveTo(0,16);x.lineTo(16,0);x.stroke();return x.createPattern(s,'repeat');}const d=${JSON.stringify(currentData)};const czIdx=d.datasets.findIndex(x=>x.label==='Critical Zone');if(czIdx>=0){d.datasets[czIdx].backgroundColor=createPattern('rgba(240,82,82,0.35)');d.datasets[czIdx].fill='end';}new Chart(document.getElementById('popChart'),{type:'line',data:d,options:{...${JSON.stringify(currentOptions)},maintainAspectRatio:false,animation:false}});<\/script></body></html>`);
+    const dark=isDark();
+
+    // Colours
+    const bg    = dark?'#0d0f14':'#f0f2f7';
+    const panel = dark?'#161b27':'#ffffff';
+    const border= dark?'#3b8cf7':'#1a5fcc';
+    const sub   = dark?'#8b92a8':'#4a5168';
+    const main  = dark?'#e8eaf0':'#1a1f2e';
+    const btnBg = dark?'#3b8cf7':'#1a5fcc';
+    const grid  = dark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.06)';
+    const tick  = dark?'#4a536a':'#9ca3af';
+    const title = dark?'#6b7a99':'#6b7280';
+
+    // Build serialisable datasets — replace gradients with flat colours
+    const safeDatasets = chart.data.datasets.map((ds, i)=>{
+        const d = {...ds};
+        // Replace non-serialisable gradient fills with a flat tinted colour
+        if(d.backgroundColor && typeof d.backgroundColor === 'object' && !(d.backgroundColor instanceof String)){
+            const col = d.borderColor;
+            if(col && col !== 'transparent' && !col.startsWith('rgba(240,82')) {
+                d.backgroundColor = col.replace(')',',0.15)').replace('rgb(','rgba(');
+            }
+        }
+        return d;
+    });
+
+    const opts = chart.options;
+    const xMin = opts.scales?.x?.min ?? 0;
+    const xMax = opts.scales?.x?.max ?? 100;
+    const yMin = opts.scales?.y?.min ?? 0;
+    const yMax = opts.scales?.y?.max ?? 100;
+    const xTitle = opts.scales?.x?.title?.text ?? 'Depth (m)';
+    const yTitle = opts.scales?.y?.title?.text ?? 'Value';
+
+    const w = window.open('','_blank');
+    w.document.write(`<!DOCTYPE html><html><head><title>Catenary Chart</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:${bg};padding:20px;font-family:'Space Grotesk',sans-serif;color:${main};}
+  .meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding:10px 16px;background:${panel};border-left:4px solid ${border};border-radius:8px;}
+  .meta strong{font-size:14px;color:${main};}
+  .meta span{font-size:12px;color:${sub};}
+  .bp{background:${btnBg};color:white;border:none;padding:9px 18px;font-weight:700;border-radius:6px;cursor:pointer;margin-bottom:14px;font-family:'Space Grotesk',sans-serif;font-size:12px;}
+  .chart-wrap{background:${panel};border-radius:10px;padding:8px;height:calc(100vh - 130px);}
+  @media print{@page{size:landscape;margin:10mm;}.bp{display:none;}.meta{margin-bottom:8px;}body{padding:8px;}.chart-wrap{height:calc(100vh - 80px);}}
+</style></head><body>
+<button class="bp" onclick="window.print()">🖨 Print Chart</button>
+<div class="meta">
+  <strong>Catenary Profile</strong>
+  <span>Water: ${wW} kg/m &nbsp;·&nbsp; Air: ${wA} kg/m</span>
+</div>
+<div class="chart-wrap"><canvas id="popChart"></canvas></div>
+<script>
+function createPattern(c){
+  const s=document.createElement('canvas');s.width=14;s.height=14;
+  const x=s.getContext('2d');x.strokeStyle=c;x.lineWidth=1.5;
+  x.beginPath();x.moveTo(0,14);x.lineTo(14,0);x.stroke();
+  return x.createPattern(s,'repeat');
+}
+const ds=${JSON.stringify(safeDatasets)};
+const czIdx=ds.findIndex(x=>x.label==='Critical Zone');
+if(czIdx>=0){ds[czIdx].backgroundColor=createPattern('rgba(240,82,82,0.32)');ds[czIdx].fill='end';}
+new Chart(document.getElementById('popChart'),{
+  type:'line',
+  data:{datasets:ds},
+  options:{
+    responsive:true, maintainAspectRatio:false, animation:false,
+    devicePixelRatio:window.devicePixelRatio||2,
+    layout:{padding:{left:8,right:18,top:18,bottom:8}},
+    plugins:{
+      legend:{display:true,labels:{color:'${tick}',font:{size:11,family:'JetBrains Mono'},boxWidth:14,boxHeight:2,padding:14,filter:i=>i.text!=='_env_top'&&i.text!=='Envelope'}},
+      tooltip:{enabled:false}
+    },
+    scales:{
+      x:{type:'linear',min:${xMin},max:${xMax},title:{display:true,text:'${xTitle}',color:'${title}',font:{size:11}},ticks:{color:'${tick}',font:{size:10,family:'JetBrains Mono'},maxTicksLimit:10},grid:{color:'${grid}'},border:{display:false}},
+      y:{min:${yMin},max:${yMax},title:{display:true,text:'${yTitle}',color:'${title}',font:{size:11}},ticks:{color:'${tick}',font:{size:10,family:'JetBrains Mono'},maxTicksLimit:8},grid:{color:'${grid}'},border:{display:false}}
+    }
+  }
+});
+<\/script></body></html>`);
     w.document.close();
 }
 
