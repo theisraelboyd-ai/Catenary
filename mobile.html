@@ -4,14 +4,18 @@
 <meta charset="UTF-8">
 <title>Catenary Suite — Field App</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<!-- Favicon & home screen icons — see manifest.json and icon files in same folder -->
+<link rel="icon" type="image/x-icon"   href="favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Catenary">
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0d0f14">
+<meta name="mobile-web-app-capable" content="yes">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="icon" type="image/x-icon" href="favicon.ico?v=1">
-<link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png?v=1">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=1">
-<link rel="manifest" href="manifest.json?v=1">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -451,6 +455,28 @@ td.cell-crit{background:var(--crit-bg);color:var(--red);}
 #page-config{background:var(--bg);}
 #page-solver{background:var(--bg);}
 #page-data{background:var(--bg);}
+
+/* ── TENSION TRACKING TRAY ── */
+.track-tray{
+  display:flex;flex-wrap:wrap;gap:8px;
+  margin-top:12px;padding-top:12px;
+  border-top:1px solid var(--border);
+}
+.track-pill{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 14px;border-radius:20px;
+  font-size:11px;font-weight:700;font-family:var(--mono);
+  border:1px solid;cursor:pointer;
+  transition:all 0.15s;-webkit-tap-highlight-color:transparent;
+  opacity:0.45;
+  white-space:nowrap;
+}
+.track-pill.active{opacity:1;box-shadow:0 0 0 2px currentColor;}
+.track-pill-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.track-tray-label{
+  width:100%;font-size:9px;font-weight:700;text-transform:uppercase;
+  letter-spacing:0.8px;color:var(--txt3);margin-bottom:4px;
+}
 </style>
 </head>
 <body>
@@ -520,6 +546,11 @@ td.cell-crit{background:var(--crit-bg);color:var(--red);}
           oninput="updateDashFromSlider(this.value)">
         <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--txt3);font-family:var(--mono);">
           <span>0 m</span><span id="depthSliderMax">100 m</span>
+        </div>
+        <!-- Tension tracking tray — shown when multiple tensions loaded -->
+        <div class="track-tray" id="trackTray" style="display:none;">
+          <div class="track-tray-label">Tracking tension</div>
+          <div id="trackPills" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
         </div>
       </div>
 
@@ -815,6 +846,7 @@ function applyPreset(n){
 ================================================================ */
 let activeTensions=[250],solverActive=false,solverTarget={x:0,y:0,h:0};
 let dashChart,totalRows=0,lastDatasets=[];
+let trackedTension=null; // which tension the dashboard stats track
 const COLORS=['#3b8cf7','#f05252','#a855f7','#f59e0b','#22c882','#06b6d4'];
 let deployTimer=null;
 
@@ -827,12 +859,46 @@ function initDropdown(){
 }
 function addTension(){
   const v=parseInt(document.getElementById('tSelect').value);
-  if(!activeTensions.includes(v)){activeTensions.push(v);activeTensions.sort((a,b)=>a-b);updateTags();}
+  if(!activeTensions.includes(v)){activeTensions.push(v);activeTensions.sort((a,b)=>a-b);updateTags();renderTrackTray();}
 }
 function updateTags(){
   document.getElementById('tList').innerHTML=activeTensions.map(t=>`<span class="t-tag">${t} kg <span class="t-tag-x" onclick="removeT(${t})">×</span></span>`).join('');
 }
-function removeT(t){activeTensions=activeTensions.filter(x=>x!==t);updateTags();}
+function removeT(t){
+  activeTensions=activeTensions.filter(x=>x!==t);
+  if(trackedTension===t) trackedTension=activeTensions[0]||null;
+  updateTags();renderTrackTray();
+}
+
+/* Render the tension selector tray on the dashboard */
+function renderTrackTray(){
+  const tray=document.getElementById('trackTray');
+  const pills=document.getElementById('trackPills');
+  if(activeTensions.length<=1){
+    tray.style.display='none';
+    trackedTension=activeTensions[0]||null;
+    return;
+  }
+  tray.style.display='flex';
+  // Default track to first if not set or stale
+  if(!trackedTension||!activeTensions.includes(trackedTension)) trackedTension=activeTensions[0];
+  pills.innerHTML=activeTensions.map((t,i)=>{
+    const col=COLORS[i%COLORS.length];
+    const active=trackedTension===t;
+    return `<span class="track-pill ${active?'active':''}"
+      style="color:${col};border-color:${col};background:${active?col+'22':'transparent'};"
+      onclick="setTrackedTension(${t})">
+      <span class="track-pill-dot" style="background:${col};"></span>
+      ${t} kg
+    </span>`;
+  }).join('');
+}
+
+function setTrackedTension(t){
+  trackedTension=t;
+  renderTrackTray();
+  updateDashFromSlider(document.getElementById('depthSlider').value);
+}
 
 function clearSolver(){
   ['obsL','obsD','obsA'].forEach(id=>document.getElementById(id).value='');
@@ -942,6 +1008,10 @@ function runMain(){
     document.getElementById('critAlert').classList.toggle('show',sliderDepth<cwd);
   }
 
+  // Sync tracked tension and update tray
+  if(!trackedTension||!activeTensions.includes(trackedTension)) trackedTension=activeTensions[0]||null;
+  renderTrackTray();
+
   // Update stats from slider
   updateDashFromSlider(document.getElementById('depthSlider').value);
   buildDashChart(fullDatasets);
@@ -957,7 +1027,8 @@ function updateDashFromSlider(depthVal){
     ['d-layback','d-length','d-angle','d-tension'].forEach(id=>{ const el=document.getElementById(id); if(el){const u=el.querySelector('.stat-unit');el.innerHTML='--';if(u)el.appendChild(u);} });
     return;
   }
-  const t=activeTensions[0]; // primary tension
+  // Use whichever tension is currently tracked (defaults to first)
+  const t=trackedTension||activeTensions[0];
   const wW=parseFloat(document.getElementById('wW').value);
   const wA=parseFloat(document.getElementById('wA').value);
   const sH=parseFloat(document.getElementById('sH').value);
@@ -969,8 +1040,15 @@ function updateDashFromSlider(depthVal){
     setStatVal('d-length',r.length.toFixed(1),'m');
     setStatVal('d-angle',r.angle.toFixed(1),'°');
     setStatVal('d-tension',r.tension.toFixed(0),'kg');
-    document.getElementById('d-layback-sub').textContent='at '+d+'m depth';
-    document.getElementById('d-tension-sub').textContent=t+' kg bottom tension';
+    document.getElementById('d-layback-sub').textContent='at '+d+' m depth';
+    // Show which tension is being tracked and its colour
+    const tIdx=activeTensions.indexOf(t);
+    const col=COLORS[tIdx%COLORS.length];
+    document.getElementById('d-tension-sub').innerHTML=
+      `<span style="display:inline-flex;align-items:center;gap:3px;">
+        <span style="width:7px;height:7px;border-radius:50%;background:${col};display:inline-block;flex-shrink:0;"></span>
+        ${t} kg bottom tension
+      </span>`;
     // CWD alert
     document.getElementById('critAlert').classList.toggle('show',d<r.cwd);
   }catch(e){}
@@ -1115,9 +1193,30 @@ function exportCSV(){
 ================================================================ */
 function printTableWindow(){
   const wW=document.getElementById('wW').value,wA=document.getElementById('wA').value,sH=document.getElementById('sH').value;
-  const tableHtml=document.getElementById('mainTable').outerHTML;
+  const fric=document.getElementById('fric').value;
+  // Clone and strip dark inline styles so print is always light
+  const tableClone=document.getElementById('mainTable').cloneNode(true);
+  tableClone.querySelectorAll('th').forEach(th=>{ th.style.background='#f0f2f7'; th.style.color='#4a5168'; });
+  tableClone.querySelectorAll('td').forEach(td=>{ if(!td.classList.contains('cell-crit')) td.style.background=''; });
+  const tableHtml=tableClone.outerHTML;
   const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html><head><title>Catenary Report</title><style>body{font-family:sans-serif;padding:28px;background:#fff;color:#1a1f2e;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.meta{background:#f0f2f7;border-left:5px solid #1a5fcc;padding:14px;margin-bottom:18px;border-radius:6px;}h2{margin:0;color:#1a5fcc;font-size:16px;}p{margin:5px 0 0;font-size:11px;color:#4a5168;}table{width:100%;border-collapse:collapse;font-size:10px;}th{background:#f0f2f7!important;color:#6b7280;font-weight:700;text-transform:uppercase;font-size:8px;letter-spacing:.5px;padding:7px;border-bottom:2px solid #e5e7eb;-webkit-print-color-adjust:exact;}td{padding:5px 8px;border-bottom:1px solid #f3f4f6;text-align:center;font-family:monospace;}.cell-crit{background:#fef2f2!important;color:#b91c1c!important;-webkit-print-color-adjust:exact;}@media print{@page{size:landscape;margin:10mm;}.bp{display:none;}}  .bp{background:#1a5fcc;color:white;border:none;padding:8px 18px;font-weight:700;border-radius:5px;cursor:pointer;margin-bottom:14px;}</style></head><body><button class="bp" onclick="window.print()">Print</button><div class="meta"><h2>Catenary Analysis Report</h2><p>Water: ${wW} kg/m · Air: ${wA} kg/m · Sheave H: ${sH} m</p></div>${tableHtml}</body></html>`);
+  w.document.write(`<!DOCTYPE html><html><head><title>Catenary Report</title><style>
+    *{box-sizing:border-box;}
+    body{font-family:sans-serif;padding:28px;background:#fff;color:#1a1f2e;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .meta{background:#f0f2f7;border-left:5px solid #1a5fcc;padding:14px;margin-bottom:18px;border-radius:6px;}
+    h2{margin:0;color:#1a5fcc;font-size:16px;}p{margin:5px 0 0;font-size:11px;color:#4a5168;}
+    table{width:100%;border-collapse:collapse;font-size:10px;}
+    th{background:#f0f2f7!important;color:#6b7280!important;font-weight:700;text-transform:uppercase;font-size:8px;letter-spacing:.5px;padding:7px;border-bottom:2px solid #e5e7eb;-webkit-print-color-adjust:exact;}
+    td{padding:5px 8px;border-bottom:1px solid #f3f4f6;text-align:center;font-family:monospace;color:inherit;}
+    td:first-child,th:first-child{background:#f8f9fc!important;border-right:1px solid #e5e7eb;}
+    .cell-crit{background:#fef2f2!important;color:#b91c1c!important;-webkit-print-color-adjust:exact;}
+    @media print{@page{size:landscape;margin:10mm;}.bp{display:none;}}
+    .bp{background:#1a5fcc;color:white;border:none;padding:8px 18px;font-weight:700;border-radius:5px;cursor:pointer;margin-bottom:14px;}
+  </style></head><body>
+  <button class="bp" onclick="window.print()">🖨 Print</button>
+  <div class="meta"><h2>Catenary Analysis Report</h2><p>Water: ${wW} kg/m · Air: ${wA} kg/m · Sheave H: ${sH} m · Friction μ: ${fric}</p></div>
+  ${tableHtml}
+  </body></html>`);
   w.document.close();
 }
 
@@ -1127,6 +1226,7 @@ function printTableWindow(){
 window.onload=()=>{
   initDropdown();
   updateTags();
+  renderTrackTray();
   runMain();
 };
 </script>
