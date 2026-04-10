@@ -4,44 +4,186 @@
 <meta charset="UTF-8">
 <title>Catenary Suite</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Catenary Suite — Submarine Cable Analysis Engine">
 <meta name="theme-color" content="#0d0f14">
+
+<!-- Inline SVG favicon — no external files needed -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230d0f14'/%3E%3Cpath d='M4 9 Q16 22 28 9' stroke='%233b8cf7' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M4 15 Q16 28 28 15' stroke='%23f05252' stroke-width='2.5' fill='none' stroke-linecap='round' opacity='0.8'/%3E%3Ccircle cx='16' cy='25' r='2.2' fill='%2322c882'/%3E%3C/svg%3E">
+
+<!-- Apple touch icon -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%230d0f14'/%3E%3Cpath d='M18 50 Q90 130 162 50' stroke='%233b8cf7' stroke-width='13' fill='none' stroke-linecap='round'/%3E%3Cpath d='M18 85 Q90 165 162 85' stroke='%23f05252' stroke-width='13' fill='none' stroke-linecap='round' opacity='0.8'/%3E%3Ccircle cx='90' cy='143' r='11' fill='%2322c882'/%3E%3C/svg%3E">
+
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-  *{box-sizing:border-box;margin:0;padding:0;}
-  html,body{height:100%;background:#0d0f14;font-family:'Space Grotesk',system-ui,sans-serif;color:#e8eaf0;display:flex;align-items:center;justify-content:center;}
-  .splash{text-align:center;padding:32px;}
-  .logo{font-size:28px;font-weight:700;color:#3b8cf7;letter-spacing:-0.5px;margin-bottom:6px;}
-  .sub{font-size:11px;text-transform:uppercase;letter-spacing:1.4px;color:#555d72;margin-bottom:32px;}
-  .spinner{width:36px;height:36px;border:3px solid rgba(59,140,247,0.15);border-top-color:#3b8cf7;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .redirect-msg{font-size:12px;color:#555d72;}
-  .manual-links{margin-top:24px;display:flex;gap:12px;justify-content:center;}
-  .manual-link{padding:9px 20px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;border:1px solid rgba(255,255,255,0.1);color:#8b92a8;transition:all 0.15s;}
-  .manual-link:hover{border-color:#3b8cf7;color:#3b8cf7;background:rgba(59,140,247,0.08);}
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+
+:root {
+  --brand:#3b8cf7; --green:#22c882; --red:#f05252;
+  --bg:#0d0f14; --panel:#161b27; --border:rgba(255,255,255,0.08);
+  --txt:#e8eaf0; --txt2:#8b92a8; --txt3:#4a5168;
+  --sans:'Space Grotesk',system-ui,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+
+html,body { height:100%; background:var(--bg); color:var(--txt); font-family:var(--sans); -webkit-font-smoothing:antialiased; }
+
+body {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  min-height:100dvh; padding:24px; position:relative; overflow:hidden;
+}
+
+/* Background grid */
+body::before {
+  content:''; position:fixed; inset:0;
+  background-image:linear-gradient(rgba(59,140,247,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(59,140,247,0.03) 1px,transparent 1px);
+  background-size:48px 48px; pointer-events:none;
+}
+
+/* Ambient glow orbs */
+.orb { position:fixed; border-radius:50%; filter:blur(90px); pointer-events:none; opacity:0.28; animation:drift 14s ease-in-out infinite; }
+.orb-1 { width:520px; height:520px; background:radial-gradient(circle,rgba(59,140,247,0.45),transparent); top:-140px; left:-120px; animation-delay:0s; }
+.orb-2 { width:380px; height:380px; background:radial-gradient(circle,rgba(34,200,130,0.3),transparent); bottom:-80px; right:-80px; animation-delay:-7s; }
+@keyframes drift { 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(28px,18px) scale(1.04);} }
+
+/* Main card */
+.card {
+  position:relative; z-index:10;
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:20px; padding:36px 40px; text-align:center;
+  max-width:440px; width:100%;
+  box-shadow:0 8px 48px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.03);
+  animation:cardIn 0.4s cubic-bezier(0.34,1.2,0.64,1) both;
+}
+@keyframes cardIn { from{opacity:0;transform:translateY(16px) scale(0.97);} to{opacity:1;transform:none;} }
+
+/* Logo row */
+.logo-row { display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:20px; }
+.logo-icon {
+  width:50px; height:50px; flex-shrink:0;
+  background:rgba(59,140,247,0.1); border:1px solid rgba(59,140,247,0.22);
+  border-radius:13px; display:flex; align-items:center; justify-content:center;
+}
+.logo-name  { font-size:21px; font-weight:700; color:var(--brand); letter-spacing:-0.5px; line-height:1.1; text-align:left; }
+.logo-sub   { font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:1.4px; color:var(--txt3); margin-top:2px; text-align:left; }
+
+/* Device badge */
+.device-badge {
+  display:inline-flex; align-items:center; gap:5px; margin-bottom:14px;
+  background:rgba(34,200,130,0.1); border:1px solid rgba(34,200,130,0.25);
+  border-radius:20px; padding:3px 11px;
+  font-size:10px; font-weight:700; color:var(--green); font-family:var(--mono); letter-spacing:0.4px;
+}
+.badge-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 1.8s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.5;transform:scale(1.4);} }
+
+/* Tagline */
+.tagline { font-size:12px; color:var(--txt2); line-height:1.65; margin-bottom:24px; }
+
+/* Spinner */
+.spinner-wrap { display:flex; flex-direction:column; align-items:center; gap:8px; margin-bottom:22px; }
+.spinner { width:26px; height:26px; border:2.5px solid rgba(59,140,247,0.12); border-top-color:var(--brand); border-radius:50%; animation:spin 0.7s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg);} }
+.redirect-msg { font-size:11px; font-family:var(--mono); color:var(--txt3); letter-spacing:0.3px; }
+
+/* Divider */
+.divider { display:flex; align-items:center; gap:10px; margin:18px 0; }
+.divider::before,.divider::after { content:''; flex:1; height:1px; background:var(--border); }
+.divider span { font-size:9px; color:var(--txt3); text-transform:uppercase; letter-spacing:1px; }
+
+/* App links */
+.link-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.app-link {
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  padding:14px 10px; background:rgba(255,255,255,0.02);
+  border:1px solid var(--border); border-radius:12px;
+  text-decoration:none; color:var(--txt2);
+  transition:all 0.18s; cursor:pointer;
+}
+.app-link:hover { background:rgba(59,140,247,0.07); border-color:rgba(59,140,247,0.28); color:var(--brand); }
+.link-icon  { font-size:22px; line-height:1; }
+.link-label { font-size:12px; font-weight:700; }
+.link-desc  { font-size:10px; color:var(--txt3); text-align:center; line-height:1.4; font-weight:400; }
+.app-link:hover .link-desc { color:rgba(59,140,247,0.6); }
+
+/* Version footer */
+.version { margin-top:24px; font-size:9px; color:var(--txt3); font-family:var(--mono); letter-spacing:0.4px; }
 </style>
 </head>
 <body>
-<div class="splash">
-  <div class="logo">Catenary Suite</div>
-  <div class="sub">Submarine Cable Analysis Engine</div>
-  <div class="spinner"></div>
-  <div class="redirect-msg" id="msg">Detecting your device…</div>
-  <div class="manual-links">
-    <a class="manual-link" href="desktop.html">Desktop App</a>
-    <a class="manual-link" href="mobile.html">Mobile App</a>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div class="card">
+
+  <div class="logo-row">
+    <div class="logo-icon">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 7 Q14 20 26 7"  stroke="#3b8cf7" stroke-width="2.2" stroke-linecap="round"/>
+        <path d="M2 13 Q14 26 26 13" stroke="#f05252" stroke-width="2.2" stroke-linecap="round" opacity="0.75"/>
+        <circle cx="14" cy="22.5" r="2" fill="#22c882"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-name">Catenary Suite</div>
+      <div class="logo-sub">Cable Analysis Engine</div>
+    </div>
   </div>
+
+  <div class="device-badge">
+    <span class="badge-dot"></span>
+    <span id="deviceLabel">Detecting device…</span>
+  </div>
+
+  <p class="tagline">Two-segment catenary model for submarine cable deployment. Critical zone analysis, live solver, and operating envelope visualisation.</p>
+
+  <div class="spinner-wrap">
+    <div class="spinner"></div>
+    <div class="redirect-msg" id="redirectMsg">Detecting device…</div>
+  </div>
+
+  <div class="divider"><span>or open directly</span></div>
+
+  <div class="link-grid">
+    <a class="app-link" href="desktop.html">
+      <span class="link-icon">🖥️</span>
+      <span class="link-label">Desktop</span>
+      <span class="link-desc">Three-column layout · crosshair chart · full analysis suite</span>
+    </a>
+    <a class="app-link" href="mobile.html">
+      <span class="link-icon">📱</span>
+      <span class="link-label">Mobile</span>
+      <span class="link-desc">Dashboard · live depth monitor · field-optimised UI</span>
+    </a>
+  </div>
+
+  <div class="version">Catenary Suite v3.0 · Space Grotesk · JetBrains Mono</div>
 </div>
+
 <script>
-  function isMobileDevice(){
-    const touch=('ontouchstart' in window)||(navigator.maxTouchPoints>1);
-    const narrow=window.screen.width<=1024||window.innerWidth<=1024;
-    const ua=/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent);
-    return [touch,narrow,ua].filter(Boolean).length>=2;
-  }
-  const mobile=isMobileDevice();
-  const target=mobile?'mobile.html':'desktop.html';
-  const label=mobile?'Mobile Field App':'Desktop Analysis Suite';
-  document.getElementById('msg').textContent='Launching '+label+'…';
-  setTimeout(()=>{window.location.replace(target);},600);
+function isMobileDevice(){
+  const touch  = ('ontouchstart' in window) || (navigator.maxTouchPoints > 1);
+  const narrow = window.screen.width <= 1024 || window.innerWidth <= 1024;
+  const ua     = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent);
+  return [touch, narrow, ua].filter(Boolean).length >= 2;
+}
+
+const mobile  = isMobileDevice();
+const target  = mobile ? 'mobile.html' : 'desktop.html';
+const devName = mobile ? 'Mobile detected' : 'Desktop detected';
+const appName = mobile ? 'Field App' : 'Analysis Suite';
+
+document.getElementById('deviceLabel').textContent = devName;
+
+let secs = 2;
+const msgEl = document.getElementById('redirectMsg');
+msgEl.textContent = `Launching ${appName} in ${secs}…`;
+
+const t = setInterval(()=>{
+  secs--;
+  if(secs <= 0){ clearInterval(t); window.location.replace(target); }
+  else { msgEl.textContent = `Launching ${appName} in ${secs}…`; }
+}, 1000);
 </script>
 </body>
 </html>
