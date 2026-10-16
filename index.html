@@ -35,8 +35,8 @@
   --water-top:rgba(52,128,176,.30); --water-bot:rgba(20,60,92,.55); --surface:#6fc3ea;
   --seabed:#5b5246; --seabed-line:#a08e72; --sky:transparent;
   --hull:#32424e; --hull-line:#62788a;
-  --solver:#e8eef2;
-  --s1:#4aa8ff; --s2:#3fd0b4; --s3:#b591ff; --s4:#ff7eb6; --s5:#b4dc55; --s6:#ff9f4a;
+  --solver:#ff5ad9; --solver-soft:rgba(255,90,217,.10);
+  --s1:#4aa8ff; --s2:#3fd0b4; --s3:#b591ff; --s4:#ff8a65; --s5:#b4dc55; --s6:#d9b77a;
   color-scheme:dark;
 }
 [data-theme="day"]{
@@ -48,8 +48,8 @@
   --water-top:rgba(70,150,200,.20); --water-bot:rgba(30,95,140,.32); --surface:#1f86bd;
   --seabed:#cbbd9f; --seabed-line:#8a7556; --sky:transparent;
   --hull:#c4ced5; --hull-line:#7b8d99;
-  --solver:#1b2b36;
-  --s1:#1f6fd1; --s2:#0d9a80; --s3:#7a4fd6; --s4:#c93a7d; --s5:#5f8f12; --s6:#c9620e;
+  --solver:#b8239d; --solver-soft:rgba(184,35,157,.07);
+  --s1:#1f6fd1; --s2:#0d9a80; --s3:#7a4fd6; --s4:#cf5a2e; --s5:#5f8f12; --s6:#8a6b2e;
   color-scheme:light;
 }
 
@@ -84,14 +84,14 @@ button{cursor:pointer}
 ===================================================================== */
 .app{display:grid;grid-template-columns:350px minmax(0,1fr);height:calc(100dvh - var(--hdr))}
 .side{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:4px 0 28px;scrollbar-width:thin}
-.main{overflow-y:auto;padding:16px;display:grid;gap:14px;align-content:start;scrollbar-width:thin;
+.main{overflow-y:auto;overflow-x:hidden;padding:16px;display:grid;gap:14px;align-content:start;scrollbar-width:thin;
   grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-  grid-template-areas:"depth depth" "solve solve" "curves elev" "readout readout" "table table"}
+  grid-template-areas:"depth depth" "solve solve" "curves elev" "table table"}
 #card-solve{grid-area:solve}
 #card-depth{grid-area:depth}#card-curves{grid-area:curves}#card-elev{grid-area:elev}
-#card-readout{grid-area:readout}#card-table{grid-area:table}
+#card-table{grid-area:table}
 @media (max-width:1180px){
-  .main{grid-template-columns:minmax(0,1fr);grid-template-areas:"depth" "solve" "curves" "elev" "readout" "table"}
+  .main{grid-template-columns:minmax(0,1fr);grid-template-areas:"depth" "solve" "elev" "curves" "table"}
 }
 
 .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-m);min-width:0}
@@ -143,7 +143,10 @@ button{cursor:pointer}
 .check{display:flex;align-items:center;gap:8px;color:var(--ink2);font-size:13px;margin:4px 0 10px;cursor:pointer}
 .check input{accent-color:var(--cursor);width:15px;height:15px}
 
-.solvebar{border-color:var(--line2)}
+.solvebar{border-color:color-mix(in srgb, var(--solver) 45%, transparent);background:linear-gradient(90deg,var(--solver-soft),transparent 70%),var(--panel);box-shadow:inset 4px 0 0 var(--solver)}
+.solvebar .sv-t b{color:var(--solver)}
+.solvebar .inp input:focus{border-color:var(--solver);box-shadow:0 0 0 3px var(--solver-soft)}
+.btn.sol{background:var(--solver);border-color:var(--solver);color:#fff}
 .sv{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 18px;padding:12px 18px}
 .sv-t{display:flex;flex-direction:column;min-width:170px;align-self:center}
 .sv-t b{font-size:14.5px;font-weight:650}
@@ -220,16 +223,21 @@ button{cursor:pointer}
 .tip .tr i{width:8px;height:8px;border-radius:50%;flex:none}
 .tip .tr b{margin-left:auto;font-weight:650;padding-left:14px}
 .tip .tr.crit b{color:var(--crit)}
-#card-elev{display:flex;flex-direction:column}
-#elevPlot{flex:1;min-height:clamp(300px,50vh,560px);height:auto}
+#card-elev,#card-curves{display:flex;flex-direction:column}
+#elevPlot,#curvePlot{flex:1;min-height:clamp(300px,46vh,520px);height:auto}
 
 /* =====================================================================
    READOUT
 ===================================================================== */
-.readout{width:100%;border-collapse:collapse;table-layout:fixed}
-.readout th{font-weight:500;color:var(--ink3);font-size:12px;text-align:right;padding:6px 18px;border-bottom:1px solid var(--line);white-space:nowrap}
+.ro{border-top:1px solid var(--line);overflow-x:auto}
+.readout{width:100%;border-collapse:collapse}
+.readout th.st,.readout td.st{padding-left:12px;padding-right:14px}
+.readout td.who,.readout th:first-child{padding-left:14px}
+
+.readout tr.sol td.who{color:var(--solver)}
+.readout th{font-weight:500;color:var(--ink3);font-size:12px;text-align:right;padding:6px 7px;border-bottom:1px solid var(--line);white-space:nowrap}
 .readout th:first-child{text-align:left}
-.readout td{padding:6px 18px;border-bottom:1px solid var(--line);text-align:right;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.readout td{padding:6px 7px;border-bottom:1px solid var(--line);text-align:right;font-size:14.5px;font-weight:600;white-space:nowrap}
 .readout td small{font-size:12px;color:var(--ink3);font-weight:500;margin-left:3px;letter-spacing:0}
 .readout tr:last-child td{border-bottom:0}
 .readout td.who{text-align:left;font-size:14px;font-weight:650;letter-spacing:0}
@@ -238,10 +246,11 @@ button{cursor:pointer}
 .readout td.st{font-size:13px;font-weight:600;letter-spacing:0;text-align:left}
 .readout th.st{text-align:left}
 .readout td.st .ok{color:var(--ok)}.readout td.st .bad{color:var(--crit)}
-.readout td.st small{margin-left:8px}
+.readout td.st small{margin-left:6px}
 .readout tr{cursor:pointer}
-.readout tr.focus td{background:var(--cursor-soft)}
-.readout tr.focus td.who{box-shadow:inset 3px 0 0 var(--cursor)}
+.readout tr.focus td{background:color-mix(in srgb, var(--sel) 13%, transparent)}
+.readout tr.focus td.who{box-shadow:inset 3px 0 0 var(--sel)}
+.readout tr:not(.focus):hover td{background:var(--panel2)}
 .empty{padding:22px 16px;color:var(--ink2);font-size:13.5px}
 
 /* =====================================================================
@@ -306,11 +315,11 @@ dialog::backdrop{background:rgba(5,10,15,.6)}
   .depthbar .lbl{display:none}
   .dval input{width:84px;height:42px;font-size:24px}
   .steps button{width:38px;height:38px}
-  .plot,#elevPlot{height:300px}
-  #card-depth{order:0}#card-solve{order:1}#card-readout{order:2}#card-curves{order:3}#card-elev{order:4}#card-table{order:5}
+  .plot,#elevPlot,#curvePlot{height:300px;min-height:300px}
+  #card-depth{order:0}#card-solve{order:1}#card-elev{order:2}#card-curves{order:3}#card-table{order:4}
   #elevPlot{min-height:300px}
   .show-m{display:inline-flex!important}
-  .readout tr.focus{background:var(--cursor-soft);box-shadow:inset 3px 0 0 var(--cursor)}
+  .readout tr.focus{background:color-mix(in srgb, var(--sel) 13%, transparent);box-shadow:inset 3px 0 0 var(--sel)}
   .readout tr.focus td{background:none}
   .readout thead{display:none}
   .readout,.readout tbody{display:block}
@@ -334,7 +343,7 @@ dialog::backdrop{background:rgba(5,10,15,.6)}
   body[data-tab="setup"] .main,
   body[data-tab="profile"] .side,body[data-tab="table"] .side{display:none}
   body[data-tab="profile"] #card-table{display:none}
-  body[data-tab="table"] #card-curves,body[data-tab="table"] #card-elev,body[data-tab="table"] #card-readout,body[data-tab="table"] #card-solve{display:none}
+  body[data-tab="table"] #card-curves,body[data-tab="table"] #card-elev,body[data-tab="table"] #card-solve{display:none}
   .bnav{display:grid;grid-template-columns:repeat(3,1fr);position:fixed;left:0;right:0;bottom:0;z-index:20;
     height:calc(var(--nav) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);
     background:var(--panel);border-top:1px solid var(--line2)}
@@ -356,13 +365,15 @@ dialog::backdrop{background:rgba(5,10,15,.6)}
   .print-head h1{font-size:18px;margin-bottom:4px}
   .app{display:block;height:auto}
   .main{display:block;overflow:visible;padding:0}
-  .card{border:1px solid #ccd;break-inside:avoid;margin-bottom:8px}
+  .card{border:1px solid #ccd;margin-bottom:8px}
+  #card-curves,#card-elev{break-inside:avoid}
   #card-curves,#card-elev{display:inline-block;width:49.3%;vertical-align:top}
-  .plot,#elevPlot{height:300px}
+  .plot,#elevPlot,#curvePlot{height:280px;min-height:0;flex:none}
+  #card-curves,#card-elev{display:inline-block!important}
   .twrap{max-height:none;overflow:visible}
   table.data th{position:static}
   #card-table{break-before:page}
-  body.print-table #card-solve,body.print-table #card-curves,body.print-table #card-elev,body.print-table #card-readout{display:none!important}
+  body.print-table #card-solve,body.print-table #card-curves,body.print-table #card-elev{display:none!important}
   body.print-table #card-table{break-before:auto}
   #card-table{break-inside:auto}
   #card-solve{display:none!important}
@@ -457,7 +468,7 @@ dialog::backdrop{background:rgba(5,10,15,.6)}
           <div class="sv-h"><small>Matching bottom tension</small><b id="soH">–</b></div>
           <dl id="soDl"></dl>
         </div>
-        <div class="sv-a"><button class="btn" id="soAdd" disabled>Add to comparison</button><button class="btn quiet" id="soClear">Clear</button></div>
+        <div class="sv-a"><button class="btn sol" id="soAdd" disabled>Add to comparison</button><button class="btn quiet" id="soClear">Clear</button></div>
       </div>
       <div class="msg" id="solveMsg"></div>
     </section>
@@ -475,17 +486,14 @@ dialog::backdrop{background:rgba(5,10,15,.6)}
 
     <section class="card" id="card-elev">
       <div class="card-h">
-        <h2>Cable shape</h2>
+        <h2 id="roTitle">Cable shape</h2>
         <span class="hint" id="elevHint"></span>
         <label class="check" style="margin:0"><input type="checkbox" id="trueScale" checked> True scale</label>
       </div>
       <div class="plot" id="elevPlot"><canvas id="elevCv"></canvas></div>
+      <div id="roBody" class="ro"></div>
     </section>
 
-    <section class="card" id="card-readout">
-      <div class="card-h" style="padding:8px 18px"><h2 id="roTitle" style="font-size:13.5px">At this depth</h2><span class="hint">Tap a row to focus it in the cable shape</span></div>
-      <div id="roBody"></div>
-    </section>
 
     <section class="card" id="card-table">
       <div class="card-h">
@@ -905,131 +913,186 @@ function hideTip(){ $('tip').style.display='none'; }
 
 /* =====================================================================
    CABLE SHAPE (side elevation at the selected depth)
+   One selection is shared by the drawing and the readout rows:
+   S.focus is a tension index, or 'sol' for the solved cable.
 ===================================================================== */
+const ELEV = {hits:[], hover:null, ptr:null};
+function cablesAt(d){
+  const p=params();
+  const out = M.series.map((s,i)=>({key:i, color:s.color, label:fmtT(s.H), r:solve(s.H,d,p)}));
+  if(M.solverSeries) out.push({key:'sol', sol:true, color:css('--solver'), label:'Solved '+fmtT(M.solverSeries.H), r:solve(M.solverSeries.H,d,p)});
+  return out;
+}
+function focusKey(){
+  if(S.focus==='sol' && M.solverSeries) return 'sol';
+  if(typeof S.focus==='number' && S.focus<M.series.length) return S.focus;
+  return M.series.length ? 0 : (M.solverSeries ? 'sol' : null);
+}
+function setFocus(k){ S.focus=k; save(); renderReadout(); drawElev(); }
+
 function drawElev(){
   const cv=$('elevCv'); const {ctx,w,h}=prep(cv);
-  const d=S.depth, p=params();
-  const items = M.series.map(s=>({s, r:solve(s.H,d,p)})).filter(o=>o.r);
-  const sol = M.solverSeries ? solve(M.solverSeries.H,d,p) : null;
+  const d=S.depth;
+  const all = cablesAt(d), items = all.filter(c=>c.r);
   const ink3=css('--ink3'), ink2=css('--ink2');
+  ELEV.hits = [];
   ctx.font='12px '+css('--sans');
-  if(!(d>0) || (!items.length && !sol)){
+  if(!(d>0) || !items.length){
     ctx.fillStyle=ink2; ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText(d>0 ? 'Add a bottom tension to see the cable shape.' : 'Pick a water depth above 0 m.', w/2, h/2);
     $('elevHint').textContent=''; return;
   }
-  const maxLay = Math.max(...items.map(o=>o.r.layback), sol?sol.layback:0);
-  const pad={l:52,r:Math.min(130,w*.22),t:22,b:26};
-  const topY = S.sH + S.sR + 2, botY = -d - Math.max(2, d*0.06);
+  const fk = focusKey();
+  const fo = items.find(c=>c.key===fk) || items[0];
+  const maxLay = Math.max(...items.map(c=>c.r.layback));
+  const pad={l:52,r:Math.min(130,w*.22),t:22,b:30};
+  const topY = S.sH + S.sR + 2, botY = -d - Math.max(2, d*0.08);
   const spanY = topY-botY, spanX = maxLay*1.08 + 2;
   let kx = (w-pad.l-pad.r)/spanX, ky = (h-pad.t-pad.b)/spanY;
   if(S.trueScale){ const k=Math.min(kx,ky); kx=ky=k; }
-  const ex = w-pad.r;                                   // chute exit x (pixels)
-  const X = dist => ex - dist*kx;                       // dist = metres from chute exit toward touchdown
-  const Y = z => pad.t + (topY - z)*ky;                 // z = metres above sea surface
-  const left = 0;
-  $('elevHint').textContent = S.trueScale ? '1:1 scale' : 'Stretched to fit, angles not true';
+  const ex = w-pad.r;
+  const X = dist => ex - dist*kx;                       // metres from chute exit toward touchdown
+  const Y = z => pad.t + (topY - z)*ky;                 // metres above the sea surface
+  $('elevHint').textContent = (S.trueScale ? '1:1 scale' : 'Stretched, angles not true') + ' · tap a cable to select it';
 
-  // water
+  // water, seabed, surface
   const g=ctx.createLinearGradient(0,Y(0),0,Y(-d));
   g.addColorStop(0,css('--water-top')); g.addColorStop(1,css('--water-bot'));
-  ctx.fillStyle=g; ctx.fillRect(left,Y(0),w,Y(-d)-Y(0));
-  // seabed
-  ctx.fillStyle=css('--seabed'); ctx.fillRect(left,Y(-d),w,h-Y(-d));
-  ctx.fillStyle=hatch(ctx, css('--seabed-line')); ctx.fillRect(left,Y(-d),w,h-Y(-d));
-  ctx.strokeStyle=css('--seabed-line'); ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(left,Y(-d)); ctx.lineTo(w,Y(-d)); ctx.stroke();
-  // surface
-  ctx.strokeStyle=css('--surface'); ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(left,Y(0)); ctx.lineTo(w,Y(0)); ctx.stroke();
+  ctx.fillStyle=g; ctx.fillRect(0,Y(0),w,Y(-d)-Y(0));
+  ctx.fillStyle=css('--seabed'); ctx.fillRect(0,Y(-d),w,h-Y(-d));
+  ctx.fillStyle=hatch(ctx, css('--seabed-line')); ctx.fillRect(0,Y(-d),w,h-Y(-d));
+  ctx.strokeStyle=css('--seabed-line'); ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(0,Y(-d)); ctx.lineTo(w,Y(-d)); ctx.stroke();
+  ctx.strokeStyle=css('--surface'); ctx.beginPath(); ctx.moveTo(0,Y(0)); ctx.lineTo(w,Y(0)); ctx.stroke();
 
-  // vessel stern with chute, drawn around the focused (or first) item
-  const fo = items[Math.min(S.focus, items.length-1)] || null;
-  const phi = (fo ? fo.r.exitAng : (sol?sol.exitAng:Math.PI/3));
+  // vessel stern and chute, drawn for the selected cable's exit angle
+  const phi = fo.r.exitAng;
   const rPx = Math.max(4, S.sR*kx);
   const E = {x:ex, y:Y(S.sH)};
-  // centre is inboard (to the right on screen) and below the exit point
   const C = {x:E.x + rPx*Math.sin(phi), y:E.y + rPx*Math.cos(phi)};
   const deckY = C.y - rPx;
   const draft = Math.max(Y(0)+12, Y(-Math.min(6, d*0.5)));
   ctx.fillStyle=css('--hull'); ctx.strokeStyle=css('--hull-line'); ctx.lineWidth=1.2;
   ctx.beginPath(); ctx.moveTo(C.x, deckY); ctx.lineTo(w+2, deckY); ctx.lineTo(w+2, draft);
-  ctx.lineTo(C.x+ (draft-Y(0))*0.35, draft); ctx.lineTo(C.x, Math.max(C.y, Y(0)-2)); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.lineTo(C.x+(draft-Y(0))*0.35, draft); ctx.lineTo(C.x, Math.max(C.y, Y(0)-2)); ctx.closePath(); ctx.fill(); ctx.stroke();
   if(S.trueScale && rPx>3){
-    const angE = Math.atan2(E.y-C.y, E.x-C.x);   // exit point, measured from the chute centre
+    const angE = Math.atan2(E.y-C.y, E.x-C.x);
     ctx.beginPath(); ctx.arc(C.x, C.y, rPx, angE, -Math.PI/2, false);
     ctx.strokeStyle=css('--hull-line'); ctx.lineWidth=3; ctx.stroke();
   }
   ctx.fillStyle=ink2; ctx.font='600 12px '+css('--sans'); ctx.textAlign='left'; ctx.textBaseline='bottom';
   ctx.fillText('Vessel', C.x+8, deckY-6);
 
-  // cables
-  const drawCable = (r, color, width, dash) => {
-    const pts=shape(r,d);
-    ctx.strokeStyle=color; ctx.lineWidth=width; ctx.setLineDash(dash||[]); ctx.lineJoin='round'; ctx.lineCap='round';
-    ctx.beginPath();
-    pts.forEach((q,i)=>{ const x=X(r.layback-q[0]), y=Y(q[1]-d); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
-    ctx.stroke(); ctx.setLineDash([]);
-    // laid cable on seabed beyond touchdown
-    ctx.globalAlpha=.55; ctx.beginPath(); ctx.moveTo(X(r.layback),Y(-d)-width/2); ctx.lineTo(Math.max(0,X(r.layback)-60),Y(-d)-width/2); ctx.stroke(); ctx.globalAlpha=1;
-    ctx.beginPath(); ctx.arc(X(r.layback),Y(-d)-1,3.5,0,Math.PI*2); ctx.fillStyle=color; ctx.fill();
+  // cables: others thin, hovered medium, selected thick on top
+  const path = c => shape(c.r,d).map(q=>[X(c.r.layback-q[0]), Y(q[1]-d)]);
+  const drawCable = (c, width, alpha) => {
+    const pts = path(c);
+    ELEV.hits.push({key:c.key, pts, c});
+    ctx.globalAlpha=alpha; ctx.strokeStyle=c.color; ctx.lineWidth=width; ctx.lineJoin='round'; ctx.lineCap='round';
+    ctx.setLineDash(c.sol ? [9,5] : []);
+    ctx.beginPath(); pts.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])); ctx.stroke(); ctx.setLineDash([]);
+    ctx.globalAlpha=alpha*.55; ctx.beginPath(); ctx.moveTo(X(c.r.layback),Y(-d)-width/2); ctx.lineTo(Math.max(0,X(c.r.layback)-60),Y(-d)-width/2); ctx.stroke();
+    ctx.globalAlpha=alpha; ctx.beginPath(); ctx.arc(X(c.r.layback),Y(-d)-1,width>2.5?5:3.5,0,Math.PI*2); ctx.fillStyle=c.color; ctx.fill();
+    ctx.globalAlpha=1;
   };
-  items.forEach((o,i)=>{ if(o!==fo) drawCable(o.r, o.s.color, 1.8); });
-  if(sol) drawCable(sol, css('--solver'), 2, [8,5]);
-  if(fo) drawCable(fo.r, fo.s.color, 3.2);
+  const hov = items.find(c=>c.key===ELEV.hover && c.key!==fo.key);
+  items.forEach(c=>{ if(c!==fo && c!==hov) drawCable(c, c.sol?2.2:1.8, .7); });
+  if(hov) drawCable(hov, 2.8, 1);
+  drawCable(fo, 3.6, 1);
+  // hit order: selected first, then the rest
+  ELEV.hits.reverse();
 
-  // annotations for the focused cable
-  const ann = fo ? fo.r : sol;
-  if(ann){
-    const tx=X(ann.layback), y=Math.min(h-8, Y(-d)+14);
-    ctx.strokeStyle=css('--cursor'); ctx.fillStyle=css('--cursor'); ctx.lineWidth=1.2;
-    ctx.beginPath(); ctx.moveTo(tx,y); ctx.lineTo(ex,y); ctx.moveTo(tx,y-5); ctx.lineTo(tx,y+5); ctx.moveTo(ex,y-5); ctx.lineTo(ex,y+5); ctx.stroke();
-    ctx.setLineDash([2,3]); ctx.globalAlpha=.6; ctx.beginPath(); ctx.moveTo(ex,E.y); ctx.lineTo(ex,y); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1;
-    const lab = `Layback ${fmt(ann.layback,1)} m`; ctx.font='600 12.5px '+css('--sans');
-    const tw=ctx.measureText(lab).width+12, lx=Math.max(4,(tx+ex)/2-tw/2);
-    ctx.fillStyle=css('--panel'); roundRect(ctx,lx,y-10,tw,20,4); ctx.fill();
-    ctx.fillStyle=css('--cursor'); ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText(lab,lx+6,y);
-    // surface crossing + angle
-    const sx = X(ann.layback - ann.x1), sy=Y(0);
-    ctx.beginPath(); ctx.arc(sx,sy,3.5,0,Math.PI*2); ctx.fill();
-    ctx.font='12px '+css('--sans'); ctx.fillStyle=ink2; ctx.textAlign='right'; ctx.textBaseline='bottom';
-    ctx.fillText(`${fmt(ann.angle,1)}° from vertical`, sx-8, sy-5);
+  // annotations for the selected cable, in its own colour
+  const r=fo.r, col=fo.color;
+  const tx=X(r.layback), y=Math.min(h-12, Y(-d)+16);
+  ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=1.3;
+  ctx.beginPath(); ctx.moveTo(tx,y); ctx.lineTo(ex,y); ctx.moveTo(tx,y-5); ctx.lineTo(tx,y+5); ctx.moveTo(ex,y-5); ctx.lineTo(ex,y+5); ctx.stroke();
+  ctx.setLineDash([2,3]); ctx.globalAlpha=.6; ctx.beginPath(); ctx.moveTo(ex,E.y); ctx.lineTo(ex,y); ctx.moveTo(tx,Y(-d)); ctx.lineTo(tx,y); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1;
+  pill(ctx, `${fo.label} · layback ${fmt(r.layback,1)} m`, (tx+ex)/2, y, col, 'center', w);
+  const sx = X(r.layback - r.x1), sy=Y(0);
+  ctx.beginPath(); ctx.arc(sx,sy,4,0,Math.PI*2); ctx.fillStyle=col; ctx.fill();
+  pill(ctx, `${fmt(r.angle,1)}° from vertical`, sx-10, sy-14, col, 'right', w);
+
+  // hover card
+  if(hov && ELEV.ptr){
+    const lines=[hov.label, `Layback ${fmt(hov.r.layback,1)} m`, `Angle ${fmt(hov.r.angle,1)}° from vertical`];
+    ctx.font='600 12.5px '+css('--sans');
+    const bw=Math.max(...lines.map(t=>ctx.measureText(t).width))+20, bh=lines.length*18+12;
+    let bx=ELEV.ptr.x+14, by=ELEV.ptr.y-bh-8;
+    if(bx+bw>w-4) bx=ELEV.ptr.x-bw-14; if(by<4) by=ELEV.ptr.y+14;
+    ctx.fillStyle=css('--panel'); ctx.strokeStyle=hov.color; ctx.lineWidth=1.5; roundRect(ctx,bx,by,bw,bh,6); ctx.fill(); ctx.stroke();
+    lines.forEach((t,i)=>{ ctx.fillStyle=i?css('--ink'):hov.color; ctx.font=(i?'500 ':'650 ')+'12.5px '+css('--sans'); ctx.textAlign='left'; ctx.textBaseline='top'; ctx.fillText(t,bx+10,by+8+i*18); });
   }
+
   // depth dimension
-  ctx.strokeStyle=ink3; ctx.fillStyle=ink2; ctx.lineWidth=1;
+  ctx.strokeStyle=ink3; ctx.lineWidth=1;
   const dx=14; ctx.beginPath(); ctx.moveTo(dx,Y(0)); ctx.lineTo(dx,Y(-d)); ctx.moveTo(dx-4,Y(0)); ctx.lineTo(dx+4,Y(0)); ctx.moveTo(dx-4,Y(-d)); ctx.lineTo(dx+4,Y(-d)); ctx.stroke();
   ctx.save(); ctx.translate(dx+12,(Y(0)+Y(-d))/2); ctx.rotate(-Math.PI/2); ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.font='600 12px '+css('--sans'); ctx.fillStyle=css('--cursor'); ctx.fillText(`${fmt(d,1)} m`,0,0); ctx.restore();
   ctx.font='11.5px '+css('--sans'); ctx.fillStyle=ink3; ctx.textAlign='left'; ctx.textBaseline='bottom';
   ctx.fillText('Sea surface', dx+24, Y(0)-4);
 }
+function pill(ctx, text, x, y, col, align, w){
+  ctx.font='600 12.5px '+css('--sans');
+  const tw=ctx.measureText(text).width+14;
+  let lx = align==='center' ? x-tw/2 : align==='right' ? x-tw : x;
+  lx = Math.max(4, Math.min(lx, w-tw-4));
+  ctx.fillStyle=css('--panel'); roundRect(ctx,lx,y-11,tw,22,5); ctx.fill();
+  ctx.strokeStyle=col; ctx.lineWidth=1.2; ctx.stroke();
+  ctx.fillStyle=col; ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText(text,lx+7,y+.5);
+}
+function elevHit(e){
+  const rect=$('elevCv').getBoundingClientRect(), x=e.clientX-rect.left, y=e.clientY-rect.top;
+  const lim = e.pointerType==='mouse' ? 12 : 26;
+  let best=null, bd=lim;
+  ELEV.hits.forEach(hh=>{
+    for(let i=1;i<hh.pts.length;i++){
+      const [x1,y1]=hh.pts[i-1],[x2,y2]=hh.pts[i], dx=x2-x1, dy=y2-y1, L=dx*dx+dy*dy||1;
+      const t=Math.max(0,Math.min(1,((x-x1)*dx+(y-y1)*dy)/L)), px=x1+t*dx-x, py=y1+t*dy-y, dd=Math.hypot(px,py);
+      if(dd<bd){ bd=dd; best=hh.key; }
+    }
+  });
+  return {key:best, x, y};
+}
+const elevPlot=$('elevPlot');
+elevPlot.addEventListener('pointermove', e=>{
+  if(e.pointerType!=='mouse') return;
+  const hit=elevHit(e);
+  elevPlot.style.cursor = hit.key!=null ? 'pointer' : 'default';
+  const changed = hit.key!==ELEV.hover;
+  ELEV.hover=hit.key; ELEV.ptr={x:hit.x,y:hit.y};
+  if(changed || hit.key!=null) drawElev();
+});
+elevPlot.addEventListener('pointerleave', ()=>{ ELEV.hover=null; ELEV.ptr=null; drawElev(); });
+elevPlot.addEventListener('click', e=>{ const hit=elevHit(e); if(hit.key!=null){ ELEV.hover=null; setFocus(hit.key); } });
 
 /* =====================================================================
-   READOUT
+   READOUT — lives under the cable shape and shares its selection
 ===================================================================== */
 function renderReadout(){
-  const d=S.depth, p=params();
-  $('roTitle').textContent = `At ${fmt(d,1)} m water depth`;
-  if(!M.series.length && !M.solverSeries){
-    $('roBody').innerHTML = `<div class="empty">Add a bottom tension in Setup to see layback, length, angle and tensioner load here.</div>`; return;
-  }
-  const row = (who, r, cls, idx) => {
-    if(!r) return `<tr><td class="who">${who}</td><td colspan="5" class="st"><span class="bad">No solution at this depth</span></td></tr>`;
-    const crit = d < r.cwd;
-    return `<tr class="${cls}" ${idx!=null?`data-i="${idx}"`:''}>
+  const d=S.depth;
+  $('roTitle').textContent = `Cable shape at ${fmt(d,1)} m`;
+  const cs = cablesAt(d);
+  if(!cs.length){ $('roBody').innerHTML = `<div class="empty">Add a bottom tension in Setup to see the cable and its figures here.</div>`; return; }
+  const fk=focusKey();
+  const body = cs.map(c=>{
+    const who = `<i class="${c.sol?'dash':''}" style="${c.sol?'border-color':'background'}:${c.color}"></i>${c.label}`;
+    const cls = [c.key===fk?'focus':'', c.sol?'sol':''].join(' ');
+    const sel = `style="--sel:${c.color}"`;
+    if(!c.r) return `<tr class="${cls}" data-i="${c.key}" ${sel}><td class="who">${who}</td><td colspan="5" class="st"><span class="bad">No solution at this depth</span></td></tr>`;
+    const r=c.r, crit=d<r.cwd;
+    return `<tr class="${cls}" data-i="${c.key}" ${sel}>
       <td class="who">${who}</td>
-      <td data-l="Layback">${fmt(r.layback,1)}<small>m</small></td>
-      <td data-l="Length">${fmt(r.length,1)}<small>m</small></td>
-      <td data-l="Angle">${fmt(r.angle,1)}<small>°</small></td>
-      <td data-l="Tensioner">${fmtT(r.tension,false)}<small>${S.unit}</small></td>
-      <td class="st">${crit?`<span class="bad">Critical zone</span><small>CWD ${fmt(r.cwd,1)} m — go deeper or reduce tension</small>`
-                         :`<span class="ok">Clear</span><small>CWD ${fmt(r.cwd,1)} m</small>`}</td></tr>`;
-  };
-  let body = M.series.map((s,i)=>row(`<i style="background:${s.color}"></i>${fmtT(s.H)}`, solve(s.H,d,p), i===S.focus?'focus':'', i)).join('');
-  if(M.solverSeries) body += row(`<i class="dash" style="border-color:var(--solver)"></i>Solved ${fmtT(M.solverSeries.H)}`, solve(M.solverSeries.H,d,p), '', null);
-  $('roBody').innerHTML = `<table class="readout"><thead><tr><th>Bottom tension</th><th>Layback</th><th>Length</th><th>Angle from vertical</th><th>Tensioner load</th><th style="text-align:left">Critical water depth</th></tr></thead><tbody>${body}</tbody></table>`;
+      <td data-l="Layback m">${fmt(r.layback,1)}</td>
+      <td data-l="Angle °">${fmt(r.angle,1)}</td>
+      <td data-l="Length m">${fmt(r.length,1)}</td>
+      <td data-l="Tensioner ${S.unit}">${fmtT(r.tension,false)}</td>
+      <td class="st" title="${crit?'Shallower than the critical water depth':'Clear of the critical water depth'}"><span class="${crit?'bad':'ok'}">● ${fmt(r.cwd,1)}</span>${crit?'<small>critical</small>':''}</td></tr>`;
+  }).join('');
+  $('roBody').innerHTML = `<table class="readout"><thead><tr><th>Bottom tension</th><th>Layback m</th><th>Angle °</th><th>Length m</th><th>Tensioner ${S.unit}</th><th class="st">CWD m</th></tr></thead><tbody>${body}</tbody></table>`;
 }
 $('roBody').addEventListener('click', e=>{
   const tr=e.target.closest('tr[data-i]'); if(!tr) return;
-  S.focus=+tr.dataset.i; save(); renderReadout(); drawElev();
+  setFocus(tr.dataset.i==='sol' ? 'sol' : +tr.dataset.i);
 });
 
 function renderZone(){
@@ -1193,7 +1256,9 @@ function runSolver(){
   if(!validInputs()) return off('Fix the cable inputs first.');
   const res = inverse(d, hasL?'layback':'angle', hasL?L:A, params());
   if(res.err) return off(res.err);
+  const fresh = !S.solver;
   S.solver = {H:res.H, d, L: hasL?L:null, A: hasA?A:null};
+  if(fresh) S.focus='sol';
   const r=res.r, crit=d<r.cwd;
   $('soH').textContent = fmtT(res.H);
   $('soDl').innerHTML = `
@@ -1323,7 +1388,7 @@ function renderAll(){
   $('dRange').max = S.maxD; $('dRange').step = Math.max(0.1, S.maxD/1000).toFixed(1);
   $('dRange').value = S.depth;
   if(document.activeElement!==$('dIn')) $('dIn').value = fmt(S.depth, S.depth%1?1:0);
-  if(S.focus>=S.tensions.length) S.focus=0;
+  if(typeof S.focus==='number' && S.focus>=S.tensions.length) S.focus=0;
   runSolver(); solverSeries();
   curveLegend(); renderTable(); renderCursor(false);
   save();
