@@ -1,13 +1,13 @@
 {
   "name": "Catenary Suite",
   "short_name": "Catenary",
-  "description": "Submarine cable deployment analysis — two-segment catenary model with critical zone, live solver and operating envelope.",
+  "description": "Two-segment catenary model for submarine cable lay: layback, length, angle and tensioner load against water depth.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#0d0f14",
-  "theme_color": "#0d0f14",
+  "background_color": "#0e1720",
+  "theme_color": "#0e1720",
   "lang": "en",
   "icons": [
     {

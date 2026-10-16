@@ -1,189 +1,1293 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="night">
 <head>
 <meta charset="UTF-8">
-<title>Catenary Suite</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Catenary Suite — Submarine Cable Analysis Engine">
-<meta name="theme-color" content="#0d0f14">
-
-<!-- Inline SVG favicon — no external files needed -->
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230d0f14'/%3E%3Cpath d='M4 9 Q16 22 28 9' stroke='%233b8cf7' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M4 15 Q16 28 28 15' stroke='%23f05252' stroke-width='2.5' fill='none' stroke-linecap='round' opacity='0.8'/%3E%3Ccircle cx='16' cy='25' r='2.2' fill='%2322c882'/%3E%3C/svg%3E">
-
-<!-- Apple touch icon -->
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%230d0f14'/%3E%3Cpath d='M18 50 Q90 130 162 50' stroke='%233b8cf7' stroke-width='13' fill='none' stroke-linecap='round'/%3E%3Cpath d='M18 85 Q90 165 162 85' stroke='%23f05252' stroke-width='13' fill='none' stroke-linecap='round' opacity='0.8'/%3E%3Ccircle cx='90' cy='143' r='11' fill='%2322c882'/%3E%3C/svg%3E">
-
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<title>Catenary</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Two-segment catenary model for submarine cable lay: layback, length, angle and tensioner load against water depth.">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0e1720">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Catenary">
 <style>
-*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
-
-:root {
-  --brand:#3b8cf7; --green:#22c882; --red:#f05252;
-  --bg:#0d0f14; --panel:#161b27; --border:rgba(255,255,255,0.08);
-  --txt:#e8eaf0; --txt2:#8b92a8; --txt3:#4a5168;
-  --sans:'Space Grotesk',system-ui,sans-serif;
-  --mono:'JetBrains Mono',monospace;
+/* =====================================================================
+   TOKENS
+   Night = bridge night palette (deep sea slate). Day = chart paper.
+   Hi-vis amber is reserved for the depth cursor and focus — the one
+   thing your eye should find first.
+===================================================================== */
+:root{
+  --sans: "Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Roboto,Arial,sans-serif;
+  --r-s:6px; --r-m:10px;
+  --hdr:52px; --nav:62px;
+}
+[data-theme="night"]{
+  --bg:#0e1720; --panel:#142029; --panel2:#18262f; --well:#0b131a;
+  --line:rgba(150,185,205,.13); --line2:rgba(150,185,205,.24);
+  --ink:#e2eaef; --ink2:#9db0be; --ink3:#647887;
+  --cursor:#f5a623; --cursor-soft:rgba(245,166,35,.16);
+  --crit:#ff6b6b; --crit-soft:rgba(255,107,107,.12); --ok:#58d39b;
+  --water-top:rgba(52,128,176,.30); --water-bot:rgba(20,60,92,.55); --surface:#6fc3ea;
+  --seabed:#5b5246; --seabed-line:#a08e72; --sky:transparent;
+  --hull:#32424e; --hull-line:#62788a;
+  --solver:#e8eef2;
+  --s1:#4aa8ff; --s2:#3fd0b4; --s3:#b591ff; --s4:#ff7eb6; --s5:#b4dc55; --s6:#ff9f4a;
+  color-scheme:dark;
+}
+[data-theme="day"]{
+  --bg:#e9eef0; --panel:#ffffff; --panel2:#f5f8f9; --well:#f1f5f6;
+  --line:rgba(20,45,60,.11); --line2:rgba(20,45,60,.22);
+  --ink:#122230; --ink2:#465b6a; --ink3:#7d8f9b;
+  --cursor:#d07a00; --cursor-soft:rgba(208,122,0,.12);
+  --crit:#d23c3c; --crit-soft:rgba(210,60,60,.08); --ok:#14895a;
+  --water-top:rgba(70,150,200,.20); --water-bot:rgba(30,95,140,.32); --surface:#1f86bd;
+  --seabed:#cbbd9f; --seabed-line:#8a7556; --sky:transparent;
+  --hull:#c4ced5; --hull-line:#7b8d99;
+  --solver:#1b2b36;
+  --s1:#1f6fd1; --s2:#0d9a80; --s3:#7a4fd6; --s4:#c93a7d; --s5:#5f8f12; --s6:#c9620e;
+  color-scheme:light;
 }
 
-html,body { height:100%; background:var(--bg); color:var(--txt); font-family:var(--sans); -webkit-font-smoothing:antialiased; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--sans);font-size:14px;line-height:1.45;background:var(--bg);color:var(--ink);
+  -webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;overflow:hidden}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--cursor);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
 
-body {
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  min-height:100dvh; padding:24px; position:relative; overflow:hidden;
+/* =====================================================================
+   HEADER
+===================================================================== */
+.top{height:var(--hdr);display:flex;align-items:center;gap:14px;padding:0 16px;
+  background:var(--panel);border-bottom:1px solid var(--line);position:relative;z-index:5}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0}
+.brand svg{flex:none}
+.brand b{font-size:17px;font-weight:650;letter-spacing:-.2px}
+.brand span{color:var(--ink3);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg{display:inline-flex;background:var(--well);border:1px solid var(--line);border-radius:var(--r-s);padding:2px}
+.seg button{border:0;background:none;padding:4px 10px;border-radius:4px;color:var(--ink2);font-size:13px;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--panel2);color:var(--ink);box-shadow:0 0 0 1px var(--line2)}
+.icon-btn{height:32px;min-width:32px;padding:0 10px;border-radius:var(--r-s);border:1px solid var(--line);
+  background:none;color:var(--ink2);display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:600}
+.icon-btn:hover{color:var(--ink);border-color:var(--line2)}
+.icon-btn svg{width:16px;height:16px}
+
+/* =====================================================================
+   LAYOUT
+===================================================================== */
+.app{display:grid;grid-template-columns:300px minmax(0,1fr);height:calc(100dvh - var(--hdr))}
+.side{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:4px 0 28px;scrollbar-width:thin}
+.main{overflow-y:auto;padding:16px;display:grid;gap:14px;align-content:start;scrollbar-width:thin;
+  grid-template-columns:minmax(0,1.75fr) minmax(300px,1fr);
+  grid-template-areas:"depth depth" "curves elev" "readout readout" "table table"}
+#card-depth{grid-area:depth}#card-curves{grid-area:curves}#card-elev{grid-area:elev}
+#card-readout{grid-area:readout}#card-table{grid-area:table}
+@media (max-width:1180px){
+  .main{grid-template-columns:minmax(0,1fr);grid-template-areas:"depth" "curves" "readout" "elev" "table"}
 }
 
-/* Background grid */
-body::before {
-  content:''; position:fixed; inset:0;
-  background-image:linear-gradient(rgba(59,140,247,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(59,140,247,0.03) 1px,transparent 1px);
-  background-size:48px 48px; pointer-events:none;
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-m);min-width:0}
+.card-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line)}
+.card-h h2{font-size:14px;font-weight:650;margin-right:auto}
+.card-h .hint{color:var(--ink3);font-size:12.5px}
+.card-b{padding:12px 14px}
+
+/* =====================================================================
+   SIDE PANEL (setup + solver)
+===================================================================== */
+.grp{padding:14px 16px 6px;border-bottom:1px solid var(--line)}
+.grp:last-child{border-bottom:0}
+.grp h3{font-size:13.5px;font-weight:650;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.grp h3 small{font-weight:500;color:var(--ink3);font-size:12px;margin-left:auto}
+.grp p.note{color:var(--ink3);font-size:12.5px;margin:-4px 0 10px}
+.field{display:grid;grid-template-columns:1fr 116px;align-items:center;gap:8px;margin-bottom:8px}
+.field label{color:var(--ink2);font-size:13px;line-height:1.25}
+.field label em{font-style:normal;color:var(--ink3);font-size:11.5px;display:block}
+.inp{position:relative}
+.inp input{width:100%;height:32px;padding:0 44px 0 9px;border:1px solid var(--line2);border-radius:var(--r-s);
+  background:var(--well);font-weight:600;font-size:14px;text-align:right;-moz-appearance:textfield}
+.inp input::-webkit-inner-spin-button,.inp input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.inp input:focus{outline:none;border-color:var(--cursor);box-shadow:0 0 0 3px var(--cursor-soft)}
+.inp input[aria-invalid="true"]{border-color:var(--crit)}
+.inp .u{position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--ink3);font-size:11.5px;pointer-events:none}
+.err{color:var(--crit);font-size:12px;margin:-4px 0 8px;display:none}
+.err.show{display:block}
+.presets{display:flex;gap:6px;margin-bottom:12px}
+.presets button{flex:1;height:30px;border-radius:var(--r-s);border:1px solid var(--line2);background:none;color:var(--ink2);font-size:12.5px;font-weight:600}
+.presets button:hover,.presets button[aria-pressed="true"]{color:var(--ink);border-color:var(--ink3);background:var(--panel2)}
+
+.tlist{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.trow{display:flex;align-items:center;gap:10px;height:34px;padding:0 6px 0 10px;border-radius:var(--r-s);background:var(--well);border:1px solid var(--line)}
+.trow i{width:14px;height:4px;border-radius:2px;flex:none}
+.trow b{font-weight:650;font-size:14px}
+.trow span{color:var(--ink3);font-size:12px;margin-left:auto}
+.trow button{border:0;background:none;color:var(--ink3);width:26px;height:26px;border-radius:4px;font-size:16px;line-height:1}
+.trow button:hover{color:var(--crit);background:var(--crit-soft)}
+.add{display:flex;gap:6px;margin-bottom:6px}
+.add .inp{flex:1}
+.btn{height:32px;padding:0 12px;border-radius:var(--r-s);border:1px solid var(--line2);background:var(--panel2);font-weight:600;font-size:13px;color:var(--ink)}
+.btn:hover{border-color:var(--ink3)}
+.btn.primary{background:var(--cursor);border-color:var(--cursor);color:#1b1205}
+.btn.quiet{background:none;color:var(--ink2)}
+.quick{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.quick button{height:24px;padding:0 8px;border-radius:12px;border:1px dashed var(--line2);background:none;color:var(--ink3);font-size:12px}
+.quick button:hover{color:var(--ink);border-style:solid}
+.check{display:flex;align-items:center;gap:8px;color:var(--ink2);font-size:13px;margin:4px 0 10px;cursor:pointer}
+.check input{accent-color:var(--cursor);width:15px;height:15px}
+
+.solve-out{margin:6px 0 10px;border:1px solid var(--line2);border-radius:var(--r-s);background:var(--well);display:none}
+.solve-out.show{display:block}
+.solve-out .big{padding:10px 12px;border-bottom:1px solid var(--line)}
+.solve-out .big small{display:block;color:var(--ink3);font-size:12px}
+.solve-out .big b{font-size:22px;font-weight:650;letter-spacing:-.3px}
+.solve-out dl{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:10px 12px;font-size:13px}
+.solve-out dt{color:var(--ink2)}
+.solve-out dd{font-weight:600;text-align:right}
+.solve-out .acts{display:flex;gap:6px;padding:0 12px 12px}
+.msg{font-size:12.5px;margin:2px 0 10px;color:var(--ink2)}
+.msg.bad{color:var(--crit)}
+
+/* =====================================================================
+   DEPTH BAR — the one control everything follows
+===================================================================== */
+.depthbar{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:center;gap:14px;padding:12px 16px}
+.depthbar .lbl{color:var(--ink2);font-size:13px;line-height:1.2}
+.depthbar .lbl small{display:block;color:var(--ink3);font-size:11.5px}
+.dval{display:flex;align-items:baseline;gap:4px}
+.dval input{width:96px;height:44px;border:1px solid var(--line2);border-radius:var(--r-s);background:var(--well);
+  text-align:right;padding:0 10px;font-size:28px;font-weight:650;letter-spacing:-.5px;color:var(--cursor);-moz-appearance:textfield}
+.dval input::-webkit-inner-spin-button{-webkit-appearance:none}
+.dval input:focus{outline:none;border-color:var(--cursor);box-shadow:0 0 0 3px var(--cursor-soft)}
+.dval span{color:var(--ink3);font-size:15px}
+.range{width:100%;accent-color:var(--cursor);height:28px}
+.steps{display:flex;gap:6px}
+.steps button{width:40px;height:40px;border-radius:var(--r-s);border:1px solid var(--line2);background:var(--panel2);font-size:20px;font-weight:500;color:var(--ink)}
+.steps button:hover{border-color:var(--cursor);color:var(--cursor)}
+.zone{grid-column:1/-1;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2);margin-top:-4px}
+.zone .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:none}
+.zone.crit{color:var(--crit)}.zone.crit .dot{background:var(--crit)}
+
+/* =====================================================================
+   CHARTS
+===================================================================== */
+.tabs{display:inline-flex;gap:2px;background:var(--well);border:1px solid var(--line);border-radius:var(--r-s);padding:2px}
+.tabs button{border:0;background:none;padding:5px 11px;border-radius:4px;color:var(--ink2);font-size:13px;font-weight:600}
+.tabs button[aria-pressed="true"]{background:var(--panel2);color:var(--ink);box-shadow:0 0 0 1px var(--line2)}
+.view{display:flex;align-items:center;gap:6px;color:var(--ink3);font-size:12.5px}
+.view input{width:58px;height:28px;border:1px solid var(--line2);border-radius:5px;background:var(--well);text-align:right;padding:0 6px;font-weight:600;font-size:13px;-moz-appearance:textfield}
+.view input::-webkit-inner-spin-button{-webkit-appearance:none}
+.plot{position:relative;height:clamp(300px,50vh,560px);touch-action:none;cursor:crosshair}
+.plot canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#elevPlot{cursor:default;touch-action:auto}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;padding:8px 14px 12px;font-size:12.5px;color:var(--ink2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:18px;height:3px;border-radius:2px}
+.legend i.dash{height:0;border-top:2px dashed;background:none!important;border-radius:0}
+.legend i.hatch{height:10px;width:16px;border-radius:2px;background:repeating-linear-gradient(-45deg,var(--crit) 0 1.5px,transparent 1.5px 5px)!important;opacity:.8}
+.legend i.env{height:10px;width:16px;border-radius:2px;opacity:.35}
+.tip{position:absolute;pointer-events:none;display:none;z-index:3;background:var(--panel);border:1px solid var(--line2);
+  border-radius:var(--r-s);padding:8px 10px;font-size:12.5px;min-width:150px;box-shadow:0 6px 24px rgba(0,0,0,.28)}
+.tip .th{color:var(--ink3);margin-bottom:4px}
+.tip .tr{display:flex;align-items:center;gap:8px}
+.tip .tr i{width:8px;height:8px;border-radius:50%;flex:none}
+.tip .tr b{margin-left:auto;font-weight:650;padding-left:14px}
+.tip .tr.crit b{color:var(--crit)}
+#card-elev{display:flex;flex-direction:column}
+#elevPlot{flex:1;min-height:clamp(300px,50vh,560px);height:auto}
+
+/* =====================================================================
+   READOUT
+===================================================================== */
+.readout{width:100%;border-collapse:collapse}
+.readout th{font-weight:500;color:var(--ink3);font-size:12.5px;text-align:right;padding:8px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+.readout th:first-child{text-align:left}
+.readout td{padding:9px 14px;border-bottom:1px solid var(--line);text-align:right;font-size:20px;font-weight:600;letter-spacing:-.3px;white-space:nowrap}
+.readout td small{font-size:12.5px;color:var(--ink3);font-weight:500;margin-left:3px;letter-spacing:0}
+.readout tr:last-child td{border-bottom:0}
+.readout td.who{text-align:left;font-size:14px;font-weight:650;letter-spacing:0}
+.readout td.who i{display:inline-block;width:14px;height:4px;border-radius:2px;margin-right:8px;vertical-align:middle}
+.readout td.who i.dash{height:0;border-top:2px dashed;background:none!important}
+.readout td.st{font-size:13px;font-weight:600;letter-spacing:0;text-align:left;white-space:normal}
+.readout td.st .ok{color:var(--ok)}.readout td.st .bad{color:var(--crit)}
+.readout td.st small{display:block;margin:0}
+.readout tr{cursor:pointer}
+.readout tr.focus td{background:var(--cursor-soft)}
+.readout tr.focus td.who{box-shadow:inset 3px 0 0 var(--cursor)}
+.empty{padding:22px 16px;color:var(--ink2);font-size:13.5px}
+
+/* =====================================================================
+   TABLE
+===================================================================== */
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chips button{height:28px;padding:0 10px;border-radius:14px;border:1px solid var(--line2);background:none;color:var(--ink3);font-size:12.5px;font-weight:600}
+.chips button[aria-pressed="true"]{color:var(--ink);background:var(--panel2);border-color:var(--ink3)}
+.twrap{overflow:auto;max-height:70vh;border-top:1px solid var(--line);scrollbar-width:thin}
+table.data{border-collapse:separate;border-spacing:0;width:auto;min-width:min(100%,560px);font-size:13.5px}
+table.data th{position:sticky;z-index:2;background:var(--panel);font-weight:600;white-space:nowrap;padding:7px 12px;text-align:right}
+table.data thead tr:first-child th{top:0;height:36px;border-bottom:1px solid var(--line)}
+table.data thead tr:nth-child(2) th{top:36px;color:var(--ink3);font-weight:500;font-size:12px;border-bottom:1px solid var(--line2)}
+table.data th.g{text-align:center;font-size:13.5px}
+table.data th.g i{display:inline-block;width:14px;height:4px;border-radius:2px;margin-right:7px;vertical-align:middle}
+table.data th.gs,table.data td.gs{border-left:1px solid var(--line2)}
+table.data th:first-child,table.data td:first-child{position:sticky;left:0;z-index:1;background:var(--panel);text-align:left;font-weight:650;border-right:1px solid var(--line2)}
+table.data thead th:first-child{z-index:3}
+table.data td{padding:6px 11px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+table.data tbody tr{cursor:pointer}
+table.data tbody tr:hover td{background:var(--panel2)}
+table.data td.c{color:var(--crit);background:var(--crit-soft)}
+table.data tbody tr:hover td.c{background:var(--crit-soft)}
+table.data tr.cur td{background:var(--cursor-soft)!important;font-weight:650}
+table.data tr.cur td:first-child{box-shadow:inset 3px 0 0 var(--cursor);color:var(--cursor)}
+.tfoot{display:flex;flex-wrap:wrap;gap:6px 18px;padding:9px 14px;color:var(--ink3);font-size:12.5px;border-top:1px solid var(--line)}
+.tfoot .sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:6px}
+
+/* =====================================================================
+   HELP DIALOG
+===================================================================== */
+dialog{margin:auto;border:1px solid var(--line2);border-radius:12px;background:var(--panel);color:var(--ink);
+  width:min(720px,calc(100vw - 24px));max-height:calc(100dvh - 40px);padding:0}
+dialog::backdrop{background:rgba(5,10,15,.6)}
+.dlg-h{display:flex;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel)}
+.dlg-h h2{font-size:18px;font-weight:650;margin-right:auto}
+.dlg-b{padding:6px 20px 22px;font-size:14px;color:var(--ink2);line-height:1.6}
+.dlg-b h3{color:var(--ink);font-size:15px;font-weight:650;margin:18px 0 6px}
+.dlg-b p{margin-bottom:8px;max-width:68ch}
+.dlg-b strong{color:var(--ink)}
+.dlg-b code{display:block;background:var(--well);border:1px solid var(--line);border-radius:6px;padding:7px 10px;margin:6px 0;color:var(--ink);font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:13px}
+.dlg-b ul{padding-left:18px;margin-bottom:8px}
+.dlg-b a{color:var(--s1)}
+
+/* =====================================================================
+   MOBILE
+===================================================================== */
+.bnav{display:none}
+.show-m{display:none!important}
+.tsel{height:28px;border:1px solid var(--line2);border-radius:5px;background:var(--well);padding:0 8px;font-size:12.5px;font-weight:600}
+@media (max-width:760px){
+  body{overflow:auto}
+  .top{position:sticky;top:0;padding:0 12px;gap:8px}
+  .brand span{display:none}
+  .hide-m{display:none!important}
+  .app{display:block;height:auto;padding-bottom:calc(var(--nav) + env(safe-area-inset-bottom))}
+  .side{border:0;background:none;overflow:visible;padding:8px 0 16px}
+  .side .grp{background:var(--panel);margin:8px 10px;border:1px solid var(--line);border-radius:var(--r-m)}
+  .main{display:flex;flex-direction:column;overflow:visible;padding:10px;gap:10px}
+  #card-depth{position:sticky;top:var(--hdr);z-index:4;box-shadow:0 6px 16px rgba(0,0,0,.18)}
+  .depthbar{grid-template-columns:auto minmax(0,1fr) auto;gap:10px;padding:10px 12px}
+  .depthbar .lbl{display:none}
+  .dval input{width:84px;height:42px;font-size:24px}
+  .steps button{width:38px;height:38px}
+  .plot,#elevPlot{height:300px}
+  #card-depth{order:0}#card-readout{order:1}#card-curves{order:2}#card-elev{order:3}#card-table{order:4}
+  #elevPlot{min-height:300px}
+  .show-m{display:inline-flex!important}
+  .readout tr.focus{background:var(--cursor-soft);box-shadow:inset 3px 0 0 var(--cursor)}
+  .readout tr.focus td{background:none}
+  .readout thead{display:none}
+  .readout,.readout tbody{display:block}
+  .readout tr{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line);padding:8px 12px 10px;gap:2px 10px}
+  .readout tr:last-child{border-bottom:0}
+  .readout td{display:block;border:0;padding:2px 0;text-align:left;font-size:19px}
+  .readout td::before{content:attr(data-l);display:block;font-size:11.5px;color:var(--ink3);font-weight:500;letter-spacing:0}
+  .readout td.who{grid-column:1/-1;font-size:15px;padding-bottom:4px}
+  .readout td.who::before,.readout td.st::before{display:none}
+  .readout td.st{grid-column:1/-1}
+  .readout tr.focus td.who{box-shadow:none}
+  .twrap{max-height:none}
+  body[data-tab="setup"] .main,body[data-tab="solve"] .main,
+  body[data-tab="profile"] .side,body[data-tab="table"] .side{display:none}
+  body[data-tab="setup"] #grp-solve,body[data-tab="solve"] .grp:not(#grp-solve){display:none}
+  body[data-tab="profile"] #card-table{display:none}
+  body[data-tab="table"] #card-curves,body[data-tab="table"] #card-elev,body[data-tab="table"] #card-readout{display:none}
+  .bnav{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:0;right:0;bottom:0;z-index:20;
+    height:calc(var(--nav) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);
+    background:var(--panel);border-top:1px solid var(--line2)}
+  .bnav button{border:0;background:none;color:var(--ink3);font-size:11.5px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+  .bnav button svg{width:22px;height:22px}
+  .bnav button[aria-current="page"]{color:var(--cursor)}
 }
 
-/* Ambient glow orbs */
-.orb { position:fixed; border-radius:50%; filter:blur(90px); pointer-events:none; opacity:0.28; animation:drift 14s ease-in-out infinite; }
-.orb-1 { width:520px; height:520px; background:radial-gradient(circle,rgba(59,140,247,0.45),transparent); top:-140px; left:-120px; animation-delay:0s; }
-.orb-2 { width:380px; height:380px; background:radial-gradient(circle,rgba(34,200,130,0.3),transparent); bottom:-80px; right:-80px; animation-delay:-7s; }
-@keyframes drift { 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(28px,18px) scale(1.04);} }
-
-/* Main card */
-.card {
-  position:relative; z-index:10;
-  background:var(--panel); border:1px solid var(--border);
-  border-radius:20px; padding:36px 40px; text-align:center;
-  max-width:440px; width:100%;
-  box-shadow:0 8px 48px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.03);
-  animation:cardIn 0.4s cubic-bezier(0.34,1.2,0.64,1) both;
+/* =====================================================================
+   PRINT — always day palette, report layout
+===================================================================== */
+.print-head{display:none}
+@media print{
+  @page{size:A4 landscape;margin:10mm}
+  html,body{height:auto;overflow:visible;background:#fff}
+  .top,.side,.bnav,#card-depth,.card-h button,.card-h .tabs,.card-h .view,.card-h .hint,.card-h .check,.chips,.tsel,.steps{display:none!important}
+  .print-head{display:block;padding:0 0 8px;font-size:12px;color:#333}
+  .print-head h1{font-size:18px;margin-bottom:4px}
+  .app{display:block;height:auto}
+  .main{display:block;overflow:visible;padding:0}
+  .card{border:1px solid #ccd;break-inside:avoid;margin-bottom:8px}
+  #card-curves,#card-elev{display:inline-block;width:49.3%;vertical-align:top}
+  .plot,#elevPlot{height:300px}
+  .twrap{max-height:none;overflow:visible}
+  table.data th{position:static}
+  #card-table{break-before:page}
 }
-@keyframes cardIn { from{opacity:0;transform:translateY(16px) scale(0.97);} to{opacity:1;transform:none;} }
-
-/* Logo row */
-.logo-row { display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:20px; }
-.logo-icon {
-  width:50px; height:50px; flex-shrink:0;
-  background:rgba(59,140,247,0.1); border:1px solid rgba(59,140,247,0.22);
-  border-radius:13px; display:flex; align-items:center; justify-content:center;
-}
-.logo-name  { font-size:21px; font-weight:700; color:var(--brand); letter-spacing:-0.5px; line-height:1.1; text-align:left; }
-.logo-sub   { font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:1.4px; color:var(--txt3); margin-top:2px; text-align:left; }
-
-/* Device badge */
-.device-badge {
-  display:inline-flex; align-items:center; gap:5px; margin-bottom:14px;
-  background:rgba(34,200,130,0.1); border:1px solid rgba(34,200,130,0.25);
-  border-radius:20px; padding:3px 11px;
-  font-size:10px; font-weight:700; color:var(--green); font-family:var(--mono); letter-spacing:0.4px;
-}
-.badge-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 1.8s ease-in-out infinite; }
-@keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.5;transform:scale(1.4);} }
-
-/* Tagline */
-.tagline { font-size:12px; color:var(--txt2); line-height:1.65; margin-bottom:24px; }
-
-/* Spinner */
-.spinner-wrap { display:flex; flex-direction:column; align-items:center; gap:8px; margin-bottom:22px; }
-.spinner { width:26px; height:26px; border:2.5px solid rgba(59,140,247,0.12); border-top-color:var(--brand); border-radius:50%; animation:spin 0.7s linear infinite; }
-@keyframes spin { to{transform:rotate(360deg);} }
-.redirect-msg { font-size:11px; font-family:var(--mono); color:var(--txt3); letter-spacing:0.3px; }
-
-/* Divider */
-.divider { display:flex; align-items:center; gap:10px; margin:18px 0; }
-.divider::before,.divider::after { content:''; flex:1; height:1px; background:var(--border); }
-.divider span { font-size:9px; color:var(--txt3); text-transform:uppercase; letter-spacing:1px; }
-
-/* App links */
-.link-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-.app-link {
-  display:flex; flex-direction:column; align-items:center; gap:6px;
-  padding:14px 10px; background:rgba(255,255,255,0.02);
-  border:1px solid var(--border); border-radius:12px;
-  text-decoration:none; color:var(--txt2);
-  transition:all 0.18s; cursor:pointer;
-}
-.app-link:hover { background:rgba(59,140,247,0.07); border-color:rgba(59,140,247,0.28); color:var(--brand); }
-.link-icon  { font-size:22px; line-height:1; }
-.link-label { font-size:12px; font-weight:700; }
-.link-desc  { font-size:10px; color:var(--txt3); text-align:center; line-height:1.4; font-weight:400; }
-.app-link:hover .link-desc { color:rgba(59,140,247,0.6); }
-
-/* Version footer */
-.version { margin-top:24px; font-size:9px; color:var(--txt3); font-family:var(--mono); letter-spacing:0.4px; }
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
-<body>
+<body data-tab="profile">
 
-<div class="orb orb-1"></div>
-<div class="orb orb-2"></div>
-
-<div class="card">
-
-  <div class="logo-row">
-    <div class="logo-icon">
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M2 7 Q14 20 26 7"  stroke="#3b8cf7" stroke-width="2.2" stroke-linecap="round"/>
-        <path d="M2 13 Q14 26 26 13" stroke="#f05252" stroke-width="2.2" stroke-linecap="round" opacity="0.75"/>
-        <circle cx="14" cy="22.5" r="2" fill="#22c882"/>
-      </svg>
-    </div>
-    <div>
-      <div class="logo-name">Catenary Suite</div>
-      <div class="logo-sub">Cable Analysis Engine</div>
-    </div>
+<header class="top">
+  <div class="brand">
+    <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
+      <rect width="28" height="28" rx="7" fill="var(--well)" stroke="var(--line2)"/>
+      <path d="M4 8 Q4 21 23 21" stroke="var(--s1)" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <path d="M2 11h24" stroke="var(--surface)" stroke-width="1.2" opacity=".7"/>
+      <circle cx="23" cy="21" r="2.2" fill="var(--cursor)"/>
+    </svg>
+    <b>Catenary</b><span>Two-segment cable lay model</span>
   </div>
-
-  <div class="device-badge">
-    <span class="badge-dot"></span>
-    <span id="deviceLabel">Detecting device…</span>
+  <div class="seg" role="group" aria-label="Tension units" id="unitSeg">
+    <button data-u="kg">kg</button><button data-u="te">te</button><button data-u="kN">kN</button>
   </div>
+  <button class="icon-btn hide-m" id="btnPrint" title="Print report">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/></svg>Print</button>
+  <button class="icon-btn" id="btnTheme" title="Switch day / night">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+  <button class="icon-btn" id="btnHelp" title="How it works">?</button>
+</header>
 
-  <p class="tagline">Two-segment catenary model for submarine cable deployment. Critical zone analysis, live solver, and operating envelope visualisation.</p>
+<div class="app">
+  <!-- ================= SIDE: SETUP + SOLVER ================= -->
+  <aside class="side">
+    <section class="grp" id="grp-cable">
+      <h3>Cable and chute</h3>
+      <div class="presets" id="presets">
+        <button data-p="light">Light</button><button data-p="medium">Medium</button><button data-p="heavy">Heavy</button>
+      </div>
+      <div class="field"><label for="wW">Weight in water<em>submerged</em></label><div class="inp"><input id="wW" type="number" inputmode="decimal" step="any"><span class="u">kg/m</span></div></div>
+      <div class="field"><label for="wA">Weight in air</label><div class="inp"><input id="wA" type="number" inputmode="decimal" step="any"><span class="u">kg/m</span></div></div>
+      <div class="field"><label for="sH">Chute height<em>exit point above water</em></label><div class="inp"><input id="sH" type="number" inputmode="decimal" step="any"><span class="u">m</span></div></div>
+      <div class="field"><label for="sR">Chute radius</label><div class="inp"><input id="sR" type="number" inputmode="decimal" step="any"><span class="u">m</span></div></div>
+      <div class="field"><label for="mu">Chute friction μ<em>0.3–0.5 dry · 0.1–0.2 wet</em></label><div class="inp"><input id="mu" type="number" inputmode="decimal" step="0.05"><span class="u"></span></div></div>
+      <div class="err" id="errCable"></div>
+    </section>
 
-  <div class="spinner-wrap">
-    <div class="spinner"></div>
-    <div class="redirect-msg" id="redirectMsg">Detecting device…</div>
-  </div>
+    <section class="grp" id="grp-depth">
+      <h3>Depth range</h3>
+      <div class="field"><label for="maxD">Deepest water</label><div class="inp"><input id="maxD" type="number" inputmode="decimal" step="any"><span class="u">m</span></div></div>
+      <div class="field"><label for="stepD">Table step</label><div class="inp"><input id="stepD" type="number" inputmode="decimal" step="any"><span class="u">m</span></div></div>
+      <div class="err" id="errDepth"></div>
+    </section>
 
-  <div class="divider"><span>or open directly</span></div>
+    <section class="grp" id="grp-tension">
+      <h3>Bottom tensions <small>horizontal, H</small></h3>
+      <div class="tlist" id="tList"></div>
+      <div class="add">
+        <div class="inp"><input id="tNew" type="number" inputmode="decimal" step="any" placeholder="Add a tension"><span class="u" id="tNewU">kg</span></div>
+        <button class="btn" id="tAdd">Add</button>
+      </div>
+      <div class="err" id="errT"></div>
+      <div class="quick" id="tQuick"></div>
+      <label class="check"><input type="checkbox" id="envT"> Shade between lowest and highest</label>
+    </section>
 
-  <div class="link-grid">
-    <a class="app-link" href="desktop.html">
-      <span class="link-icon">🖥️</span>
-      <span class="link-label">Desktop</span>
-      <span class="link-desc">Three-column layout · crosshair chart · full analysis suite</span>
-    </a>
-    <a class="app-link" href="mobile.html">
-      <span class="link-icon">📱</span>
-      <span class="link-label">Mobile</span>
-      <span class="link-desc">Dashboard · live depth monitor · field-optimised UI</span>
-    </a>
-  </div>
+    <section class="grp" id="grp-solve">
+      <h3>Solve from what you see</h3>
+      <p class="note">Enter the water depth and one observation. It finds the bottom tension that matches.</p>
+      <div class="field"><label for="oD">Water depth</label><div class="inp"><input id="oD" type="number" inputmode="decimal" step="any"><span class="u">m</span></div></div>
+      <div class="field"><label for="oL">Layback</label><div class="inp"><input id="oL" type="number" inputmode="decimal" step="any" placeholder="–"><span class="u">m</span></div></div>
+      <div class="field"><label for="oA">Angle<em>from vertical, at surface</em></label><div class="inp"><input id="oA" type="number" inputmode="decimal" step="any" placeholder="–"><span class="u">°</span></div></div>
+      <div class="msg" id="solveMsg"></div>
+      <div class="solve-out" id="solveOut">
+        <div class="big"><small>Bottom tension that matches</small><b id="soH">–</b></div>
+        <dl id="soDl"></dl>
+        <div class="acts"><button class="btn" id="soAdd">Add to comparison</button><button class="btn quiet" id="soClear">Clear</button><button class="btn primary show-m" id="soView">View on profile</button></div>
+      </div>
+    </section>
+  </aside>
 
-  <div class="version">Catenary Suite v3.0 · Space Grotesk · JetBrains Mono</div>
+  <!-- ================= MAIN ================= -->
+  <main class="main">
+    <div class="print-head" id="printHead"></div>
+
+    <section class="card" id="card-depth" aria-label="Water depth">
+      <div class="depthbar">
+        <div class="lbl">Water depth<small>drag, type, or tap the charts</small></div>
+        <div class="dval"><input id="dIn" type="number" inputmode="decimal" step="any" aria-label="Water depth in metres"><span>m</span></div>
+        <input class="range" id="dRange" type="range" min="0" max="100" step="0.1" aria-label="Water depth slider">
+        <div class="steps"><button id="dDn" aria-label="Shallower by one step">−</button><button id="dUp" aria-label="Deeper by one step">+</button></div>
+        <div class="zone" id="zone"><span class="dot"></span><span id="zoneTxt"></span></div>
+      </div>
+    </section>
+
+    <section class="card" id="card-curves">
+      <div class="card-h">
+        <h2>Lay curves</h2>
+        <div class="tabs" id="metricTabs" role="group" aria-label="Chart value"></div>
+        <div class="view hide-m">Depth <input id="vMin" type="number" step="any" aria-label="View from depth"> to <input id="vMax" type="number" step="any" aria-label="View to depth"> m
+          <button class="btn quiet" id="vFit" style="height:28px">Fit</button></div>
+      </div>
+      <div class="plot" id="curvePlot"><canvas id="curveCv"></canvas><div class="tip" id="tip"></div></div>
+      <div class="legend" id="curveLegend"></div>
+    </section>
+
+    <section class="card" id="card-elev">
+      <div class="card-h">
+        <h2>Cable shape</h2>
+        <span class="hint" id="elevHint"></span>
+        <label class="check" style="margin:0"><input type="checkbox" id="trueScale" checked> True scale</label>
+      </div>
+      <div class="plot" id="elevPlot"><canvas id="elevCv"></canvas></div>
+    </section>
+
+    <section class="card" id="card-readout">
+      <div class="card-h"><h2 id="roTitle">At this depth</h2><span class="hint">Tap a row to focus it in the cable shape</span></div>
+      <div id="roBody"></div>
+    </section>
+
+    <section class="card" id="card-table">
+      <div class="card-h">
+        <h2>Table</h2>
+        <select class="tsel" id="tSel" aria-label="Tensions shown in table"></select>
+        <div class="chips" id="colChips" role="group" aria-label="Table columns"></div>
+        <button class="btn quiet" id="btnCsv">Download CSV</button>
+      </div>
+      <div class="twrap" id="twrap"><table class="data" id="dataTable"></table></div>
+      <div class="tfoot">
+        <span><i class="sw" style="background:var(--crit-soft);box-shadow:inset 0 0 0 1px var(--crit)"></i>Shallower than the critical water depth (CWD) for that tension</span>
+        <span><i class="sw" style="background:var(--cursor-soft);box-shadow:inset 0 0 0 1px var(--cursor)"></i>Nearest row to the selected depth</span>
+      </div>
+    </section>
+  </main>
 </div>
 
+<nav class="bnav" aria-label="Sections">
+  <button data-tab="setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Setup</button>
+  <button data-tab="profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h18" opacity=".5"/><path d="M4 5c0 10 6 14 16 14"/><circle cx="20" cy="19" r="1.6" fill="currentColor"/></svg>Profile</button>
+  <button data-tab="table"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 4v16"/></svg>Table</button>
+  <button data-tab="solve"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>Solve</button>
+</nav>
+
+<dialog id="help">
+  <div class="dlg-h"><h2>How the model works</h2><button class="icon-btn" id="helpClose" aria-label="Close">✕</button></div>
+  <div class="dlg-b">
+    <h3>Using it</h3>
+    <ul>
+      <li>Set the cable and chute on the left, then add the bottom tensions you want to compare.</li>
+      <li>Pick a water depth with the depth bar, the + and − buttons, or by tapping either chart. Every view follows that depth.</li>
+      <li>Dashed parts of a curve are shallower than that tension's critical water depth (CWD). The hatched area is where any tension would be critical.</li>
+      <li>Use <strong>Solve from what you see</strong> with the depth and either an observed layback or angle. The matching tension is drawn as a dashed curve and can be added to the comparison.</li>
+      <li>Settings are kept on this device between visits.</li>
+    </ul>
+    <h3>The catenary and parameter a</h3>
+    <p>A cable hanging under its own weight forms a catenary. Its shape is set by <strong>a = H / q</strong>, where H is the horizontal tension (constant along the span, and equal to the tension at the touchdown point) and q is the weight per metre. Higher tension gives a flatter curve and a longer layback.</p>
+    <code>y = a · [cosh(x / a) − 1]</code>
+    <h3>Two segments: water then air</h3>
+    <p>The submerged span from touchdown to the surface uses the weight in water. The span from the surface up to the chute exit uses the weight in air. The two are joined at the sea surface with matching tension and slope.</p>
+    <h3>What each value means</h3>
+    <ul>
+      <li><strong>Layback</strong>: horizontal distance from the chute exit to the touchdown point.</li>
+      <li><strong>Length</strong>: cable from touchdown to the chute exit, plus the length wrapped on the chute.</li>
+      <li><strong>Angle</strong>: cable angle from vertical where it crosses the sea surface.</li>
+      <li><strong>Tensioner load</strong>: top tension √(H² + V²) at the chute, reduced by chute friction: T / e^(μ·θ).</li>
+    </ul>
+    <code>T_tensioner = √(H² + V²) / e^(μ·θ)</code>
+    <h3>Critical water depth</h3>
+    <p>Below the CWD for a given tension, the air segment's weight dominates and small vessel movements cause large tension changes. CWD is a fitted curve from the reference below, with H in tonnes:</p>
+    <code>CWD = 0.0698H⁴ − 1.2321H³ + 6.5376H² + 2.9029H + 3.1488</code>
+    <h3>Reference</h3>
+    <p>Mamatsopoulos et al. (2020). Critical Water Depth and Installation Curves for Submarine Cable Deployment Process. JMSE 8(11), 838. <a href="https://doi.org/10.3390/jmse8110838" target="_blank" rel="noopener">doi.org/10.3390/jmse8110838</a></p>
+  </div>
+</dialog>
+
 <script>
-function isMobileDevice(){
-  const touch  = ('ontouchstart' in window) || (navigator.maxTouchPoints > 1);
-  const narrow = window.screen.width <= 1024 || window.innerWidth <= 1024;
-  const ua     = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent);
-  return [touch, narrow, ua].filter(Boolean).length >= 2;
+"use strict";
+/* =====================================================================
+   PHYSICS — the one and only copy. Units: tension kgf, weight kg/m, m.
+   Formulae are unchanged from the v3 engine.
+===================================================================== */
+const KN_PER_KG = 0.00980665;
+
+function cwdOf(Hkg){
+  const h = Hkg/1000;
+  return 0.0698*h**4 - 1.2321*h**3 + 6.5376*h**2 + 2.9029*h + 3.1488;
 }
 
-const mobile  = isMobileDevice();
-const target  = mobile ? 'mobile.html' : 'desktop.html';
-const devName = mobile ? 'Mobile detected' : 'Desktop detected';
-const appName = mobile ? 'Field App' : 'Analysis Suite';
+function solve(H, d, p){
+  if(!(H>0 && d>0)) return null;
+  const a1 = H/p.wW;
+  const x1 = a1*Math.acosh(d/a1 + 1);
+  const L1 = a1*Math.sinh(x1/a1);
+  const Vs = L1*p.wW;                              // vertical force at the surface
+  const a2 = H/p.wA;
+  const Lvs = Vs/p.wA;
+  const yvs = Math.hypot(Lvs, a2), yve = yvs + p.sH;
+  const xvs = a2*Math.acosh(yvs/a2), xve = a2*Math.acosh(yve/a2);
+  const x2 = xve - xvs;
+  const L2 = Math.sqrt(yve*yve - a2*a2) - Lvs;
+  const Vo = Vs + L2*p.wA;                         // vertical force at the chute exit
+  const th = Math.atan(Vs/H);                      // angle below horizontal at the surface
+  const wrap = p.sR>0 ? p.sR*(Math.PI/2 - th) : 0;
+  const Ttop = Math.hypot(H, Vo);
+  const r = {
+    layback: x1 + x2, length: L1 + L2 + wrap, angle: 90 - th*180/Math.PI,
+    tension: Ttop/Math.exp(p.mu*th), top: Ttop, cwd: cwdOf(H),
+    x1, a1, a2, xvs, xve, yvs, exitAng: Math.atan(Vo/H), surfAng: th
+  };
+  return (Number.isFinite(r.layback) && Number.isFinite(r.tension) && Number.isFinite(r.length)) ? r : null;
+}
 
-document.getElementById('deviceLabel').textContent = devName;
+/* Cable shape for drawing: points [dist from touchdown, height above seabed]. */
+function shape(r, d, n){
+  n = n || 70;
+  const pts = [];
+  for(let i=0;i<=n;i++){ const s=r.x1*i/n; pts.push([s, r.a1*(Math.cosh(s/r.a1)-1)]); }
+  const m = Math.max(8, Math.round(n/4));
+  for(let i=1;i<=m;i++){ const u=r.xvs+(r.xve-r.xvs)*i/m; pts.push([r.x1+u-r.xvs, d + r.a2*Math.cosh(u/r.a2) - r.yvs]); }
+  return pts;
+}
 
-let secs = 2;
-const msgEl = document.getElementById('redirectMsg');
-msgEl.textContent = `Launching ${appName} in ${secs}…`;
+/* Find H from depth + (layback | angle). Both rise with H, so bisect in log space. */
+function inverse(d, key, target, p){
+  let lo=1, hi=5e6;
+  const f = H => { const r=solve(H,d,p); return r ? r[key] : NaN; };
+  const fl=f(lo), fh=f(hi);
+  if(!Number.isFinite(fl) || !Number.isFinite(fh)) return {err:'The model has no solution at this depth with these inputs.'};
+  if(target < fl) return {err:`That ${key==='layback'?'layback':'angle'} is below what any tension gives at ${fmt(d,1)} m (minimum ${fmt(fl, 1)}${key==='angle'?'°':' m'}).`};
+  if(target > fh) return {err:`That ${key==='layback'?'layback':'angle'} is beyond the model's range at this depth.`};
+  for(let i=0;i<200;i++){
+    const mid=Math.sqrt(lo*hi), v=f(mid);
+    if(v < target) lo=mid; else hi=mid;
+    if(hi/lo < 1+1e-9) break;
+  }
+  const H = Math.sqrt(lo*hi);
+  return {H, r: solve(H,d,p)};
+}
 
-const t = setInterval(()=>{
-  secs--;
-  if(secs <= 0){ clearInterval(t); window.location.replace(target); }
-  else { msgEl.textContent = `Launching ${appName} in ${secs}…`; }
-}, 1000);
+/* =====================================================================
+   UNITS AND FORMATTING
+===================================================================== */
+const UNITS = {
+  kg:{to:v=>v,            from:v=>v,            dp:0, step:50},
+  te:{to:v=>v/1000,       from:v=>v*1000,       dp:2, step:0.05},
+  kN:{to:v=>v*KN_PER_KG,  from:v=>v/KN_PER_KG,  dp:1, step:0.5},
+};
+function fmt(v, dp){ return Number.isFinite(v) ? v.toFixed(dp) : '–'; }
+function fmtT(kg, withUnit=true){
+  const u=UNITS[S.unit]; const s=u.to(kg).toLocaleString('en-GB',{minimumFractionDigits:u.dp,maximumFractionDigits:u.dp});
+  return withUnit ? `${s} ${S.unit}` : s;
+}
+function esc(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+const METRICS = {
+  layback:{name:'Layback',   unit:'m', dp:1, axis:'Layback (m)'},
+  length: {name:'Length',    unit:'m', dp:1, axis:'Cable length, touchdown to chute (m)'},
+  angle:  {name:'Angle',     unit:'°', dp:1, axis:'Angle from vertical at surface (°)'},
+  tension:{name:'Tensioner', unit:'T', dp:0, axis:'Tensioner load'},
+};
+function fmtM(key, v){
+  if(key==='tension') return fmtT(v,false);
+  return fmt(v, METRICS[key].dp);
+}
+function mUnit(key){ return key==='tension' ? S.unit : METRICS[key].unit; }
+
+const PRESETS = {
+  light: {wW:25, wA:30, sH:1,   sR:3, mu:0.2,  maxD:80,  stepD:5},
+  medium:{wW:50, wA:60, sH:1,   sR:5, mu:0.3,  maxD:100, stepD:5},
+  heavy: {wW:100,wA:120,sH:1.5, sR:6, mu:0.35, maxD:150, stepD:5},
+};
+
+/* =====================================================================
+   STATE (persisted)
+===================================================================== */
+const DEFAULTS = {
+  wW:50, wA:60, sH:1, sR:5, mu:0.3, maxD:100, stepD:5,
+  tensions:[250,500,1000], unit:'kg', theme:'night', metric:'layback',
+  cols:['layback','length','angle','tension'], depth:50, focus:0, env:false, trueScale:true,
+  view:null, solver:null, preset:'medium', tShow:'all'
+};
+const STORE = 'catenary.v4';
+let S = load();
+function load(){
+  let s = {};
+  try{ s = JSON.parse(localStorage.getItem(STORE)||'{}') || {}; }catch(e){ s = {}; }
+  return Object.assign({}, DEFAULTS, s);
+}
+function save(){ try{ localStorage.setItem(STORE, JSON.stringify(S)); }catch(e){} }
+
+const $ = id => document.getElementById(id);
+function seriesColor(i){ return getComputedStyle(document.documentElement).getPropertyValue('--s'+((i%6)+1)).trim(); }
+function css(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function params(){ return {wW:S.wW, wA:S.wA, sH:S.sH, sR:S.sR, mu:S.mu}; }
+
+/* =====================================================================
+   VALIDATION — inline, no pop-ups
+===================================================================== */
+function validInputs(){
+  const e1=[], e2=[];
+  if(!(S.wW>0)) e1.push('Weight in water must be above 0.');
+  if(!(S.wA>0)) e1.push('Weight in air must be above 0.');
+  if(!(S.sH>=0)) e1.push('Chute height cannot be negative.');
+  if(!(S.sR>=0)) e1.push('Chute radius cannot be negative.');
+  if(!(S.mu>=0)) e1.push('Friction cannot be negative.');
+  if(!(S.maxD>0)) e2.push('Deepest water must be above 0.');
+  if(!(S.stepD>0)) e2.push('Table step must be above 0.');
+  else if(S.maxD/S.stepD > 3000) e2.push('That step gives over 3,000 rows. Use a larger step.');
+  $('errCable').textContent=e1.join(' '); $('errCable').classList.toggle('show',e1.length>0);
+  $('errDepth').textContent=e2.join(' '); $('errDepth').classList.toggle('show',e2.length>0);
+  return e1.length===0 && e2.length===0;
+}
+
+/* =====================================================================
+   DATA MODEL — computed once per input change
+===================================================================== */
+let M = null;
+function compute(){
+  const p = params();
+  const N = 240, d0 = Math.min(0.25, S.maxD/200);
+  const series = S.tensions.map((H,i)=>{
+    const pts=[];
+    for(let k=0;k<=N;k++){
+      const d = d0 + (S.maxD-d0)*k/N;
+      const r = solve(H,d,p); if(r) pts.push({d, r});
+    }
+    return {H, i, color: seriesColor(i), pts, cwd: cwdOf(H)};
+  });
+  // Critical boundary: for each H, the point at depth = CWD(H).
+  const boundary=[];
+  for(let H=20; H<5e5; H*=1.03){
+    const c = cwdOf(H);
+    if(c > S.maxD*1.6) break;
+    const r = solve(H,c,p); if(r) boundary.push({d:c, r});
+  }
+  let solverSeries = null;
+  if(S.solver && S.solver.H>0){
+    const pts=[];
+    for(let k=0;k<=N;k++){ const d=d0+(S.maxD-d0)*k/N; const r=solve(S.solver.H,d,p); if(r) pts.push({d,r}); }
+    solverSeries = {H:S.solver.H, pts, cwd: cwdOf(S.solver.H)};
+  }
+  // Table rows
+  const rows=[];
+  const n = Math.floor(S.maxD/S.stepD + 1e-9);
+  for(let k=1;k<=n;k++){
+    const d = +(k*S.stepD).toFixed(6);
+    rows.push({d, cells: S.tensions.map(H=>solve(H,d,p))});
+  }
+  M = {series, boundary, solverSeries, rows};
+}
+
+/* =====================================================================
+   CANVAS HELPERS
+===================================================================== */
+function prep(cv){
+  const box = cv.parentElement.getBoundingClientRect();
+  const dpr = Math.max(1, window.devicePixelRatio||1);
+  const w = Math.max(10, box.width), h = Math.max(10, box.height);
+  if(cv.width !== Math.round(w*dpr) || cv.height !== Math.round(h*dpr)){ cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); }
+  const ctx = cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+  return {ctx, w, h};
+}
+function niceTicks(min, max, count){
+  const span = max-min || 1, raw = span/Math.max(1,count);
+  const mag = 10**Math.floor(Math.log10(raw)), f = raw/mag;
+  const step = (f<1.5?1:f<3?2:f<7?5:10)*mag;
+  const out=[]; for(let v=Math.ceil(min/step)*step; v<=max+step*1e-6; v+=step) out.push(+v.toFixed(10));
+  return {ticks:out, step};
+}
+let hatchCache = {};
+function hatch(ctx, color){
+  const key = color;
+  if(hatchCache[key]) return hatchCache[key];
+  const c=document.createElement('canvas'); c.width=c.height=10;
+  const g=c.getContext('2d'); g.strokeStyle=color; g.lineWidth=1.2; g.globalAlpha=.55;
+  g.beginPath(); g.moveTo(0,10); g.lineTo(10,0); g.moveTo(-5,5); g.lineTo(5,-5); g.moveTo(5,15); g.lineTo(15,5); g.stroke();
+  return (hatchCache[key] = ctx.createPattern(c,'repeat'));
+}
+
+/* =====================================================================
+   LAY CURVES CHART
+===================================================================== */
+const CH = {pad:{l:58,r:16,t:16,b:40}, x:null, y:null, hoverD:null};
+
+function viewRange(){
+  let a = S.view ? S.view[0] : 0, b = S.view ? S.view[1] : S.maxD;
+  if(!(b>a)) { a=0; b=S.maxD; }
+  return [Math.max(0,a), b];
+}
+
+function drawCurves(){
+  const cv=$('curveCv'); const {ctx,w,h}=prep(cv);
+  const P=CH.pad, key=S.metric;
+  const [x0,x1]=viewRange();
+  // y-range from visible data
+  let yMax=0, yMin=Infinity;
+  const vis = s => s.pts.filter(q=>q.d>=x0 && q.d<=x1);
+  M.series.forEach(s=>vis(s).forEach(q=>{ yMax=Math.max(yMax,q.r[key]); yMin=Math.min(yMin,q.r[key]); }));
+  if(M.solverSeries) vis(M.solverSeries).forEach(q=>{ yMax=Math.max(yMax,q.r[key]); yMin=Math.min(yMin,q.r[key]); });
+  if(!Number.isFinite(yMin)){ yMin=0; yMax=10; }
+  yMin = key==='angle' ? Math.max(0, yMin - (yMax-yMin)*0.08) : 0;
+  yMax = yMax + (yMax-yMin)*0.08 || 10;
+  const conv = key==='tension' ? v=>UNITS[S.unit].to(v) : v=>v;
+  const yt = niceTicks(conv(yMin), conv(yMax), Math.max(3, Math.floor((h-P.t-P.b)/48)));
+  const yLo = Math.min(conv(yMin), yt.ticks[0] ?? conv(yMin));
+  const yHi = Math.max(conv(yMax), yt.ticks[yt.ticks.length-1] ?? conv(yMax));
+  const X = d => P.l + (d-x0)/(x1-x0)*(w-P.l-P.r);
+  const Y = v => h-P.b - (conv(v)-yLo)/(yHi-yLo)*(h-P.t-P.b);
+  CH.x = {X, x0, x1, w}; CH.y = {Y};
+
+  const ink3=css('--ink3'), line=css('--line'), line2=css('--line2'), ink2=css('--ink2');
+  ctx.font = '12px '+css('--sans');
+  // grid
+  ctx.strokeStyle=line; ctx.lineWidth=1; ctx.fillStyle=ink3; ctx.textAlign='right'; ctx.textBaseline='middle';
+  yt.ticks.forEach(t=>{ const y=h-P.b-(t-yLo)/(yHi-yLo)*(h-P.t-P.b); if(y<P.t-1) return;
+    ctx.beginPath(); ctx.moveTo(P.l,Math.round(y)+.5); ctx.lineTo(w-P.r,Math.round(y)+.5); ctx.stroke();
+    ctx.fillText(t.toLocaleString('en-GB',{maximumFractionDigits:3}), P.l-8, y); });
+  const xt = niceTicks(x0, x1, Math.max(3, Math.floor((w-P.l-P.r)/70)));
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  xt.ticks.forEach(t=>{ const x=X(t);
+    ctx.beginPath(); ctx.moveTo(Math.round(x)+.5,P.t); ctx.lineTo(Math.round(x)+.5,h-P.b); ctx.stroke();
+    ctx.fillText(t, x, h-P.b+6); });
+  ctx.strokeStyle=line2; ctx.beginPath(); ctx.moveTo(P.l,h-P.b+.5); ctx.lineTo(w-P.r,h-P.b+.5); ctx.stroke();
+  // axis titles
+  ctx.fillStyle=ink2; ctx.textAlign='center'; ctx.fillText('Water depth (m)', P.l+(w-P.l-P.r)/2, h-16);
+  ctx.save(); ctx.translate(14, P.t+(h-P.t-P.b)/2); ctx.rotate(-Math.PI/2);
+  ctx.textBaseline='middle'; ctx.fillText(key==='tension' ? `Tensioner load (${S.unit})` : METRICS[key].axis, 0, 0); ctx.restore();
+
+  ctx.save(); ctx.beginPath(); ctx.rect(P.l, P.t, w-P.l-P.r, h-P.t-P.b); ctx.clip();
+
+  // critical region: above the CWD boundary
+  if(M.boundary.length>1){
+    ctx.beginPath(); ctx.moveTo(X(0), Y(0));
+    M.boundary.forEach(q=>ctx.lineTo(X(q.d), Y(q.r[key])));
+    const last=M.boundary[M.boundary.length-1];
+    ctx.lineTo(X(last.d), P.t-5); ctx.lineTo(X(0)-5, P.t-5); ctx.closePath();
+    ctx.fillStyle = hatch(ctx, css('--crit')); ctx.fill();
+    ctx.strokeStyle = css('--crit'); ctx.globalAlpha=.5; ctx.lineWidth=1;
+    ctx.beginPath(); M.boundary.forEach((q,i)=>i?ctx.lineTo(X(q.d),Y(q.r[key])):ctx.moveTo(X(q.d),Y(q.r[key]))); ctx.stroke();
+    ctx.globalAlpha=1;
+  }
+  // envelope
+  if(S.env && M.series.length>=2){
+    const lo = M.series.reduce((a,b)=>b.H<a.H?b:a), hi = M.series.reduce((a,b)=>b.H>a.H?b:a);
+    if(lo.pts.length && hi.pts.length){
+      ctx.beginPath();
+      lo.pts.forEach((q,i)=>i?ctx.lineTo(X(q.d),Y(q.r[key])):ctx.moveTo(X(q.d),Y(q.r[key])));
+      for(let i=hi.pts.length-1;i>=0;i--){ const q=hi.pts[i]; ctx.lineTo(X(q.d),Y(q.r[key])); }
+      ctx.closePath(); ctx.fillStyle=lo.color; ctx.globalAlpha=.12; ctx.fill(); ctx.globalAlpha=1;
+    }
+  }
+  // series: dashed where critical (d < cwd), solid otherwise
+  const drawSeries = (s, color, width, baseDash) => {
+    const crit = s.pts.filter(q=>q.d<=s.cwd), ok = s.pts.filter(q=>q.d>=s.cwd);
+    ctx.strokeStyle=color; ctx.lineJoin='round'; ctx.lineCap='round';
+    if(crit.length>1){ ctx.lineWidth=width*0.8; ctx.setLineDash([4,4]); ctx.globalAlpha=.75;
+      ctx.beginPath(); crit.forEach((q,i)=>i?ctx.lineTo(X(q.d),Y(q.r[key])):ctx.moveTo(X(q.d),Y(q.r[key]))); ctx.stroke(); }
+    ctx.globalAlpha=1; ctx.lineWidth=width; ctx.setLineDash(baseDash||[]);
+    if(ok.length>1){ ctx.beginPath(); ok.forEach((q,i)=>i?ctx.lineTo(X(q.d),Y(q.r[key])):ctx.moveTo(X(q.d),Y(q.r[key]))); ctx.stroke(); }
+    ctx.setLineDash([]);
+    // CWD marker
+    if(s.cwd>0 && s.cwd<S.maxD){ const r=solve(s.H, s.cwd, params()); if(r){
+      ctx.beginPath(); ctx.arc(X(s.cwd), Y(r[key]), 4, 0, Math.PI*2); ctx.fillStyle=css('--panel'); ctx.fill(); ctx.lineWidth=1.5; ctx.stroke(); } }
+  };
+  M.series.forEach(s=>drawSeries(s, s.color, 2.4));
+  if(M.solverSeries){
+    const s=M.solverSeries; ctx.strokeStyle=css('--solver'); ctx.lineWidth=2; ctx.setLineDash([9,5]);
+    ctx.beginPath(); s.pts.forEach((q,i)=>i?ctx.lineTo(X(q.d),Y(q.r[key])):ctx.moveTo(X(q.d),Y(q.r[key]))); ctx.stroke(); ctx.setLineDash([]);
+    if(S.solver.d){ const r=solve(s.H,S.solver.d,params()); if(r){ const x=X(S.solver.d), y=Y(r[key]);
+      ctx.beginPath(); ctx.moveTo(x,y-7); ctx.lineTo(x+7,y); ctx.lineTo(x,y+7); ctx.lineTo(x-7,y); ctx.closePath();
+      ctx.fillStyle=css('--solver'); ctx.fill(); } }
+  }
+  // hover ghost line
+  if(CH.hoverD!=null && Math.abs(CH.hoverD-S.depth)>(x1-x0)/400){
+    ctx.strokeStyle=line2; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+    const x=X(CH.hoverD); ctx.beginPath(); ctx.moveTo(x,P.t); ctx.lineTo(x,h-P.b); ctx.stroke(); ctx.setLineDash([]);
+  }
+  // depth cursor
+  const cx = X(S.depth), cur=css('--cursor');
+  if(cx>=P.l-1 && cx<=w-P.r+1){
+    ctx.strokeStyle=cur; ctx.lineWidth=1.6; ctx.beginPath(); ctx.moveTo(cx,P.t); ctx.lineTo(cx,h-P.b); ctx.stroke();
+    const p=params();
+    M.series.forEach(s=>{ const r=solve(s.H,S.depth,p); if(!r) return;
+      ctx.beginPath(); ctx.arc(cx,Y(r[key]),5,0,Math.PI*2); ctx.fillStyle=s.color; ctx.fill();
+      ctx.lineWidth=2; ctx.strokeStyle=css('--panel'); ctx.stroke(); });
+  }
+  ctx.restore();
+  // cursor label on the axis
+  if(cx>=P.l-1 && cx<=w-P.r+1){
+    const t = fmt(S.depth,1)+' m'; ctx.font='600 12px '+css('--sans');
+    const tw = ctx.measureText(t).width+12; let lx=Math.min(Math.max(cx-tw/2,P.l),w-P.r-tw);
+    ctx.fillStyle=cur; roundRect(ctx,lx,h-P.b+3,tw,19,4); ctx.fill();
+    ctx.fillStyle='#1b1205'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(t, lx+tw/2, h-P.b+12.5);
+  }
+}
+function roundRect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+function curveLegend(){
+  let h = M.series.map(s=>`<span><i style="background:${s.color}"></i>${fmtT(s.H)}</span>`).join('');
+  if(M.solverSeries) h += `<span><i class="dash" style="border-color:var(--solver)"></i>Solved ${fmtT(M.solverSeries.H)}</span>`;
+  h += `<span><i class="dash" style="border-color:var(--ink3)"></i>Shallower than its CWD</span>`;
+  h += `<span><i class="hatch"></i>Critical zone</span>`;
+  if(S.env && M.series.length>=2) h += `<span><i class="env" style="background:${M.series[0].color}"></i>Between lowest and highest</span>`;
+  $('curveLegend').innerHTML = h;
+}
+
+/* chart interaction */
+function depthFromEvent(e){
+  const rect=$('curveCv').getBoundingClientRect(), x=e.clientX-rect.left;
+  const {x0,x1,w}=CH.x, P=CH.pad;
+  const d = x0 + (x-P.l)/(w-P.l-P.r)*(x1-x0);
+  return Math.min(S.maxD, Math.max(0, d));
+}
+let dragging=false;
+const plot=$('curvePlot');
+plot.addEventListener('pointerdown', e=>{ dragging=true; plot.setPointerCapture(e.pointerId); setDepth(snap(depthFromEvent(e))); hideTip(); });
+plot.addEventListener('pointermove', e=>{
+  const d=depthFromEvent(e);
+  if(dragging){ setDepth(snap(d)); return; }
+  if(e.pointerType==='mouse'){ CH.hoverD=d; drawCurves(); showTip(e,d); }
+});
+plot.addEventListener('pointerup', ()=>{ dragging=false; });
+plot.addEventListener('pointercancel', ()=>{ dragging=false; });
+plot.addEventListener('pointerleave', ()=>{ CH.hoverD=null; hideTip(); drawCurves(); });
+function snap(d){ return Math.round(d*10)/10; }
+
+function showTip(e,d){
+  const tip=$('tip'), key=S.metric, p=params();
+  let rows = M.series.map(s=>{ const r=solve(s.H,d,p); if(!r) return '';
+    const c = d < r.cwd;
+    return `<div class="tr ${c?'crit':''}"><i style="background:${s.color}"></i>${fmtT(s.H)}<b>${fmtM(key,r[key])} ${mUnit(key)}</b></div>`; }).join('');
+  if(M.solverSeries){ const r=solve(M.solverSeries.H,d,p); if(r) rows+=`<div class="tr"><i style="background:var(--solver)"></i>Solved<b>${fmtM(key,r[key])} ${mUnit(key)}</b></div>`; }
+  tip.innerHTML = `<div class="th">${METRICS[key].name} at ${fmt(d,1)} m · click to select</div>${rows}`;
+  tip.style.display='block';
+  const rect=plot.getBoundingClientRect(); let x=e.clientX-rect.left+14, y=e.clientY-rect.top+14;
+  if(x+tip.offsetWidth>rect.width-6) x=e.clientX-rect.left-tip.offsetWidth-14;
+  if(y+tip.offsetHeight>rect.height-6) y=rect.height-tip.offsetHeight-6;
+  tip.style.left=x+'px'; tip.style.top=Math.max(6,y)+'px';
+}
+function hideTip(){ $('tip').style.display='none'; }
+
+/* =====================================================================
+   CABLE SHAPE (side elevation at the selected depth)
+===================================================================== */
+function drawElev(){
+  const cv=$('elevCv'); const {ctx,w,h}=prep(cv);
+  const d=S.depth, p=params();
+  const items = M.series.map(s=>({s, r:solve(s.H,d,p)})).filter(o=>o.r);
+  const sol = M.solverSeries ? solve(M.solverSeries.H,d,p) : null;
+  const ink3=css('--ink3'), ink2=css('--ink2');
+  ctx.font='12px '+css('--sans');
+  if(!(d>0) || (!items.length && !sol)){
+    ctx.fillStyle=ink2; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(d>0 ? 'Add a bottom tension to see the cable shape.' : 'Pick a water depth above 0 m.', w/2, h/2);
+    $('elevHint').textContent=''; return;
+  }
+  const maxLay = Math.max(...items.map(o=>o.r.layback), sol?sol.layback:0);
+  const pad={l:52,r:Math.min(130,w*.22),t:22,b:26};
+  const topY = S.sH + S.sR + 2, botY = -d - Math.max(2, d*0.06);
+  const spanY = topY-botY, spanX = maxLay*1.08 + 2;
+  let kx = (w-pad.l-pad.r)/spanX, ky = (h-pad.t-pad.b)/spanY;
+  if(S.trueScale){ const k=Math.min(kx,ky); kx=ky=k; }
+  const ex = w-pad.r;                                   // chute exit x (pixels)
+  const X = dist => ex - dist*kx;                       // dist = metres from chute exit toward touchdown
+  const Y = z => pad.t + (topY - z)*ky;                 // z = metres above sea surface
+  const left = 0;
+  $('elevHint').textContent = S.trueScale ? '1:1 scale' : 'Stretched to fit, angles not true';
+
+  // water
+  const g=ctx.createLinearGradient(0,Y(0),0,Y(-d));
+  g.addColorStop(0,css('--water-top')); g.addColorStop(1,css('--water-bot'));
+  ctx.fillStyle=g; ctx.fillRect(left,Y(0),w,Y(-d)-Y(0));
+  // seabed
+  ctx.fillStyle=css('--seabed'); ctx.fillRect(left,Y(-d),w,h-Y(-d));
+  ctx.fillStyle=hatch(ctx, css('--seabed-line')); ctx.fillRect(left,Y(-d),w,h-Y(-d));
+  ctx.strokeStyle=css('--seabed-line'); ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(left,Y(-d)); ctx.lineTo(w,Y(-d)); ctx.stroke();
+  // surface
+  ctx.strokeStyle=css('--surface'); ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(left,Y(0)); ctx.lineTo(w,Y(0)); ctx.stroke();
+
+  // vessel stern with chute, drawn around the focused (or first) item
+  const fo = items[Math.min(S.focus, items.length-1)] || null;
+  const phi = (fo ? fo.r.exitAng : (sol?sol.exitAng:Math.PI/3));
+  const rPx = Math.max(4, S.sR*kx);
+  const E = {x:ex, y:Y(S.sH)};
+  // centre is inboard (to the right on screen) and below the exit point
+  const C = {x:E.x + rPx*Math.sin(phi), y:E.y + rPx*Math.cos(phi)};
+  const deckY = C.y - rPx;
+  const draft = Math.max(Y(0)+12, Y(-Math.min(6, d*0.5)));
+  ctx.fillStyle=css('--hull'); ctx.strokeStyle=css('--hull-line'); ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.moveTo(C.x, deckY); ctx.lineTo(w+2, deckY); ctx.lineTo(w+2, draft);
+  ctx.lineTo(C.x+ (draft-Y(0))*0.35, draft); ctx.lineTo(C.x, Math.max(C.y, Y(0)-2)); ctx.closePath(); ctx.fill(); ctx.stroke();
+  if(S.trueScale && rPx>3){
+    const angE = Math.atan2(E.y-C.y, E.x-C.x);   // exit point, measured from the chute centre
+    ctx.beginPath(); ctx.arc(C.x, C.y, rPx, angE, -Math.PI/2, false);
+    ctx.strokeStyle=css('--hull-line'); ctx.lineWidth=3; ctx.stroke();
+  }
+  ctx.fillStyle=ink2; ctx.font='600 12px '+css('--sans'); ctx.textAlign='left'; ctx.textBaseline='bottom';
+  ctx.fillText('Vessel', C.x+8, deckY-6);
+
+  // cables
+  const drawCable = (r, color, width, dash) => {
+    const pts=shape(r,d);
+    ctx.strokeStyle=color; ctx.lineWidth=width; ctx.setLineDash(dash||[]); ctx.lineJoin='round'; ctx.lineCap='round';
+    ctx.beginPath();
+    pts.forEach((q,i)=>{ const x=X(r.layback-q[0]), y=Y(q[1]-d); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+    ctx.stroke(); ctx.setLineDash([]);
+    // laid cable on seabed beyond touchdown
+    ctx.globalAlpha=.55; ctx.beginPath(); ctx.moveTo(X(r.layback),Y(-d)-width/2); ctx.lineTo(Math.max(0,X(r.layback)-60),Y(-d)-width/2); ctx.stroke(); ctx.globalAlpha=1;
+    ctx.beginPath(); ctx.arc(X(r.layback),Y(-d)-1,3.5,0,Math.PI*2); ctx.fillStyle=color; ctx.fill();
+  };
+  items.forEach((o,i)=>{ if(o!==fo) drawCable(o.r, o.s.color, 1.8); });
+  if(sol) drawCable(sol, css('--solver'), 2, [8,5]);
+  if(fo) drawCable(fo.r, fo.s.color, 3.2);
+
+  // annotations for the focused cable
+  const ann = fo ? fo.r : sol;
+  if(ann){
+    const tx=X(ann.layback), y=Math.min(h-8, Y(-d)+14);
+    ctx.strokeStyle=css('--cursor'); ctx.fillStyle=css('--cursor'); ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(tx,y); ctx.lineTo(ex,y); ctx.moveTo(tx,y-5); ctx.lineTo(tx,y+5); ctx.moveTo(ex,y-5); ctx.lineTo(ex,y+5); ctx.stroke();
+    ctx.setLineDash([2,3]); ctx.globalAlpha=.6; ctx.beginPath(); ctx.moveTo(ex,E.y); ctx.lineTo(ex,y); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1;
+    const lab = `Layback ${fmt(ann.layback,1)} m`; ctx.font='600 12.5px '+css('--sans');
+    const tw=ctx.measureText(lab).width+12, lx=Math.max(4,(tx+ex)/2-tw/2);
+    ctx.fillStyle=css('--panel'); roundRect(ctx,lx,y-10,tw,20,4); ctx.fill();
+    ctx.fillStyle=css('--cursor'); ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText(lab,lx+6,y);
+    // surface crossing + angle
+    const sx = X(ann.layback - ann.x1), sy=Y(0);
+    ctx.beginPath(); ctx.arc(sx,sy,3.5,0,Math.PI*2); ctx.fill();
+    ctx.font='12px '+css('--sans'); ctx.fillStyle=ink2; ctx.textAlign='right'; ctx.textBaseline='bottom';
+    ctx.fillText(`${fmt(ann.angle,1)}° from vertical`, sx-8, sy-5);
+  }
+  // depth dimension
+  ctx.strokeStyle=ink3; ctx.fillStyle=ink2; ctx.lineWidth=1;
+  const dx=14; ctx.beginPath(); ctx.moveTo(dx,Y(0)); ctx.lineTo(dx,Y(-d)); ctx.moveTo(dx-4,Y(0)); ctx.lineTo(dx+4,Y(0)); ctx.moveTo(dx-4,Y(-d)); ctx.lineTo(dx+4,Y(-d)); ctx.stroke();
+  ctx.save(); ctx.translate(dx+12,(Y(0)+Y(-d))/2); ctx.rotate(-Math.PI/2); ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font='600 12px '+css('--sans'); ctx.fillStyle=css('--cursor'); ctx.fillText(`${fmt(d,1)} m`,0,0); ctx.restore();
+  ctx.font='11.5px '+css('--sans'); ctx.fillStyle=ink3; ctx.textAlign='left'; ctx.textBaseline='bottom';
+  ctx.fillText('Sea surface', dx+24, Y(0)-4);
+}
+
+/* =====================================================================
+   READOUT
+===================================================================== */
+function renderReadout(){
+  const d=S.depth, p=params();
+  $('roTitle').textContent = `At ${fmt(d,1)} m water depth`;
+  if(!M.series.length && !M.solverSeries){
+    $('roBody').innerHTML = `<div class="empty">Add a bottom tension in Setup to see layback, length, angle and tensioner load here.</div>`; return;
+  }
+  const row = (who, r, cls, idx) => {
+    if(!r) return `<tr><td class="who">${who}</td><td colspan="5" class="st"><span class="bad">No solution at this depth</span></td></tr>`;
+    const crit = d < r.cwd;
+    return `<tr class="${cls}" ${idx!=null?`data-i="${idx}"`:''}>
+      <td class="who">${who}</td>
+      <td data-l="Layback">${fmt(r.layback,1)}<small>m</small></td>
+      <td data-l="Length">${fmt(r.length,1)}<small>m</small></td>
+      <td data-l="Angle from vertical">${fmt(r.angle,1)}<small>°</small></td>
+      <td data-l="Tensioner load">${fmtT(r.tension,false)}<small>${S.unit}</small></td>
+      <td class="st">${crit?`<span class="bad">Critical zone</span><small>CWD ${fmt(r.cwd,1)} m — go deeper or reduce tension</small>`
+                         :`<span class="ok">Clear</span><small>CWD ${fmt(r.cwd,1)} m</small>`}</td></tr>`;
+  };
+  let body = M.series.map((s,i)=>row(`<i style="background:${s.color}"></i>${fmtT(s.H)}`, solve(s.H,d,p), i===S.focus?'focus':'', i)).join('');
+  if(M.solverSeries) body += row(`<i class="dash" style="border-color:var(--solver)"></i>Solved ${fmtT(M.solverSeries.H)}`, solve(M.solverSeries.H,d,p), '', null);
+  $('roBody').innerHTML = `<table class="readout"><thead><tr><th>Bottom tension</th><th>Layback</th><th>Length</th><th>Angle from vertical</th><th>Tensioner load</th><th style="text-align:left">Critical water depth</th></tr></thead><tbody>${body}</tbody></table>`;
+}
+$('roBody').addEventListener('click', e=>{
+  const tr=e.target.closest('tr[data-i]'); if(!tr) return;
+  S.focus=+tr.dataset.i; save(); renderReadout(); drawElev();
+});
+
+function renderZone(){
+  const d=S.depth;
+  const crit = M.series.filter(s=>d < s.cwd);
+  const z=$('zone');
+  if(!M.series.length){ z.className='zone'; $('zoneTxt').textContent='No tensions selected.'; return; }
+  if(crit.length){
+    z.className='zone crit';
+    $('zoneTxt').textContent = crit.length===M.series.length
+      ? `All tensions are in the critical zone at ${fmt(d,1)} m.`
+      : `${crit.map(s=>fmtT(s.H)).join(', ')} ${crit.length>1?'are':'is'} in the critical zone at ${fmt(d,1)} m.`;
+  } else { z.className='zone'; $('zoneTxt').textContent = `All tensions are clear of the critical zone at ${fmt(d,1)} m.`; }
+}
+
+/* =====================================================================
+   TABLE
+===================================================================== */
+function renderTable(){
+  const cols = Object.keys(METRICS).filter(k=>S.cols.includes(k));
+  const T=$('dataTable');
+  if(!M.series.length || !cols.length){
+    T.innerHTML = `<tbody><tr><td class="empty" style="position:static">${!M.series.length?'Add a bottom tension to fill the table.':'Pick at least one column above.'}</td></tr></tbody>`; return;
+  }
+  const show = M.series.filter(s=>S.tShow==='all' || Math.abs(s.H-S.tShow)<0.5);
+  const shown = show.length ? show : M.series;
+  let h1 = `<tr><th rowspan="2" style="vertical-align:bottom">Depth (m)</th>`;
+  let h2 = `<tr>`;
+  shown.forEach(s=>{
+    h1 += `<th class="g gs" colspan="${cols.length}"><i style="background:${s.color}"></i>${fmtT(s.H)}</th>`;
+    cols.forEach((k,j)=>{ h2 += `<th class="${j===0?'gs':''}">${METRICS[k].name} (${mUnit(k)})</th>`; });
+  });
+  h1+='</tr>'; h2+='</tr>';
+  const body = M.rows.map((row,ri)=>{
+    let tds = `<td>${fmt(row.d, row.d%1?1:0)}</td>`;
+    shown.forEach(s=>{ const r=row.cells[s.i];
+      cols.forEach((k,j)=>{
+        if(!r){ tds += `<td class="${j===0?'gs':''}">–</td>`; return; }
+        const c = row.d < r.cwd;
+        tds += `<td class="${j===0?'gs':''}${c?' c':''}">${fmtM(k,r[k])}</td>`;
+      });
+    });
+    return `<tr data-r="${ri}">${tds}</tr>`;
+  }).join('');
+  T.innerHTML = `<thead>${h1}${h2}</thead><tbody>${body}</tbody>`;
+  markRow(false);
+}
+let curRow=-1;
+function markRow(scroll){
+  const rows=M.rows; if(!rows.length) return;
+  let best=-1, bd=Infinity;
+  rows.forEach((r,i)=>{ const dd=Math.abs(r.d-S.depth); if(dd<bd){bd=dd;best=i;} });
+  if(bd > S.stepD/2+1e-9) best=-1;
+  const T=$('dataTable');
+  const old=T.querySelector('tr.cur'); if(old) old.classList.remove('cur');
+  if(best<0) { curRow=-1; return; }
+  const tr=T.querySelector(`tr[data-r="${best}"]`); if(!tr) return;
+  tr.classList.add('cur');
+  if(scroll && best!==curRow){
+    const wrap=$('twrap'), head=T.tHead.offsetHeight;
+    const top=tr.offsetTop - head - (wrap.clientHeight-head)/2 + tr.offsetHeight/2;
+    wrap.scrollTo({top:Math.max(0,top), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+  }
+  curRow=best;
+}
+$('dataTable').addEventListener('click', e=>{
+  const tr=e.target.closest('tbody tr[data-r]'); if(!tr) return;
+  setDepth(M.rows[+tr.dataset.r].d);
+});
+
+/* =====================================================================
+   CSV
+===================================================================== */
+function downloadCSV(){
+  if(!M.rows.length || !M.series.length) return;
+  const keys = Object.keys(METRICS);
+  const q = v => /[",\n]/.test(v) ? `"${String(v).replace(/"/g,'""')}"` : v;
+  const lines = [];
+  lines.push(['Catenary export', new Date().toLocaleString('en-GB')].map(q).join(','));
+  lines.push(['Weight in water (kg/m)',S.wW,'Weight in air (kg/m)',S.wA,'Chute height (m)',S.sH,'Chute radius (m)',S.sR,'Chute friction',S.mu].map(q).join(','));
+  lines.push('');
+  const hdr=['Depth (m)'];
+  M.series.forEach(s=>{ keys.forEach(k=>hdr.push(`${fmtT(s.H)} ${METRICS[k].name} (${mUnit(k)})`)); hdr.push(`${fmtT(s.H)} Critical`); });
+  lines.push(hdr.map(q).join(','));
+  M.rows.forEach(row=>{
+    const c=[row.d];
+    row.cells.forEach(r=>{ keys.forEach(k=>c.push(r? (k==='tension'? UNITS[S.unit].to(r[k]).toFixed(UNITS[S.unit].dp+1) : r[k].toFixed(2)) : '')); c.push(r ? (row.d<r.cwd?'yes':'no') : ''); });
+    lines.push(c.map(q).join(','));
+  });
+  const n=new Date(), z=v=>String(v).padStart(2,'0');
+  const name=`catenary_${n.getFullYear()}${z(n.getMonth()+1)}${z(n.getDate())}_${z(n.getHours())}${z(n.getMinutes())}.csv`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv'})); a.download=name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+}
+
+/* =====================================================================
+   SETUP PANEL
+===================================================================== */
+const NUM_IDS = ['wW','wA','sH','sR','mu','maxD','stepD'];
+function fillInputs(){
+  NUM_IDS.forEach(id=>{ $(id).value = S[id]; });
+  $('envT').checked = S.env; $('trueScale').checked = S.trueScale;
+  document.querySelectorAll('#presets button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.p===S.preset)));
+}
+NUM_IDS.forEach(id=>{
+  $(id).addEventListener('input', ()=>{
+    const v=parseFloat($(id).value);
+    S[id] = Number.isFinite(v) ? v : NaN;
+    S.preset = null; document.querySelectorAll('#presets button').forEach(b=>b.setAttribute('aria-pressed','false'));
+    if(id==='maxD' && S.depth>S.maxD) S.depth=S.maxD;
+    if(id==='maxD') S.view=null;
+    scheduleAll();
+  });
+});
+document.querySelectorAll('#presets button').forEach(b=>b.addEventListener('click', ()=>{
+  Object.assign(S, PRESETS[b.dataset.p]); S.preset=b.dataset.p; S.view=null;
+  if(S.depth>S.maxD) S.depth=S.maxD;
+  fillInputs(); renderAll();
+}));
+
+function renderTensions(){
+  $('tList').innerHTML = S.tensions.length
+    ? S.tensions.map((H,i)=>`<div class="trow"><i style="background:${seriesColor(i)}"></i><b>${fmtT(H)}</b>
+        <span>CWD ${fmt(cwdOf(H),1)} m</span><button aria-label="Remove ${fmtT(H)}" data-rm="${i}">×</button></div>`).join('')
+    : `<p class="note" style="margin:0">No tensions yet. Add one below.</p>`;
+  $('tNewU').textContent = S.unit;
+  $('tNew').step = UNITS[S.unit].step;
+  const quick = {kg:[150,250,500,750,1000,1500,2000], te:[0.25,0.5,1,1.5,2,3], kN:[2.5,5,10,15,20,30]}[S.unit];
+  $('tQuick').innerHTML = quick.map(v=>`<button data-q="${v}">+ ${v} ${S.unit}</button>`).join('');
+}
+$('tList').addEventListener('click', e=>{
+  const b=e.target.closest('[data-rm]'); if(!b) return;
+  S.tensions.splice(+b.dataset.rm,1); if(S.focus>=S.tensions.length) S.focus=Math.max(0,S.tensions.length-1); renderAll();
+});
+function addTension(kg){
+  $('errT').classList.remove('show');
+  if(!(kg>0)){ $('errT').textContent='Enter a tension above 0.'; $('errT').classList.add('show'); return false; }
+  if(S.tensions.some(t=>Math.abs(t-kg)<0.5)){ $('errT').textContent=`${fmtT(kg)} is already in the list.`; $('errT').classList.add('show'); return false; }
+  if(S.tensions.length>=6){ $('errT').textContent='Up to six tensions can be compared at once.'; $('errT').classList.add('show'); return false; }
+  S.tensions.push(kg); S.tensions.sort((a,b)=>a-b); renderAll(); return true;
+}
+$('tAdd').addEventListener('click', ()=>{ if(addTension(UNITS[S.unit].from(parseFloat($('tNew').value)))) $('tNew').value=''; });
+$('tNew').addEventListener('keydown', e=>{ if(e.key==='Enter') $('tAdd').click(); });
+$('tQuick').addEventListener('click', e=>{ const b=e.target.closest('[data-q]'); if(b) addTension(UNITS[S.unit].from(+b.dataset.q)); });
+$('envT').addEventListener('change', ()=>{ S.env=$('envT').checked; save(); curveLegend(); drawCurves(); });
+$('trueScale').addEventListener('change', ()=>{ S.trueScale=$('trueScale').checked; save(); drawElev(); });
+
+/* =====================================================================
+   SOLVER
+===================================================================== */
+function runSolver(){
+  const d=parseFloat($('oD').value), L=parseFloat($('oL').value), A=parseFloat($('oA').value);
+  const msg=$('solveMsg'), out=$('solveOut');
+  msg.className='msg'; msg.textContent='';
+  const hasL=Number.isFinite(L)&&L>0, hasA=Number.isFinite(A)&&A>0, hasD=Number.isFinite(d)&&d>0;
+  if(!hasD && !hasL && !hasA){ out.classList.remove('show'); S.solver=null; return; }
+  if(!hasD){ msg.textContent='Enter the water depth.'; out.classList.remove('show'); S.solver=null; return; }
+  if(!hasL && !hasA){ msg.textContent='Now enter the observed layback or the angle.'; out.classList.remove('show'); S.solver=null; return; }
+  if(hasL && hasA){ msg.className='msg bad'; msg.textContent='Use layback or angle, not both. Clear one of them.'; out.classList.remove('show'); S.solver=null; return; }
+  if(!validInputs()){ msg.className='msg bad'; msg.textContent='Fix the cable inputs first.'; return; }
+  const res = inverse(d, hasL?'layback':'angle', hasL?L:A, params());
+  if(res.err){ msg.className='msg bad'; msg.textContent=res.err; out.classList.remove('show'); S.solver=null; return; }
+  S.solver = {H:res.H, d, L: hasL?L:null, A: hasA?A:null};
+  const r=res.r, crit=d<r.cwd;
+  $('soH').textContent = fmtT(res.H);
+  $('soDl').innerHTML = `
+    ${hasL?`<dt>Angle from vertical</dt><dd>${fmt(r.angle,1)}°</dd>`:`<dt>Layback</dt><dd>${fmt(r.layback,1)} m</dd>`}
+    <dt>Cable length</dt><dd>${fmt(r.length,1)} m</dd>
+    <dt>Tensioner load</dt><dd>${fmtT(r.tension)}</dd>
+    <dt>Critical water depth</dt><dd style="color:${crit?'var(--crit)':'var(--ok)'}">${fmt(r.cwd,1)} m ${crit?'(in zone)':'(clear)'}</dd>`;
+  out.classList.add('show');
+}
+['oD','oL','oA'].forEach(id=>$(id).addEventListener('input', ()=>{ runSolver(); if(S.solver && S.solver.d) S.depth=Math.min(S.maxD, S.solver.d); renderAll(true); }));
+$('soClear').addEventListener('click', ()=>{ ['oD','oL','oA'].forEach(id=>$(id).value=''); S.solver=null; $('solveOut').classList.remove('show'); $('solveMsg').textContent=''; renderAll(); });
+$('soView').addEventListener('click', ()=>setTab('profile'));
+$('soAdd').addEventListener('click', ()=>{ if(S.solver) addTension(Math.round(S.solver.H)); });
+
+/* =====================================================================
+   DEPTH CURSOR
+===================================================================== */
+function setDepth(d){
+  d = Math.min(S.maxD, Math.max(0, +d));
+  if(!Number.isFinite(d)) return;
+  S.depth = +d.toFixed(2);
+  if(document.activeElement!==$('dIn')) $('dIn').value = fmt(S.depth, S.depth%1?1:0);
+  $('dRange').value = S.depth;
+  renderCursor(true);
+  saveSoon();
+}
+function renderCursor(scroll){
+  drawCurves(); drawElev(); renderReadout(); renderZone(); markRow(scroll);
+}
+$('dRange').addEventListener('input', ()=>setDepth(+$('dRange').value));
+$('dIn').addEventListener('input', ()=>{ const v=parseFloat($('dIn').value); if(Number.isFinite(v)) setDepth(v); });
+$('dIn').addEventListener('blur', ()=>{ $('dIn').value=fmt(S.depth, S.depth%1?1:0); });
+const stepTo = dir => {
+  const s=S.stepD>0?S.stepD:1;
+  const k = dir>0 ? Math.floor(S.depth/s+1e-9)+1 : Math.ceil(S.depth/s-1e-9)-1;
+  setDepth(Math.max(s, k*s));
+};
+$('dUp').addEventListener('click', ()=>stepTo(1));
+$('dDn').addEventListener('click', ()=>stepTo(-1));
+document.addEventListener('keydown', e=>{
+  if(e.target.matches('input,select,textarea') || e.ctrlKey || e.metaKey || $('help').open) return;
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'){ e.preventDefault(); stepTo(1); }
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp'){ e.preventDefault(); stepTo(-1); }
+});
+
+/* =====================================================================
+   CHART AND TABLE CONTROLS
+===================================================================== */
+function renderControls(){
+  $('metricTabs').innerHTML = Object.entries(METRICS).map(([k,m])=>`<button data-m="${k}" aria-pressed="${k===S.metric}">${m.name}</button>`).join('');
+  const opts = [`<option value="all">All tensions</option>`].concat(S.tensions.map(H=>`<option value="${H}">${fmtT(H)} only</option>`));
+  $('tSel').innerHTML = opts.join('');
+  if(S.tShow!=='all' && !S.tensions.some(H=>Math.abs(H-S.tShow)<0.5)) S.tShow='all';
+  $('tSel').value = String(S.tShow);
+  $('colChips').innerHTML = Object.entries(METRICS).map(([k,m])=>`<button data-c="${k}" aria-pressed="${S.cols.includes(k)}">${m.name}</button>`).join('');
+  const [a,b]=viewRange(); $('vMin').value=+a.toFixed(1); $('vMax').value=+b.toFixed(1);
+  document.querySelectorAll('#unitSeg button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.u===S.unit)));
+}
+$('metricTabs').addEventListener('click', e=>{ const b=e.target.closest('[data-m]'); if(!b) return; S.metric=b.dataset.m; save(); renderControls(); drawCurves(); });
+$('colChips').addEventListener('click', e=>{ const b=e.target.closest('[data-c]'); if(!b) return;
+  const k=b.dataset.c; S.cols = S.cols.includes(k) ? S.cols.filter(c=>c!==k) : [...S.cols,k]; save(); renderControls(); renderTable(); });
+['vMin','vMax'].forEach(id=>$(id).addEventListener('change', ()=>{
+  const a=parseFloat($('vMin').value), b=parseFloat($('vMax').value);
+  S.view = (Number.isFinite(a)&&Number.isFinite(b)&&b>a) ? [Math.max(0,a), b] : null; save(); renderControls(); drawCurves(); }));
+$('vFit').addEventListener('click', ()=>{ S.view=null; save(); renderControls(); drawCurves(); });
+$('unitSeg').addEventListener('click', e=>{ const b=e.target.closest('[data-u]'); if(!b) return; S.unit=b.dataset.u; renderAll(); });
+$('btnCsv').addEventListener('click', downloadCSV);
+$('tSel').addEventListener('change', ()=>{ const v=$('tSel').value; S.tShow = v==='all'?'all':+v; save(); renderTable(); });
+
+/* theme */
+function applyTheme(){
+  document.documentElement.dataset.theme=S.theme;
+  document.querySelector('meta[name="theme-color"]').content = S.theme==='night' ? '#0e1720' : '#e9eef0';
+  hatchCache={};
+}
+$('btnTheme').addEventListener('click', ()=>{ S.theme = S.theme==='night'?'day':'night'; applyTheme(); renderAll(); });
+
+/* help */
+$('btnHelp').addEventListener('click', ()=>$('help').showModal());
+$('helpClose').addEventListener('click', ()=>$('help').close());
+$('help').addEventListener('click', e=>{ if(e.target===$('help')) $('help').close(); });
+
+/* mobile tabs */
+function setTab(t){
+  document.body.dataset.tab=t;
+  document.querySelectorAll('.bnav button').forEach(b=>{ if(b.dataset.tab===t) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
+  window.scrollTo(0,0);
+  requestAnimationFrame(()=>{ drawCurves(); drawElev(); });
+}
+document.querySelector('.bnav').addEventListener('click', e=>{ const b=e.target.closest('[data-tab]'); if(b) setTab(b.dataset.tab); });
+
+/* print: day palette, report header, then restore */
+let preTheme=null;
+function printHead(){
+  $('printHead').innerHTML = `<h1>Catenary analysis</h1>
+    Weight in water ${S.wW} kg/m · weight in air ${S.wA} kg/m · chute height ${S.sH} m · chute radius ${S.sR} m · friction μ ${S.mu}
+    · tensions ${S.tensions.map(t=>fmtT(t)).join(', ')} · selected depth ${fmt(S.depth,1)} m · ${new Date().toLocaleString('en-GB')}`;
+}
+window.addEventListener('beforeprint', ()=>{ printHead(); preTheme=S.theme; if(S.theme!=='day'){ S.theme='day'; applyTheme(); } renderAll(); });
+window.addEventListener('afterprint', ()=>{ if(preTheme && preTheme!==S.theme){ S.theme=preTheme; applyTheme(); renderAll(); } preTheme=null; });
+$('btnPrint').addEventListener('click', ()=>window.print());
+
+/* =====================================================================
+   RENDER
+===================================================================== */
+let saveT=null; function saveSoon(){ clearTimeout(saveT); saveT=setTimeout(save, 300); }
+let allT=null; function scheduleAll(){ cancelAnimationFrame(allT); allT=requestAnimationFrame(()=>renderAll()); }
+
+function renderAll(keepSolver){
+  if(!keepSolver && (S.solver || $('oD').value)) runSolver();
+  renderControls(); renderTensions();
+  if(!validInputs()){ save(); return; }
+  compute();
+  $('dRange').max = S.maxD; $('dRange').step = Math.max(0.1, S.maxD/1000).toFixed(1);
+  $('dRange').value = S.depth;
+  if(document.activeElement!==$('dIn')) $('dIn').value = fmt(S.depth, S.depth%1?1:0);
+  if(S.focus>=S.tensions.length) S.focus=0;
+  curveLegend(); renderTable(); renderCursor(false);
+  save();
+}
+
+new ResizeObserver(()=>{ if(M){ drawCurves(); drawElev(); } }).observe($('curvePlot'));
+new ResizeObserver(()=>{ if(M) drawElev(); }).observe($('elevPlot'));
+
+/* boot */
+applyTheme(); fillInputs();
+if(S.solver){ $('oD').value=S.solver.d||''; $('oL').value=S.solver.L||''; $('oA').value=S.solver.A||''; }
+setTab('profile');
+renderAll();
 </script>
 </body>
 </html>
