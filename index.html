@@ -489,7 +489,7 @@ dialog::backdrop{background:rgba(5,10,15,.6)}
     <h3>What each value means</h3>
     <ul>
       <li><strong>Layback</strong>: horizontal distance from the chute exit to the touchdown point.</li>
-      <li><strong>Length</strong>: cable from touchdown to the chute exit, plus the length wrapped on the chute.</li>
+      <li><strong>Length</strong>: cable from touchdown to the chute exit, plus the length wrapped on the chute. The wrap term, r·(90° − θ), is deliberately not the pure geometric wrap: it allows for depth, chute height and cable stiffness, and was checked against OASYS to within about a metre. Don't change it without re-validating.</li>
       <li><strong>Angle</strong>: cable angle from vertical where it crosses the sea surface.</li>
       <li><strong>Tensioner load</strong>: top tension √(H² + V²) at the chute, reduced by chute friction: T / e^(μ·θ).</li>
     </ul>
@@ -529,6 +529,7 @@ function solve(H, d, p){
   const L2 = Math.sqrt(yve*yve - a2*a2) - Lvs;
   const Vo = Vs + L2*p.wA;                         // vertical force at the chute exit
   const th = Math.atan(Vs/H);                      // angle below horizontal at the surface
+  // Wrap term is calibrated, not pure geometry: validated against OASYS to ~1 m. Do not "fix" without re-testing.
   const wrap = p.sR>0 ? p.sR*(Math.PI/2 - th) : 0;
   const Ttop = Math.hypot(H, Vo);
   const r = {
