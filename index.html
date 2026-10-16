@@ -82,15 +82,16 @@ button{cursor:pointer}
 /* =====================================================================
    LAYOUT
 ===================================================================== */
-.app{display:grid;grid-template-columns:300px minmax(0,1fr);height:calc(100dvh - var(--hdr))}
+.app{display:grid;grid-template-columns:350px minmax(0,1fr);height:calc(100dvh - var(--hdr))}
 .side{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:4px 0 28px;scrollbar-width:thin}
 .main{overflow-y:auto;padding:16px;display:grid;gap:14px;align-content:start;scrollbar-width:thin;
-  grid-template-columns:minmax(0,1.75fr) minmax(300px,1fr);
-  grid-template-areas:"depth depth" "curves elev" "readout readout" "table table"}
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  grid-template-areas:"depth depth" "solve solve" "curves elev" "readout readout" "table table"}
+#card-solve{grid-area:solve}
 #card-depth{grid-area:depth}#card-curves{grid-area:curves}#card-elev{grid-area:elev}
 #card-readout{grid-area:readout}#card-table{grid-area:table}
 @media (max-width:1180px){
-  .main{grid-template-columns:minmax(0,1fr);grid-template-areas:"depth" "curves" "readout" "elev" "table"}
+  .main{grid-template-columns:minmax(0,1fr);grid-template-areas:"depth" "solve" "curves" "elev" "readout" "table"}
 }
 
 .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-m);min-width:0}
@@ -102,21 +103,21 @@ button{cursor:pointer}
 /* =====================================================================
    SIDE PANEL (setup + solver)
 ===================================================================== */
-.grp{padding:14px 16px 6px;border-bottom:1px solid var(--line)}
+.grp{padding:16px 18px 8px;border-bottom:1px solid var(--line)}
 .grp:last-child{border-bottom:0}
-.grp h3{font-size:13.5px;font-weight:650;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.grp h3{font-size:14.5px;font-weight:650;margin-bottom:10px;display:flex;align-items:center;gap:8px}
 .grp h3 small{font-weight:500;color:var(--ink3);font-size:12px;margin-left:auto}
 .grp p.note{color:var(--ink3);font-size:12.5px;margin:-4px 0 10px}
-.field{display:grid;grid-template-columns:1fr 116px;align-items:center;gap:8px;margin-bottom:8px}
-.field label{color:var(--ink2);font-size:13px;line-height:1.25}
-.field label em{font-style:normal;color:var(--ink3);font-size:11.5px;display:block}
+.field{display:grid;grid-template-columns:1fr 134px;align-items:center;gap:12px;margin-bottom:10px}
+.field label{color:var(--ink);font-size:14px;line-height:1.25}
+.field label em{font-style:normal;color:var(--ink3);font-size:12px;display:block;margin-top:1px}
 .inp{position:relative}
-.inp input{width:100%;height:32px;padding:0 44px 0 9px;border:1px solid var(--line2);border-radius:var(--r-s);
-  background:var(--well);font-weight:600;font-size:14px;text-align:right;-moz-appearance:textfield}
+.inp input{width:100%;height:36px;padding:0 46px 0 10px;border:1px solid var(--line2);border-radius:var(--r-s);
+  background:var(--well);font-weight:600;font-size:15px;text-align:right;-moz-appearance:textfield}
 .inp input::-webkit-inner-spin-button,.inp input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 .inp input:focus{outline:none;border-color:var(--cursor);box-shadow:0 0 0 3px var(--cursor-soft)}
 .inp input[aria-invalid="true"]{border-color:var(--crit)}
-.inp .u{position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--ink3);font-size:11.5px;pointer-events:none}
+.inp .u{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--ink3);font-size:11.5px;pointer-events:none}
 .err{color:var(--crit);font-size:12px;margin:-4px 0 8px;display:none}
 .err.show{display:block}
 .presets{display:flex;gap:6px;margin-bottom:12px}
@@ -142,6 +143,26 @@ button{cursor:pointer}
 .check{display:flex;align-items:center;gap:8px;color:var(--ink2);font-size:13px;margin:4px 0 10px;cursor:pointer}
 .check input{accent-color:var(--cursor);width:15px;height:15px}
 
+.solvebar{border-color:var(--line2)}
+.sv{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 18px;padding:12px 18px}
+.sv-t{display:flex;flex-direction:column;min-width:170px;align-self:center}
+.sv-t b{font-size:14.5px;font-weight:650}
+.sv-t small{color:var(--ink3);font-size:12.5px}
+.sv-t small span{color:var(--cursor);font-weight:650}
+.sv-f{display:flex;flex-direction:column;gap:4px;width:150px}
+.sv-f label{font-size:12.5px;color:var(--ink2)}
+.sv-or{color:var(--ink3);font-size:12.5px;padding-bottom:9px}
+.sv-out{display:flex;align-items:flex-end;gap:18px;flex:0 1 auto;min-width:240px;opacity:.35}
+.sv-out.show{opacity:1}
+.sv-h small{display:block;color:var(--ink3);font-size:12px}
+.sv-h b{font-size:24px;font-weight:650;letter-spacing:-.3px;color:var(--solver);line-height:1.2}
+.sv-out dl{display:grid;grid-template-columns:auto auto;gap:0 10px;font-size:12.5px}
+.sv-out dt{color:var(--ink3)}
+.sv-out dd{font-weight:600}
+.sv-a{display:flex;gap:6px}
+.btn:disabled{opacity:.4;cursor:default}
+#solveMsg{margin:-4px 18px 10px}
+#solveMsg:empty{display:none}
 .solve-out{margin:6px 0 10px;border:1px solid var(--line2);border-radius:var(--r-s);background:var(--well);display:none}
 .solve-out.show{display:block}
 .solve-out .big{padding:10px 12px;border-bottom:1px solid var(--line)}
@@ -205,18 +226,19 @@ button{cursor:pointer}
 /* =====================================================================
    READOUT
 ===================================================================== */
-.readout{width:100%;border-collapse:collapse}
-.readout th{font-weight:500;color:var(--ink3);font-size:12.5px;text-align:right;padding:8px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+.readout{width:100%;border-collapse:collapse;table-layout:fixed}
+.readout th{font-weight:500;color:var(--ink3);font-size:12px;text-align:right;padding:6px 18px;border-bottom:1px solid var(--line);white-space:nowrap}
 .readout th:first-child{text-align:left}
-.readout td{padding:9px 14px;border-bottom:1px solid var(--line);text-align:right;font-size:20px;font-weight:600;letter-spacing:-.3px;white-space:nowrap}
-.readout td small{font-size:12.5px;color:var(--ink3);font-weight:500;margin-left:3px;letter-spacing:0}
+.readout td{padding:6px 18px;border-bottom:1px solid var(--line);text-align:right;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.readout td small{font-size:12px;color:var(--ink3);font-weight:500;margin-left:3px;letter-spacing:0}
 .readout tr:last-child td{border-bottom:0}
 .readout td.who{text-align:left;font-size:14px;font-weight:650;letter-spacing:0}
 .readout td.who i{display:inline-block;width:14px;height:4px;border-radius:2px;margin-right:8px;vertical-align:middle}
 .readout td.who i.dash{height:0;border-top:2px dashed;background:none!important}
-.readout td.st{font-size:13px;font-weight:600;letter-spacing:0;text-align:left;white-space:normal}
+.readout td.st{font-size:13px;font-weight:600;letter-spacing:0;text-align:left}
+.readout th.st{text-align:left}
 .readout td.st .ok{color:var(--ok)}.readout td.st .bad{color:var(--crit)}
-.readout td.st small{display:block;margin:0}
+.readout td.st small{margin-left:8px}
 .readout tr{cursor:pointer}
 .readout tr.focus td{background:var(--cursor-soft)}
 .readout tr.focus td.who{box-shadow:inset 3px 0 0 var(--cursor)}
@@ -230,7 +252,7 @@ button{cursor:pointer}
 .chips button[aria-pressed="true"]{color:var(--ink);background:var(--panel2);border-color:var(--ink3)}
 .twrap{overflow:auto;max-height:70vh;border-top:1px solid var(--line);scrollbar-width:thin}
 table.data{border-collapse:separate;border-spacing:0;width:auto;min-width:min(100%,560px);font-size:13.5px}
-table.data th{position:sticky;z-index:2;background:var(--panel);font-weight:600;white-space:nowrap;padding:7px 12px;text-align:right}
+table.data th{position:sticky;z-index:2;background:var(--panel);font-weight:600;white-space:nowrap;padding:7px 10px;text-align:right}
 table.data thead tr:first-child th{top:0;height:36px;border-bottom:1px solid var(--line)}
 table.data thead tr:nth-child(2) th{top:36px;color:var(--ink3);font-weight:500;font-size:12px;border-bottom:1px solid var(--line2)}
 table.data th.g{text-align:center;font-size:13.5px}
@@ -238,7 +260,7 @@ table.data th.g i{display:inline-block;width:14px;height:4px;border-radius:2px;m
 table.data th.gs,table.data td.gs{border-left:1px solid var(--line2)}
 table.data th:first-child,table.data td:first-child{position:sticky;left:0;z-index:1;background:var(--panel);text-align:left;font-weight:650;border-right:1px solid var(--line2)}
 table.data thead th:first-child{z-index:3}
-table.data td{padding:6px 11px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+table.data td{padding:6px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
 table.data tbody tr{cursor:pointer}
 table.data tbody tr:hover td{background:var(--panel2)}
 table.data td.c{color:var(--crit);background:var(--crit-soft)}
@@ -285,28 +307,35 @@ dialog::backdrop{background:rgba(5,10,15,.6)}
   .dval input{width:84px;height:42px;font-size:24px}
   .steps button{width:38px;height:38px}
   .plot,#elevPlot{height:300px}
-  #card-depth{order:0}#card-readout{order:1}#card-curves{order:2}#card-elev{order:3}#card-table{order:4}
+  #card-depth{order:0}#card-solve{order:1}#card-readout{order:2}#card-curves{order:3}#card-elev{order:4}#card-table{order:5}
   #elevPlot{min-height:300px}
   .show-m{display:inline-flex!important}
   .readout tr.focus{background:var(--cursor-soft);box-shadow:inset 3px 0 0 var(--cursor)}
   .readout tr.focus td{background:none}
   .readout thead{display:none}
   .readout,.readout tbody{display:block}
-  .readout tr{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line);padding:8px 12px 10px;gap:2px 10px}
+  .readout{table-layout:auto}
+  .sv{gap:10px 10px;padding:12px}
+  .sv-t{width:100%}
+  .sv-f{width:calc(50% - 20px)}
+  .sv-or{padding-bottom:10px}
+  .sv-out{min-width:100%}
+  .sv-out:not(.show){display:none}
+  .readout tr{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line);padding:8px 12px;gap:2px 8px}
   .readout tr:last-child{border-bottom:0}
-  .readout td{display:block;border:0;padding:2px 0;text-align:left;font-size:19px}
-  .readout td::before{content:attr(data-l);display:block;font-size:11.5px;color:var(--ink3);font-weight:500;letter-spacing:0}
-  .readout td.who{grid-column:1/-1;font-size:15px;padding-bottom:4px}
+  .readout td{display:block;border:0;padding:1px 0;text-align:left;font-size:16px}
+  .readout td::before{content:attr(data-l);display:block;font-size:11px;color:var(--ink3);font-weight:500;letter-spacing:0}
+  .readout td.who{grid-row:1;grid-column:1/3;font-size:14px;padding-bottom:2px}
   .readout td.who::before,.readout td.st::before{display:none}
-  .readout td.st{grid-column:1/-1}
+  .readout td.st{grid-row:1;grid-column:3/5;text-align:right;font-size:12.5px}
+  .readout td.st small{display:block;margin:0}
   .readout tr.focus td.who{box-shadow:none}
   .twrap{max-height:none}
-  body[data-tab="setup"] .main,body[data-tab="solve"] .main,
+  body[data-tab="setup"] .main,
   body[data-tab="profile"] .side,body[data-tab="table"] .side{display:none}
-  body[data-tab="setup"] #grp-solve,body[data-tab="solve"] .grp:not(#grp-solve){display:none}
   body[data-tab="profile"] #card-table{display:none}
-  body[data-tab="table"] #card-curves,body[data-tab="table"] #card-elev,body[data-tab="table"] #card-readout{display:none}
-  .bnav{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:0;right:0;bottom:0;z-index:20;
+  body[data-tab="table"] #card-curves,body[data-tab="table"] #card-elev,body[data-tab="table"] #card-readout,body[data-tab="table"] #card-solve{display:none}
+  .bnav{display:grid;grid-template-columns:repeat(3,1fr);position:fixed;left:0;right:0;bottom:0;z-index:20;
     height:calc(var(--nav) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);
     background:var(--panel);border-top:1px solid var(--line2)}
   .bnav button{border:0;background:none;color:var(--ink3);font-size:11.5px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
@@ -322,6 +351,7 @@ dialog::backdrop{background:rgba(5,10,15,.6)}
   @page{size:A4 landscape;margin:10mm}
   html,body{height:auto;overflow:visible;background:#fff}
   .top,.side,.bnav,#card-depth,.card-h button,.card-h .tabs,.card-h .view,.card-h .hint,.card-h .check,.chips,.tsel,.steps{display:none!important}
+  .card-h #btnPrintTable,.card-h #btnCsv{display:none!important}
   .print-head{display:block;padding:0 0 8px;font-size:12px;color:#333}
   .print-head h1{font-size:18px;margin-bottom:4px}
   .app{display:block;height:auto}
@@ -332,6 +362,14 @@ dialog::backdrop{background:rgba(5,10,15,.6)}
   .twrap{max-height:none;overflow:visible}
   table.data th{position:static}
   #card-table{break-before:page}
+  body.print-table #card-solve,body.print-table #card-curves,body.print-table #card-elev,body.print-table #card-readout{display:none!important}
+  body.print-table #card-table{break-before:auto}
+  #card-table{break-inside:auto}
+  #card-solve{display:none!important}
+  table.data{width:100%}
+  table.data thead{display:table-header-group}
+  table.data tr{break-inside:avoid}
+  table.data td,table.data th{padding:3px 8px;font-size:11px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -351,7 +389,7 @@ dialog::backdrop{background:rgba(5,10,15,.6)}
   <div class="seg" role="group" aria-label="Tension units" id="unitSeg">
     <button data-u="kg">kg</button><button data-u="te">te</button><button data-u="kN">kN</button>
   </div>
-  <button class="icon-btn hide-m" id="btnPrint" title="Print report">
+  <button class="icon-btn hide-m" id="btnPrint" title="Print the full report">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/></svg>Print</button>
   <button class="icon-btn" id="btnTheme" title="Switch day / night">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
@@ -393,19 +431,6 @@ dialog::backdrop{background:rgba(5,10,15,.6)}
       <label class="check"><input type="checkbox" id="envT"> Shade between lowest and highest</label>
     </section>
 
-    <section class="grp" id="grp-solve">
-      <h3>Solve from what you see</h3>
-      <p class="note">Enter the water depth and one observation. It finds the bottom tension that matches.</p>
-      <div class="field"><label for="oD">Water depth</label><div class="inp"><input id="oD" type="number" inputmode="decimal" step="any"><span class="u">m</span></div></div>
-      <div class="field"><label for="oL">Layback</label><div class="inp"><input id="oL" type="number" inputmode="decimal" step="any" placeholder="–"><span class="u">m</span></div></div>
-      <div class="field"><label for="oA">Angle<em>from vertical, at surface</em></label><div class="inp"><input id="oA" type="number" inputmode="decimal" step="any" placeholder="–"><span class="u">°</span></div></div>
-      <div class="msg" id="solveMsg"></div>
-      <div class="solve-out" id="solveOut">
-        <div class="big"><small>Bottom tension that matches</small><b id="soH">–</b></div>
-        <dl id="soDl"></dl>
-        <div class="acts"><button class="btn" id="soAdd">Add to comparison</button><button class="btn quiet" id="soClear">Clear</button><button class="btn primary show-m" id="soView">View on profile</button></div>
-      </div>
-    </section>
   </aside>
 
   <!-- ================= MAIN ================= -->
@@ -420,6 +445,21 @@ dialog::backdrop{background:rgba(5,10,15,.6)}
         <div class="steps"><button id="dDn" aria-label="Shallower by one step">−</button><button id="dUp" aria-label="Deeper by one step">+</button></div>
         <div class="zone" id="zone"><span class="dot"></span><span id="zoneTxt"></span></div>
       </div>
+    </section>
+
+    <section class="card solvebar" id="card-solve" aria-label="Solve from an observation">
+      <div class="sv">
+        <div class="sv-t"><b>Solve from what you see</b><small>at <span id="svD">–</span> m, the selected depth</small></div>
+        <div class="sv-f"><label for="oL">Observed layback</label><div class="inp"><input id="oL" type="number" inputmode="decimal" step="any"><span class="u">m</span></div></div>
+        <span class="sv-or">or</span>
+        <div class="sv-f"><label for="oA">Angle from vertical</label><div class="inp"><input id="oA" type="number" inputmode="decimal" step="any"><span class="u">°</span></div></div>
+        <div class="sv-out" id="solveOut">
+          <div class="sv-h"><small>Matching bottom tension</small><b id="soH">–</b></div>
+          <dl id="soDl"></dl>
+        </div>
+        <div class="sv-a"><button class="btn" id="soAdd" disabled>Add to comparison</button><button class="btn quiet" id="soClear">Clear</button></div>
+      </div>
+      <div class="msg" id="solveMsg"></div>
     </section>
 
     <section class="card" id="card-curves">
@@ -443,7 +483,7 @@ dialog::backdrop{background:rgba(5,10,15,.6)}
     </section>
 
     <section class="card" id="card-readout">
-      <div class="card-h"><h2 id="roTitle">At this depth</h2><span class="hint">Tap a row to focus it in the cable shape</span></div>
+      <div class="card-h" style="padding:8px 18px"><h2 id="roTitle" style="font-size:13.5px">At this depth</h2><span class="hint">Tap a row to focus it in the cable shape</span></div>
       <div id="roBody"></div>
     </section>
 
@@ -453,6 +493,7 @@ dialog::backdrop{background:rgba(5,10,15,.6)}
         <select class="tsel" id="tSel" aria-label="Tensions shown in table"></select>
         <div class="chips" id="colChips" role="group" aria-label="Table columns"></div>
         <button class="btn quiet" id="btnCsv">Download CSV</button>
+        <button class="btn primary" id="btnPrintTable">Print table</button>
       </div>
       <div class="twrap" id="twrap"><table class="data" id="dataTable"></table></div>
       <div class="tfoot">
@@ -467,7 +508,6 @@ dialog::backdrop{background:rgba(5,10,15,.6)}
   <button data-tab="setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Setup</button>
   <button data-tab="profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h18" opacity=".5"/><path d="M4 5c0 10 6 14 16 14"/><circle cx="20" cy="19" r="1.6" fill="currentColor"/></svg>Profile</button>
   <button data-tab="table"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 4v16"/></svg>Table</button>
-  <button data-tab="solve"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>Solve</button>
 </nav>
 
 <dialog id="help">
@@ -663,12 +703,6 @@ function compute(){
     if(c > S.maxD*1.6) break;
     const r = solve(H,c,p); if(r) boundary.push({d:c, r});
   }
-  let solverSeries = null;
-  if(S.solver && S.solver.H>0){
-    const pts=[];
-    for(let k=0;k<=N;k++){ const d=d0+(S.maxD-d0)*k/N; const r=solve(S.solver.H,d,p); if(r) pts.push({d,r}); }
-    solverSeries = {H:S.solver.H, pts, cwd: cwdOf(S.solver.H)};
-  }
   // Table rows
   const rows=[];
   const n = Math.floor(S.maxD/S.stepD + 1e-9);
@@ -676,7 +710,7 @@ function compute(){
     const d = +(k*S.stepD).toFixed(6);
     rows.push({d, cells: S.tensions.map(H=>solve(H,d,p))});
   }
-  M = {series, boundary, solverSeries, rows};
+  M = {series, boundary, solverSeries:null, rows};
 }
 
 /* =====================================================================
@@ -796,7 +830,7 @@ function drawCurves(){
   if(M.solverSeries){
     const s=M.solverSeries; ctx.strokeStyle=css('--solver'); ctx.lineWidth=2; ctx.setLineDash([9,5]);
     ctx.beginPath(); s.pts.forEach((q,i)=>i?ctx.lineTo(X(q.d),Y(q.r[key])):ctx.moveTo(X(q.d),Y(q.r[key]))); ctx.stroke(); ctx.setLineDash([]);
-    if(S.solver.d){ const r=solve(s.H,S.solver.d,params()); if(r){ const x=X(S.solver.d), y=Y(r[key]);
+    if(S.solver){ const r=solve(s.H,S.depth,params()); if(r){ const x=X(S.depth), y=Y(r[key]);
       ctx.beginPath(); ctx.moveTo(x,y-7); ctx.lineTo(x+7,y); ctx.lineTo(x,y+7); ctx.lineTo(x-7,y); ctx.closePath();
       ctx.fillStyle=css('--solver'); ctx.fill(); } }
   }
@@ -984,8 +1018,8 @@ function renderReadout(){
       <td class="who">${who}</td>
       <td data-l="Layback">${fmt(r.layback,1)}<small>m</small></td>
       <td data-l="Length">${fmt(r.length,1)}<small>m</small></td>
-      <td data-l="Angle from vertical">${fmt(r.angle,1)}<small>°</small></td>
-      <td data-l="Tensioner load">${fmtT(r.tension,false)}<small>${S.unit}</small></td>
+      <td data-l="Angle">${fmt(r.angle,1)}<small>°</small></td>
+      <td data-l="Tensioner">${fmtT(r.tension,false)}<small>${S.unit}</small></td>
       <td class="st">${crit?`<span class="bad">Critical zone</span><small>CWD ${fmt(r.cwd,1)} m — go deeper or reduce tension</small>`
                          :`<span class="ok">Clear</span><small>CWD ${fmt(r.cwd,1)} m</small>`}</td></tr>`;
   };
@@ -1026,7 +1060,7 @@ function renderTable(){
   let h2 = `<tr>`;
   shown.forEach(s=>{
     h1 += `<th class="g gs" colspan="${cols.length}"><i style="background:${s.color}"></i>${fmtT(s.H)}</th>`;
-    cols.forEach((k,j)=>{ h2 += `<th class="${j===0?'gs':''}">${METRICS[k].name} (${mUnit(k)})</th>`; });
+    cols.forEach((k,j)=>{ h2 += `<th class="${j===0?'gs':''}">${METRICS[k].name} <span style="opacity:.7">${mUnit(k)}</span></th>`; });
   });
   h1+='</tr>'; h2+='</tr>';
   const body = M.rows.map((row,ri)=>{
@@ -1148,30 +1182,40 @@ $('trueScale').addEventListener('change', ()=>{ S.trueScale=$('trueScale').check
    SOLVER
 ===================================================================== */
 function runSolver(){
-  const d=parseFloat($('oD').value), L=parseFloat($('oL').value), A=parseFloat($('oA').value);
+  const d=S.depth, L=parseFloat($('oL').value), A=parseFloat($('oA').value);
   const msg=$('solveMsg'), out=$('solveOut');
+  $('svD').textContent = fmt(d,1);
   msg.className='msg'; msg.textContent='';
-  const hasL=Number.isFinite(L)&&L>0, hasA=Number.isFinite(A)&&A>0, hasD=Number.isFinite(d)&&d>0;
-  if(!hasD && !hasL && !hasA){ out.classList.remove('show'); S.solver=null; return; }
-  if(!hasD){ msg.textContent='Enter the water depth.'; out.classList.remove('show'); S.solver=null; return; }
-  if(!hasL && !hasA){ msg.textContent='Now enter the observed layback or the angle.'; out.classList.remove('show'); S.solver=null; return; }
-  if(hasL && hasA){ msg.className='msg bad'; msg.textContent='Use layback or angle, not both. Clear one of them.'; out.classList.remove('show'); S.solver=null; return; }
-  if(!validInputs()){ msg.className='msg bad'; msg.textContent='Fix the cable inputs first.'; return; }
+  const hasL=Number.isFinite(L)&&L>0, hasA=Number.isFinite(A)&&A>0;
+  const off = t => { out.classList.remove('show'); $('soH').textContent='–'; $('soDl').innerHTML=''; $('soAdd').disabled=true; S.solver=null; if(t){ msg.className='msg bad'; msg.textContent=t; } };
+  if(!hasL && !hasA) return off();
+  if(!(d>0)) return off('Pick a water depth above 0 m.');
+  if(!validInputs()) return off('Fix the cable inputs first.');
   const res = inverse(d, hasL?'layback':'angle', hasL?L:A, params());
-  if(res.err){ msg.className='msg bad'; msg.textContent=res.err; out.classList.remove('show'); S.solver=null; return; }
+  if(res.err) return off(res.err);
   S.solver = {H:res.H, d, L: hasL?L:null, A: hasA?A:null};
   const r=res.r, crit=d<r.cwd;
   $('soH').textContent = fmtT(res.H);
   $('soDl').innerHTML = `
-    ${hasL?`<dt>Angle from vertical</dt><dd>${fmt(r.angle,1)}°</dd>`:`<dt>Layback</dt><dd>${fmt(r.layback,1)} m</dd>`}
-    <dt>Cable length</dt><dd>${fmt(r.length,1)} m</dd>
-    <dt>Tensioner load</dt><dd>${fmtT(r.tension)}</dd>
-    <dt>Critical water depth</dt><dd style="color:${crit?'var(--crit)':'var(--ok)'}">${fmt(r.cwd,1)} m ${crit?'(in zone)':'(clear)'}</dd>`;
-  out.classList.add('show');
+    ${hasL?`<dt>Angle</dt><dd>${fmt(r.angle,1)}°</dd>`:`<dt>Layback</dt><dd>${fmt(r.layback,1)} m</dd>`}
+    <dt>Tensioner</dt><dd>${fmtT(r.tension)}</dd>
+    <dt>Length</dt><dd>${fmt(r.length,1)} m</dd>
+    <dt>CWD</dt><dd style="color:${crit?'var(--crit)':'var(--ok)'}">${fmt(r.cwd,1)} m ${crit?'· in zone':'· clear'}</dd>`;
+  out.classList.add('show'); $('soAdd').disabled=false;
 }
-['oD','oL','oA'].forEach(id=>$(id).addEventListener('input', ()=>{ runSolver(); if(S.solver && S.solver.d) S.depth=Math.min(S.maxD, S.solver.d); renderAll(true); }));
-$('soClear').addEventListener('click', ()=>{ ['oD','oL','oA'].forEach(id=>$(id).value=''); S.solver=null; $('solveOut').classList.remove('show'); $('solveMsg').textContent=''; renderAll(); });
-$('soView').addEventListener('click', ()=>setTab('profile'));
+function solverSeries(){
+  if(!M) return;
+  const p=params(), N=240, d0=Math.min(0.25,S.maxD/200);
+  if(S.solver && S.solver.H>0){
+    const pts=[];
+    for(let k=0;k<=N;k++){ const d=d0+(S.maxD-d0)*k/N; const r=solve(S.solver.H,d,p); if(r) pts.push({d,r}); }
+    M.solverSeries = {H:S.solver.H, pts, cwd: cwdOf(S.solver.H)};
+  } else M.solverSeries = null;
+}
+// typing in one observation clears the other, so only one is ever used
+$('oL').addEventListener('input', ()=>{ if($('oL').value) $('oA').value=''; runSolver(); solverSeries(); curveLegend(); renderCursor(false); save(); });
+$('oA').addEventListener('input', ()=>{ if($('oA').value) $('oL').value=''; runSolver(); solverSeries(); curveLegend(); renderCursor(false); save(); });
+$('soClear').addEventListener('click', ()=>{ $('oL').value=''; $('oA').value=''; runSolver(); solverSeries(); curveLegend(); renderCursor(false); save(); });
 $('soAdd').addEventListener('click', ()=>{ if(S.solver) addTension(Math.round(S.solver.H)); });
 
 /* =====================================================================
@@ -1187,6 +1231,8 @@ function setDepth(d){
   saveSoon();
 }
 function renderCursor(scroll){
+  if($('oL').value || $('oA').value){ const before=S.solver&&S.solver.H; runSolver(); if((S.solver&&S.solver.H)!==before){ solverSeries(); curveLegend(); } }
+  else $('svD').textContent = fmt(S.depth,1);
   drawCurves(); drawElev(); renderReadout(); renderZone(); markRow(scroll);
 }
 $('dRange').addEventListener('input', ()=>setDepth(+$('dRange').value));
@@ -1261,6 +1307,8 @@ function printHead(){
 window.addEventListener('beforeprint', ()=>{ printHead(); preTheme=S.theme; if(S.theme!=='day'){ S.theme='day'; applyTheme(); } renderAll(); });
 window.addEventListener('afterprint', ()=>{ if(preTheme && preTheme!==S.theme){ S.theme=preTheme; applyTheme(); renderAll(); } preTheme=null; });
 $('btnPrint').addEventListener('click', ()=>window.print());
+$('btnPrintTable').addEventListener('click', ()=>{ document.body.classList.add('print-table'); window.print(); });
+window.addEventListener('afterprint', ()=>document.body.classList.remove('print-table'));
 
 /* =====================================================================
    RENDER
@@ -1268,8 +1316,7 @@ $('btnPrint').addEventListener('click', ()=>window.print());
 let saveT=null; function saveSoon(){ clearTimeout(saveT); saveT=setTimeout(save, 300); }
 let allT=null; function scheduleAll(){ cancelAnimationFrame(allT); allT=requestAnimationFrame(()=>renderAll()); }
 
-function renderAll(keepSolver){
-  if(!keepSolver && (S.solver || $('oD').value)) runSolver();
+function renderAll(){
   renderControls(); renderTensions();
   if(!validInputs()){ save(); return; }
   compute();
@@ -1277,6 +1324,7 @@ function renderAll(keepSolver){
   $('dRange').value = S.depth;
   if(document.activeElement!==$('dIn')) $('dIn').value = fmt(S.depth, S.depth%1?1:0);
   if(S.focus>=S.tensions.length) S.focus=0;
+  runSolver(); solverSeries();
   curveLegend(); renderTable(); renderCursor(false);
   save();
 }
@@ -1286,7 +1334,7 @@ new ResizeObserver(()=>{ if(M) drawElev(); }).observe($('elevPlot'));
 
 /* boot */
 applyTheme(); fillInputs();
-if(S.solver){ $('oD').value=S.solver.d||''; $('oL').value=S.solver.L||''; $('oA').value=S.solver.A||''; }
+if(S.solver){ $('oL').value=S.solver.L||''; $('oA').value=S.solver.A||''; }
 setTab('profile');
 renderAll();
 </script>
