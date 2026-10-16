@@ -352,40 +352,17 @@ dialog::backdrop{background:rgba(5,10,15,.6)}
   .bnav button[aria-current="page"]{color:var(--cursor)}
 }
 
-/* =====================================================================
-   PRINT — always day palette, report layout
-===================================================================== */
-.print-head{display:none}
+/* Printing the app page itself isn't supported: use Print table. */
+.print-note{display:none}
 @media print{
-  @page{size:A4 landscape;margin:10mm}
-  html,body{height:auto;overflow:visible;background:#fff}
-  .top,.side,.bnav,#card-depth,.card-h button,.card-h .tabs,.card-h .view,.card-h .hint,.card-h .check,.chips,.tsel,.steps{display:none!important}
-  .card-h #btnPrintTable,.card-h #btnCsv{display:none!important}
-  .print-head{display:block;padding:0 0 8px;font-size:12px;color:#333}
-  .print-head h1{font-size:18px;margin-bottom:4px}
-  .app{display:block;height:auto}
-  .main{display:block;overflow:visible;padding:0}
-  .card{border:1px solid #ccd;margin-bottom:8px}
-  #card-curves,#card-elev{break-inside:avoid}
-  #card-curves,#card-elev{display:inline-block;width:49.3%;vertical-align:top}
-  .plot,#elevPlot,#curvePlot{height:280px;min-height:0;flex:none}
-  #card-curves,#card-elev{display:inline-block!important}
-  .twrap{max-height:none;overflow:visible}
-  table.data th{position:static}
-  #card-table{break-before:page}
-  body.print-table #card-solve,body.print-table #card-curves,body.print-table #card-elev{display:none!important}
-  body.print-table #card-table{break-before:auto}
-  #card-table{break-inside:auto}
-  #card-solve{display:none!important}
-  table.data{width:100%}
-  table.data thead{display:table-header-group}
-  table.data tr{break-inside:avoid}
-  table.data td,table.data th{padding:3px 8px;font-size:11px}
+  body>*:not(.print-note){display:none!important}
+  .print-note{display:block!important;font:16px system-ui,sans-serif;padding:40px;color:#000;background:#fff}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body data-tab="profile">
+<div class="print-note">To print, use the <strong>Print table</strong> button in the app. It opens a clean, printable table.</div>
 
 <header class="top">
   <div class="brand">
@@ -400,8 +377,6 @@ dialog::backdrop{background:rgba(5,10,15,.6)}
   <div class="seg" role="group" aria-label="Tension units" id="unitSeg">
     <button data-u="kg">kg</button><button data-u="te">te</button><button data-u="kN">kN</button>
   </div>
-  <button class="icon-btn hide-m" id="btnPrint" title="Print the full report">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/></svg>Print</button>
   <button class="icon-btn" id="btnTheme" title="Switch day / night">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
   <button class="icon-btn" id="btnHelp" title="How it works">?</button>
@@ -446,7 +421,6 @@ dialog::backdrop{background:rgba(5,10,15,.6)}
 
   <!-- ================= MAIN ================= -->
   <main class="main">
-    <div class="print-head" id="printHead"></div>
 
     <section class="card" id="card-depth" aria-label="Water depth">
       <div class="depthbar">
@@ -1362,18 +1336,100 @@ function setTab(t){
 }
 document.querySelector('.bnav').addEventListener('click', e=>{ const b=e.target.closest('[data-tab]'); if(b) setTab(b.dataset.tab); });
 
-/* print: day palette, report header, then restore */
-let preTheme=null;
-function printHead(){
-  $('printHead').innerHTML = `<h1>Catenary analysis</h1>
-    Weight in water ${S.wW} kg/m · weight in air ${S.wA} kg/m · chute height ${S.sH} m · chute radius ${S.sR} m · friction μ ${S.mu}
-    · tensions ${S.tensions.map(t=>fmtT(t)).join(', ')} · selected depth ${fmt(S.depth,1)} m · ${new Date().toLocaleString('en-GB')}`;
+/* =====================================================================
+   PRINT TABLE — builds its own clean page (inputs + table only) so it
+   prints the same in every browser, whatever the app layout is doing.
+===================================================================== */
+function reportHTML(){
+  const cols = Object.keys(METRICS).filter(k=>S.cols.includes(k));
+  const useCols = cols.length ? cols : Object.keys(METRICS);
+  const shown = M.series.filter(s=>S.tShow==='all' || Math.abs(s.H-S.tShow)<0.5);
+  const ser = shown.length ? shown : M.series;
+  const DAY = ['#1f6fd1','#0d9a80','#7a4fd6','#cf5a2e','#5f8f12','#8a6b2e'];
+  const now = new Date().toLocaleString('en-GB',{dateStyle:'medium',timeStyle:'short'});
+  const meta = [
+    ['Weight in water', `${S.wW} kg/m`], ['Weight in air', `${S.wA} kg/m`],
+    ['Chute height', `${S.sH} m`], ['Chute radius', `${S.sR} m`], ['Chute friction μ', `${S.mu}`],
+    ['Depth range', `${fmt(S.stepD, S.stepD%1?1:0)}–${S.maxD} m, every ${S.stepD} m`],
+  ].map(([k,v])=>`<div><span>${k}</span><b>${esc(v)}</b></div>`).join('');
+  const tens = ser.map(s=>`<span><i style="background:${DAY[s.i%6]}"></i>${fmtT(s.H)} <em>CWD ${fmt(s.cwd,1)} m</em></span>`).join('');
+  let h1 = `<tr><th rowspan="2" class="d">Depth<br>(m)</th>`, h2 = '<tr>';
+  ser.forEach(s=>{
+    h1 += `<th class="g" colspan="${useCols.length}"><i style="background:${DAY[s.i%6]}"></i>${fmtT(s.H)} bottom tension</th>`;
+    useCols.forEach((k,j)=>{ h2 += `<th class="${j===0?'gs':''}">${METRICS[k].name}<br><small>${mUnit(k)}</small></th>`; });
+  });
+  h1+='</tr>'; h2+='</tr>';
+  const body = M.rows.map(row=>{
+    let t = `<td class="d">${fmt(row.d, row.d%1?1:0)}</td>`;
+    ser.forEach(s=>{ const r=row.cells[s.i];
+      useCols.forEach((k,j)=>{
+        if(!r){ t += `<td class="${j===0?'gs':''}">–</td>`; return; }
+        t += `<td class="${j===0?'gs':''}${row.d<r.cwd?' c':''}">${fmtM(k,r[k])}</td>`;
+      });
+    });
+    return `<tr>${t}</tr>`;
+  }).join('');
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<title>Catenary table ${esc(now)}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  @page{size:A4 landscape;margin:10mm}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color:#122230;background:#fff;padding:18px;
+    font-variant-numeric:tabular-nums;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .bar{display:flex;gap:8px;align-items:center;margin-bottom:14px}
+  .bar button{font:inherit;font-weight:600;font-size:14px;padding:8px 18px;border-radius:6px;border:1px solid #c46f00;background:#d07a00;color:#fff;cursor:pointer}
+  .bar button.q{background:#fff;color:#465b6a;border-color:#c5d0d6}
+  .bar span{color:#7d8f9b;font-size:12.5px}
+  h1{font-size:18px;font-weight:650;margin-bottom:2px}
+  .sub{color:#465b6a;font-size:12px;margin-bottom:10px}
+  .meta{display:flex;flex-wrap:wrap;gap:4px 22px;border:1px solid #d5dde2;border-radius:6px;padding:8px 12px;margin-bottom:8px;font-size:12px}
+  .meta span{color:#7d8f9b;margin-right:6px}
+  .tens{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:12px;margin-bottom:10px;font-weight:600}
+  .tens i,th.g i{display:inline-block;width:14px;height:4px;border-radius:2px;margin-right:6px;vertical-align:middle}
+  .tens em{font-style:normal;font-weight:400;color:#7d8f9b;margin-left:4px}
+  table{border-collapse:collapse;width:100%;font-size:11.5px}
+  thead{display:table-header-group}
+  tr{break-inside:avoid;page-break-inside:avoid}
+  th{background:#eef2f4;color:#465b6a;font-weight:600;padding:4px 7px;text-align:right;border-bottom:1px solid #c5d0d6;line-height:1.2}
+  th small{font-weight:400;color:#7d8f9b}
+  th.g{text-align:center;color:#122230;font-size:12px;border-left:1.5px solid #9fb0bb}
+  th.d,td.d{text-align:left;font-weight:650;border-right:1.5px solid #9fb0bb;background:#f6f8f9}
+  td{padding:3px 7px;text-align:right;border-bottom:1px solid #e3e9ec;white-space:nowrap}
+  .gs{border-left:1.5px solid #9fb0bb}
+  tbody tr:nth-child(even) td{background:#fafbfc}
+  tbody tr:nth-child(even) td.d{background:#f1f4f6}
+  td.c{background:#fdecec!important;color:#b42323}
+  .key{margin-top:8px;font-size:11px;color:#465b6a}
+  .key i{display:inline-block;width:11px;height:11px;background:#fdecec;border:1px solid #d23c3c;border-radius:2px;vertical-align:-1px;margin-right:5px}
+  .foot{margin-top:4px;font-size:10.5px;color:#7d8f9b}
+  @media print{ body{padding:0} .bar{display:none} }
+</style></head><body>
+<div class="bar"><button onclick="window.print()">Print</button><button class="q" onclick="window.close()">Close</button><span>Opens your printer dialog. Choose landscape if it isn't already.</span></div>
+<h1>Catenary lay table</h1>
+<div class="sub">Two-segment catenary model · ${esc(now)} · tensions in ${S.unit}</div>
+<div class="meta">${meta}</div>
+<div class="tens">${tens}</div>
+<table><thead>${h1}${h2}</thead><tbody>${body}</tbody></table>
+<div class="key"><i></i>Shallower than the critical water depth (CWD) for that tension.</div>
+<div class="foot">Layback: chute exit to touchdown. Angle: from vertical at the sea surface. Tensioner: after chute friction. Model after Mamatsopoulos et al. (2020), JMSE 8(11) 838.</div>
+<script>if(window.top===window){window.addEventListener('load',function(){setTimeout(function(){window.print();},250);});}<\/script>
+</body></html>`;
 }
-window.addEventListener('beforeprint', ()=>{ printHead(); preTheme=S.theme; if(S.theme!=='day'){ S.theme='day'; applyTheme(); } renderAll(); });
-window.addEventListener('afterprint', ()=>{ if(preTheme && preTheme!==S.theme){ S.theme=preTheme; applyTheme(); renderAll(); } preTheme=null; });
-$('btnPrint').addEventListener('click', ()=>window.print());
-$('btnPrintTable').addEventListener('click', ()=>{ document.body.classList.add('print-table'); window.print(); });
-window.addEventListener('afterprint', ()=>document.body.classList.remove('print-table'));
+function printTable(){
+  if(!M || !M.rows.length || !M.series.length){ alert('Add a bottom tension first — there is no table to print yet.'); return; }
+  const html = reportHTML();
+  const w = window.open('', '_blank');
+  if(w){ w.document.open(); w.document.write(html); w.document.close(); w.focus(); return; }
+  // Pop-up blocked: print from a hidden frame instead.
+  const f=document.createElement('iframe');
+  f.setAttribute('aria-hidden','true');
+  f.style.cssText='position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0';
+  document.body.appendChild(f);
+  const doc=f.contentWindow.document; doc.open(); doc.write(html); doc.close();
+  setTimeout(()=>{ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){} setTimeout(()=>f.remove(), 60000); }, 300);
+}
+$('btnPrintTable').addEventListener('click', printTable);
 
 /* =====================================================================
    RENDER
