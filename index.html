@@ -152,7 +152,10 @@ button{cursor:pointer}
 .sv-t b{font-size:14.5px;font-weight:650}
 .sv-t small{color:var(--ink3);font-size:12.5px}
 .sv-t small span{color:var(--cursor);font-weight:650}
-.sv-f{display:flex;flex-direction:column;gap:4px;width:150px}
+.sv-f{display:flex;flex-direction:column;gap:4px;width:170px}
+.sv-f .inp input{height:52px;font-size:26px;font-weight:750;letter-spacing:-.3px;padding:0 40px 0 12px;font-variant-numeric:tabular-nums}
+.sv-f .inp .u{font-size:14px;font-weight:650}
+.sv-f label{font-weight:650}
 .sv-f label{font-size:12.5px;color:var(--ink2)}
 .atsel{font:inherit;font-size:12px;margin-left:4px;padding:1px 4px;border-radius:6px;border:1px solid var(--line2);background:var(--panel2);color:var(--ink)}
 .sv-or{color:var(--ink3);font-size:12.5px;padding-bottom:9px}
@@ -5168,6 +5171,13 @@ function solverSeries(){
 }
 // typing in one observation clears the other, so only one is ever used
 $('oL').addEventListener('input', ()=>{ if($('oL').value) $('oA').value=''; runSolver(); solverSeries(); curveLegend(); renderCursor(false); save(); });
+// tap a solver box: the whole number is selected, ready to type over
+['oL','oA'].forEach(id=>{ const el=$(id); el.enterKeyHint='done';
+  const sel=()=>{ try{ el.select(); }catch(e){} };
+  el.addEventListener('focus', ()=>{ sel(); const v0=el.value; setTimeout(()=>{ if(el.value===v0) sel(); },0); });
+  el.addEventListener('pointerup', e=>{ if(document.activeElement===el && el.selectionStart===el.selectionEnd){ e.preventDefault(); sel(); } });
+  el.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); el.blur(); } });
+});
 $('oAt').addEventListener('change', ()=>{ S.oAt=$('oAt').value; runSolver(); solverSeries(); curveLegend(); renderCursor(false); save(); });
 $('oA').addEventListener('input', ()=>{ if($('oA').value) $('oL').value=''; runSolver(); solverSeries(); curveLegend(); renderCursor(false); save(); });
 $('soClear').addEventListener('click', ()=>{ $('oL').value=''; $('oA').value=''; runSolver(); solverSeries(); curveLegend(); renderCursor(false); save(); });
