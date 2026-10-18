@@ -154,6 +154,7 @@ button{cursor:pointer}
 .sv-t small span{color:var(--cursor);font-weight:650}
 .sv-f{display:flex;flex-direction:column;gap:4px;width:150px}
 .sv-f label{font-size:12.5px;color:var(--ink2)}
+.atsel{font:inherit;font-size:12px;margin-left:4px;padding:1px 4px;border-radius:6px;border:1px solid var(--line2);background:var(--panel2);color:var(--ink)}
 .sv-or{color:var(--ink3);font-size:12.5px;padding-bottom:9px}
 .sv-out{display:flex;align-items:flex-end;gap:18px;flex:0 1 auto;min-width:240px;opacity:.35}
 .sv-out.show{opacity:1}
@@ -452,7 +453,7 @@ dialog::backdrop{background:rgba(5,10,15,.6)}
         <div class="sv-t"><b>Solve from what you see</b><small>at <span id="svD">–</span> m, the selected depth</small></div>
         <div class="sv-f"><label for="oL">Observed layback</label><div class="inp"><input id="oL" type="number" inputmode="decimal" step="any"><span class="u">m</span></div></div>
         <span class="sv-or">or</span>
-        <div class="sv-f"><label for="oA">Angle from vertical</label><div class="inp"><input id="oA" type="number" inputmode="decimal" step="any"><span class="u">°</span></div></div>
+        <div class="sv-f"><label for="oA">Angle from vertical <select id="oAt" class="atsel" aria-label="Where the angle was measured"><option value="angle">at surface</option><option value="chute">at chute</option></select></label><div class="inp"><input id="oA" type="number" inputmode="decimal" step="any"><span class="u">°</span></div></div>
         <div class="sv-out" id="solveOut">
           <div class="sv-h"><small>Matching bottom tension</small><b id="soH">–</b></div>
           <dl id="soDl"></dl>
@@ -533,7 +534,8 @@ dialog::backdrop{background:rgba(5,10,15,.6)}
     <ul>
       <li><strong>Layback</strong>: horizontal distance from the chute exit to the touchdown point.</li>
       <li><strong>Length</strong>: cable from touchdown to the chute exit, plus the length wrapped on the chute. The wrap term, r·(90° − θ), is deliberately not the pure geometric wrap: it allows for depth, chute height and cable stiffness, and was checked against OASYS to within about a metre. Don't change it without re-validating.</li>
-      <li><strong>Angle</strong>: cable angle from vertical where it crosses the sea surface.</li>
+      <li><strong>Angle at surface</strong>: cable angle from vertical where it crosses the sea surface.</li>
+      <li><strong>Angle at chute</strong>: cable angle from vertical where it leaves the chute (the departure point). Slightly closer to vertical than the surface angle, typically by about half a degree. Compare like with like: OASYS and on-deck readings at the chute go against this one.</li>
       <li><strong>Tensioner load</strong>: top tension √(H² + V²) at the chute, reduced by chute friction: T / e^(μ·θ).</li>
     </ul>
     <code>T_tensioner = √(H² + V²) / e^(μ·θ)</code>
@@ -4415,7 +4417,7 @@ function solve(H, d, p){
   const wrap = p.sR>0 ? p.sR*(Math.PI/2 - th) : 0;
   const Ttop = Math.hypot(H, Vo);
   const r = {
-    layback: x1 + x2, length: L1 + L2 + wrap, angle: 90 - th*180/Math.PI,
+    layback: x1 + x2, length: L1 + L2 + wrap, angle: 90 - th*180/Math.PI, chute: 90 - Math.atan(Vo/H)*180/Math.PI,
     tension: Ttop/Math.exp(p.mu*th), top: Ttop, cwd: cwdOf(H),
     x1, a1, a2, xvs, xve, yvs, exitAng: Math.atan(Vo/H), surfAng: th
   };
@@ -4438,7 +4440,7 @@ function inverse(d, key, target, p){
   const f = H => { const r=solve(H,d,p); return r ? r[key] : NaN; };
   const fl=f(lo), fh=f(hi);
   if(!Number.isFinite(fl) || !Number.isFinite(fh)) return {err:'The model has no solution at this depth with these inputs.'};
-  if(target < fl) return {err:`That ${key==='layback'?'layback':'angle'} is below what any tension gives at ${fmt(d,1)} m (minimum ${fmt(fl, 1)}${key==='angle'?'°':' m'}).`};
+  if(target < fl) return {err:`That ${key==='layback'?'layback':'angle'} is below what any tension gives at ${fmt(d,1)} m (minimum ${fmt(fl, 1)}${key==='layback'?' m':'°'}).`};
   if(target > fh) return {err:`That ${key==='layback'?'layback':'angle'} is beyond the model's range at this depth.`};
   for(let i=0;i<200;i++){
     const mid=Math.sqrt(lo*hi), v=f(mid);
@@ -4467,7 +4469,8 @@ function esc(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;'
 const METRICS = {
   layback:{name:'Layback',   unit:'m', dp:1, axis:'Layback (m)'},
   length: {name:'Length',    unit:'m', dp:1, axis:'Cable length, touchdown to chute (m)'},
-  angle:  {name:'Angle',     unit:'°', dp:1, axis:'Angle from vertical at surface (°)'},
+  angle:  {name:'Angle at surface', unit:'°', dp:1, axis:'Angle from vertical at the sea surface (°)'},
+  chute:  {name:'Angle at chute',   unit:'°', dp:1, axis:'Angle from vertical at the chute exit (°)'},
   tension:{name:'Tensioner', unit:'T', dp:0, axis:'Tensioner load'},
 };
 function fmtM(key, v){
@@ -4488,11 +4491,12 @@ const PRESETS = {
 const DEFAULTS = {
   wW:50, wA:60, sH:1, sR:5, mu:0.3, maxD:100, stepD:5,
   tensions:[250,500,1000], unit:'kg', theme:'night', metric:'layback',
-  cols:['layback','length','angle','tension'], depth:50, focus:0, env:false, trueScale:true,
+  cols:['layback','length','angle','chute','tension'], depth:50, focus:0, env:false, trueScale:true,
   view:null, solver:null, preset:'medium', tShow:'all', dim:'2d'
 };
 const STORE = 'catenary.v4';
 let S = load();
+if(!S.colsChute){ if(Array.isArray(S.cols) && !S.cols.includes('chute')){ const i=S.cols.indexOf('angle'); S.cols.splice(i>=0?i+1:S.cols.length,0,'chute'); } S.colsChute=true; }   // show the new chute angle once
 function load(){
   let s = {};
   try{ s = JSON.parse(localStorage.getItem(STORE)||'{}') || {}; }catch(e){ s = {}; }
@@ -4960,17 +4964,18 @@ function renderReadout(){
     const who = `<i class="${c.sol?'dash':''}" style="${c.sol?'border-color':'background'}:${c.color}"></i>${c.label}`;
     const cls = [c.key===fk?'focus':'', c.sol?'sol':''].join(' ');
     const sel = `style="--sel:${c.color}"`;
-    if(!c.r) return `<tr class="${cls}" data-i="${c.key}" ${sel}><td class="who">${who}</td><td colspan="5" class="st"><span class="bad">No solution at this depth</span></td></tr>`;
+    if(!c.r) return `<tr class="${cls}" data-i="${c.key}" ${sel}><td class="who">${who}</td><td colspan="6" class="st"><span class="bad">No solution at this depth</span></td></tr>`;
     const r=c.r, crit=d<r.cwd;
     return `<tr class="${cls}" data-i="${c.key}" ${sel}>
       <td class="who">${who}</td>
       <td data-l="Layback m">${fmt(r.layback,1)}</td>
-      <td data-l="Angle °">${fmt(r.angle,1)}</td>
+      <td data-l="Angle at surface °">${fmt(r.angle,1)}</td>
+      <td data-l="Angle at chute °">${fmt(r.chute,1)}</td>
       <td data-l="Length m">${fmt(r.length,1)}</td>
       <td data-l="Tensioner ${S.unit}">${fmtT(r.tension,false)}</td>
       <td class="st" title="${crit?'Shallower than the critical water depth':'Clear of the critical water depth'}"><span class="${crit?'bad':'ok'}">● ${fmt(r.cwd,1)}</span>${crit?'<small>critical</small>':''}</td></tr>`;
   }).join('');
-  $('roBody').innerHTML = `<table class="readout"><thead><tr><th>Bottom tension</th><th>Layback m</th><th>Angle °</th><th>Length m</th><th>Tensioner ${S.unit}</th><th class="st">CWD m</th></tr></thead><tbody>${body}</tbody></table>`;
+  $('roBody').innerHTML = `<table class="readout"><thead><tr><th>Bottom tension</th><th>Layback m</th><th>Angle ° <small>surface</small></th><th>Angle ° <small>chute</small></th><th>Length m</th><th>Tensioner ${S.unit}</th><th class="st">CWD m</th></tr></thead><tbody>${body}</tbody></table>`;
 }
 $('roBody').addEventListener('click', e=>{
   const tr=e.target.closest('tr[data-i]'); if(!tr) return;
@@ -5136,15 +5141,17 @@ function runSolver(){
   if(!hasL && !hasA) return off();
   if(!(d>0)) return off('Pick a water depth above 0 m.');
   if(!validInputs()) return off('Fix the cable inputs first.');
-  const res = inverse(d, hasL?'layback':'angle', hasL?L:A, params());
+  const aKey = S.oAt==='chute' ? 'chute' : 'angle';
+  const res = inverse(d, hasL?'layback':aKey, hasL?L:A, params());
   if(res.err) return off(res.err);
   const fresh = !S.solver;
-  S.solver = {H:res.H, d, L: hasL?L:null, A: hasA?A:null};
+  S.solver = {H:res.H, d, L: hasL?L:null, A: hasA?A:null, at: aKey};
   if(fresh) S.focus='sol';
   const r=res.r, crit=d<r.cwd;
   $('soH').textContent = fmtT(res.H);
   $('soDl').innerHTML = `
-    ${hasL?`<dt>Angle</dt><dd>${fmt(r.angle,1)}°</dd>`:`<dt>Layback</dt><dd>${fmt(r.layback,1)} m</dd>`}
+    ${hasL?'':`<dt>Layback</dt><dd>${fmt(r.layback,1)} m</dd>`}
+    <dt>Angle surface</dt><dd>${fmt(r.angle,1)}°</dd><dt>Angle chute</dt><dd>${fmt(r.chute,1)}°</dd>
     <dt>Tensioner</dt><dd>${fmtT(r.tension)}</dd>
     <dt>Length</dt><dd>${fmt(r.length,1)} m</dd>
     <dt>CWD</dt><dd style="color:${crit?'var(--crit)':'var(--ok)'}">${fmt(r.cwd,1)} m ${crit?'· in zone':'· clear'}</dd>`;
@@ -5161,6 +5168,7 @@ function solverSeries(){
 }
 // typing in one observation clears the other, so only one is ever used
 $('oL').addEventListener('input', ()=>{ if($('oL').value) $('oA').value=''; runSolver(); solverSeries(); curveLegend(); renderCursor(false); save(); });
+$('oAt').addEventListener('change', ()=>{ S.oAt=$('oAt').value; runSolver(); solverSeries(); curveLegend(); renderCursor(false); save(); });
 $('oA').addEventListener('input', ()=>{ if($('oA').value) $('oL').value=''; runSolver(); solverSeries(); curveLegend(); renderCursor(false); save(); });
 $('soClear').addEventListener('click', ()=>{ $('oL').value=''; $('oA').value=''; runSolver(); solverSeries(); curveLegend(); renderCursor(false); save(); });
 $('soAdd').addEventListener('click', ()=>{ if(S.solver) addTension(Math.round(S.solver.H)); });
@@ -5320,7 +5328,7 @@ function reportHTML(){
 <div class="tens">${tens}</div>
 <table><thead>${h1}${h2}</thead><tbody>${body}</tbody></table>
 <div class="key"><i></i>Shallower than the critical water depth (CWD) for that tension.</div>
-<div class="foot">Layback: chute exit to touchdown. Angle: from vertical at the sea surface. Tensioner: after chute friction. Model after Mamatsopoulos et al. (2020), JMSE 8(11) 838.</div>
+<div class="foot">Layback: chute exit to touchdown. Angles: from vertical, at the sea surface and at the chute exit. Tensioner: after chute friction. Model after Mamatsopoulos et al. (2020), JMSE 8(11) 838.</div>
 <script>if(window.top===window){window.addEventListener('load',function(){setTimeout(function(){window.print();},250);});}<\/script>
 </body></html>`;
 }
@@ -5363,6 +5371,7 @@ new ResizeObserver(()=>{ if(M) drawElev(); }).observe($('elevPlot'));
 
 /* boot */
 applyTheme(); fillInputs(); syncDim();
+$('oAt').value = S.oAt==='chute' ? 'chute' : 'angle';
 if(S.solver){ $('oL').value=S.solver.L||''; $('oA').value=S.solver.A||''; }
 setTab('profile');
 renderAll();
